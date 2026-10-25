@@ -1,0 +1,16 @@
+Flashkart ownership record — Mukthish implementation scope
+
+Mukthish owns:
+- Admission
+- Flash Sale Manager
+- Order
+- Sales Analytics
+- Frontend, gateway and Message Queue
+- Assignment (c): resource-based Admission/Order HPA and load evidence
+- Assignment (e): Go/Goka streaming and recovery evidence
+
+Member 2 external interfaces: Inventory/Payment, platform/IaC (a), GitOps (d), observability (h).
+Member 3 external interfaces: Catalog/Notification, serverless communications (b), leaderless concept (f), storage products (g).
+Their names, implementation tasks, languages and storage/deployment choices are owner-supplied.
+This file records boundaries; it does not assign or certify teammate implementation.
+Contract review status: contracts/adoption.json; affected owners have not approved draft.2 here.

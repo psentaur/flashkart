@@ -1,0 +1,38 @@
+name: Mukthish foundation checks
+on:
+  push:
+    branches: [001-mukthish-implementation]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: 1.27.3
+          cache-dependency-path: |
+            go.work.sum
+            **/go.sum
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: 3.14.8
+      - name: Install pinned local tools
+        run: make bootstrap
+      - name: Verify Mukthish's workspace and contracts
+        run: bash ci/lead-checks.sh
+      - name: Validate local dependencies, crash recovery and foundation runtime
+        run: |
+          make dev-init deps-config
+          make dev-up
+          make test-integration smoke-foundation
+
+      - name: Stop local processes and containers
+        if: always()
+        run: make dev-down

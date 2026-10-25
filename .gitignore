@@ -14,3 +14,26 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .specify/memory/.*-template.json
+
+# Go and local development artifacts.
+.tools/
+.cache/
+.venv/
+.env
+*.exe
+*.test
+*.out
+vendor/
+coverage/
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.secret.yaml
+.kube/
+kubeconfig*
+*.key
+*.crt

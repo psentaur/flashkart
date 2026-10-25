@@ -1,0 +1,14 @@
+go 1.27.3
+
+use (
+	./contracts
+	./frontend
+	./gateway
+	./internal/platform
+	./scripts
+	./services/admission
+	./services/analytics
+	./services/flash-sale
+	./services/order
+	./tests
+)

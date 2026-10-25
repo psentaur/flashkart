@@ -1,0 +1,893 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Leaderless Catalog Storage Contract",
+    "version": "1.0.0-draft.2"
+  },
+  "servers": [
+    {
+      "url": "https://catalog-kv.internal"
+    }
+  ],
+  "security": [
+    {
+      "serviceIdentity": []
+    }
+  ],
+  "paths": {
+    "/v1/metadata/{product_id}": {
+      "get": {
+        "operationId": "readMetadataQuorum",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quorum result: one value or proven absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetadataRead"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Quorum result: concurrent siblings require resolution",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetadataRead"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or absent identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporary dependency/quorum unavailability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Whole seconds before retry",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "writeMetadataQuorum",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetadataWrite"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Version durable on two nodes and one visible value",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetadataRead"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Concurrent siblings or operation-key mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/MetadataRead"
+                    },
+                    {
+                      "$ref": "#/components/schemas/Error"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or absent identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporary dependency/quorum unavailability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Whole seconds before retry",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/replicas/{product_id}": {
+      "get": {
+        "operationId": "readLocalReplica",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Durable local versions and receipts, including empty absence",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "node_id": {
+                      "type": "string",
+                      "enum": [
+                        "node-a",
+                        "node-b",
+                        "node-c"
+                      ]
+                    },
+                    "siblings": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MetadataVersion"
+                      }
+                    },
+                    "receipts": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OperationReceipt"
+                      }
+                    }
+                  },
+                  "required": [
+                    "node_id",
+                    "siblings",
+                    "receipts"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or absent identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporary dependency/quorum unavailability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Whole seconds before retry",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/replicas/{product_id}/merge": {
+      "post": {
+        "operationId": "mergeReplicaVersions",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "siblings": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/MetadataVersion"
+                    }
+                  },
+                  "receipts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/OperationReceipt"
+                    }
+                  }
+                },
+                "required": [
+                  "siblings",
+                  "receipts"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Acknowledge only after durable local commit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "node_id": {
+                      "type": "string",
+                      "enum": [
+                        "node-a",
+                        "node-b",
+                        "node-c"
+                      ]
+                    },
+                    "durable": {
+                      "const": true
+                    },
+                    "merged_context": {
+                      "type": "object",
+                      "properties": {
+                        "node-a": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "node-b": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "node-c": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "node_id",
+                    "durable",
+                    "merged_context"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or absent identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Business conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporary dependency/quorum unavailability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Whole seconds before retry",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/health": {
+      "get": {
+        "operationId": "getReplicaHealth",
+        "responses": {
+          "200": {
+            "description": "Node health",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplicaHealth"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or absent identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "serviceIdentity": {
+        "type": "mutualTLS"
+      }
+    },
+    "schemas": {
+      "MetadataVersion": {
+        "type": "object",
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "operation_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "context": {
+            "type": "object",
+            "properties": {
+              "node-a": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "node-b": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "node-c": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          },
+          "value": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 10000
+              },
+              "image_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 10
+              }
+            },
+            "required": [
+              "name",
+              "description",
+              "image_refs"
+            ],
+            "additionalProperties": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "Z$"
+          }
+        },
+        "required": [
+          "version_id",
+          "operation_id",
+          "context",
+          "value",
+          "created_at"
+        ],
+        "additionalProperties": false
+      },
+      "MetadataWrite": {
+        "type": "object",
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "context": {
+            "type": "object",
+            "properties": {
+              "node-a": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "node-b": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "node-c": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          },
+          "value": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 10000
+              },
+              "image_refs": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "maxItems": 10
+              }
+            },
+            "required": [
+              "name",
+              "description",
+              "image_refs"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "operation_id",
+          "context",
+          "value"
+        ],
+        "additionalProperties": false
+      },
+      "OperationReceipt": {
+        "type": "object",
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "request_hash": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "assigned_version_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "result_context": {
+            "type": "object",
+            "properties": {
+              "node-a": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "node-b": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "node-c": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "operation_id",
+          "request_hash",
+          "assigned_version_id",
+          "result_context"
+        ],
+        "additionalProperties": false
+      },
+      "MetadataRead": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "FOUND",
+              "CONFLICT",
+              "NOT_FOUND"
+            ]
+          },
+          "siblings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetadataVersion"
+            }
+          },
+          "merged_context": {
+            "type": "object",
+            "properties": {
+              "node-a": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "node-b": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "node-c": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          },
+          "responding_nodes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "node-a",
+                "node-b",
+                "node-c"
+              ]
+            },
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "product_id",
+          "status",
+          "siblings",
+          "merged_context",
+          "responding_nodes"
+        ],
+        "additionalProperties": false
+      },
+      "ReplicaHealth": {
+        "type": "object",
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "enum": [
+              "node-a",
+              "node-b",
+              "node-c"
+            ]
+          },
+          "healthy": {
+            "type": "boolean"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "Z$"
+          }
+        },
+        "required": [
+          "node_id",
+          "healthy",
+          "last_seen_at"
+        ],
+        "additionalProperties": false
+      },
+      "Offer": {
+        "type": "object",
+        "properties": {
+          "sale_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "product_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "unit_price_minor": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "Z$"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "Z$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "UPCOMING",
+              "ACTIVE",
+              "ENDED",
+              "UNAVAILABLE",
+              "CANCELLED"
+            ]
+          },
+          "per_shopper_unit_cap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
+          }
+        },
+        "required": [
+          "sale_id",
+          "product_id",
+          "version",
+          "unit_price_minor",
+          "currency",
+          "starts_at",
+          "ends_at",
+          "status",
+          "per_shopper_unit_cap"
+        ],
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "INVALID_ARGUMENT",
+              "UNAUTHENTICATED",
+              "FORBIDDEN",
+              "NOT_FOUND",
+              "SALE_INACTIVE",
+              "SALE_NOT_READY",
+              "OFFER_CHANGED",
+              "SOLD_OUT",
+              "INSUFFICIENT_STOCK",
+              "RATE_LIMITED",
+              "OVERLOADED",
+              "IDEMPOTENCY_CONFLICT",
+              "REQUEST_IN_PROGRESS",
+              "METADATA_CONFLICT",
+              "QUORUM_UNAVAILABLE",
+              "DEPENDENCY_UNAVAILABLE",
+              "VERSION_CONFLICT",
+              "SALE_WINDOW_CONFLICT",
+              "PURCHASE_LIMIT_EXCEEDED"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "correlation_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "retryable": {
+            "type": "boolean"
+          },
+          "retry_after_seconds": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "current_offer": {
+            "$ref": "#/components/schemas/Offer"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "correlation_id",
+          "retryable"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

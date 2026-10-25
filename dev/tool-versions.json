@@ -1,0 +1,185 @@
+{
+  "go": "1.27.3",
+  "modules": {
+    "github.com/jackc/pgx/v5": "v5.11.0",
+    "google.golang.org/grpc": "v1.84.0",
+    "google.golang.org/protobuf": "v1.36.12",
+    "github.com/golang-jwt/jwt/v5": "v5.3.1",
+    "github.com/prometheus/client_golang": "v1.25.0",
+    "github.com/testcontainers/testcontainers-go": "v0.44.0",
+    "github.com/testcontainers/testcontainers-go/modules/kafka": "v0.44.0",
+    "github.com/testcontainers/testcontainers-go/modules/postgres": "v0.44.0",
+    "google.golang.org/grpc/cmd/protoc-gen-go-grpc": "v1.6.2",
+    "github.com/lovoo/goka": "v1.1.17",
+    "github.com/IBM/sarama": "v1.46.3",
+    "honnef.co/go/tools": "v0.8.2",
+    "github.com/santhosh-tekuri/jsonschema/v6": "v6.0.2"
+  },
+  "module_checksums": {
+    "github.com/jackc/pgx/v5": {
+      "Version": "v5.11.0",
+      "Sum": "h1:IzBBtyK9AHqf98cctWFifYSci2hgQR/cd56wB4p+ogg=",
+      "GoModSum": "h1:mal1tBGAFfLHvZzaYh77YS/eC6IX9OWbRV1QIIM0Jn4="
+    },
+    "google.golang.org/grpc": {
+      "Version": "v1.84.0",
+      "Sum": "h1:soMyaPJ8pAak5PIQ0DGBUir0XRo2fRoMqhNWMLlLxO0=",
+      "GoModSum": "h1:ljCht0DrxQrXBDRTZp52Qxh3Ffk8CdYm2sj4O2QN2C0="
+    },
+    "google.golang.org/protobuf": {
+      "Version": "v1.36.12",
+      "Sum": "h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=",
+      "GoModSum": "h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco="
+    },
+    "github.com/golang-jwt/jwt/v5": {
+      "Version": "v5.3.1",
+      "Sum": "h1:kYf81DTWFe7t+1VvL7eS+jKFVWaUnK9cB1qbwn63YCY=",
+      "GoModSum": "h1:fxCRLWMO43lRc8nhHWY6LGqRcf+1gQWArsqaEUEa5bE="
+    },
+    "github.com/prometheus/client_golang": {
+      "Version": "v1.25.0",
+      "Sum": "h1:cDtW1TcFsMi1RJc8khwCKB4VhzwV04aKqbYtNOXuiK0=",
+      "GoModSum": "h1:j2X/4/kaQHLPnmyEU8zjmkndo1T317VpCIQEml8LTKk="
+    },
+    "github.com/testcontainers/testcontainers-go": {
+      "Version": "v0.44.0",
+      "Sum": "h1:/Fwh6HY1mIikhnm9e7HwoxGycx0lzRAE0f5VQpjFxzI=",
+      "GoModSum": "h1:IcnwQrYTO86xHXu5bvMaBH7ATlbS3Qn1M1QWW3c66rE="
+    },
+    "github.com/testcontainers/testcontainers-go/modules/kafka": {
+      "Version": "v0.44.0",
+      "Sum": "h1:KOyj22XaB0X2RsyQKQKthzcWObKtni0kLrV1HqFVeec=",
+      "GoModSum": "h1:OP4szEj4BpOH/UZhbtNER1ERRSj4YJ6hu2x+FIBdo5o="
+    },
+    "github.com/testcontainers/testcontainers-go/modules/postgres": {
+      "Version": "v0.44.0",
+      "Sum": "h1:8fdv/9y3JMxjQ+ULAcOG8RtgeNu5t9XF9LolSXDuTwM=",
+      "GoModSum": "h1:CFr2LncGYokw+OKjXcr8ARCKG1SaC2UEnGxFBovE86g="
+    },
+    "google.golang.org/grpc/cmd/protoc-gen-go-grpc": {
+      "Version": "v1.6.2",
+      "Sum": "h1:rgSNvqscFZ1JgV/4wH5GOsZFSFkR2Eua9As3KIr2LlM=",
+      "GoModSum": "h1:iMEtFwDlAhjDU9L5mY6U1XLwlIId/G3h+QcBHDIvrJ8="
+    },
+    "github.com/lovoo/goka": {
+      "Version": "v1.1.17",
+      "Sum": "h1:C6TV87dvWwSTbVjb9/3a7wSOMaI9XVuXpfAQ1bnJw/Y=",
+      "GoModSum": "h1:Zzi7zF0m7Icb5C84EWyMtcKyvgu5lj6nACD2WXsa6L4="
+    },
+    "github.com/IBM/sarama": {
+      "Version": "v1.46.3",
+      "Sum": "h1:njRsX6jNlnR+ClJ8XmkO+CM4unbrNr/2vB5KK6UA+IE=",
+      "GoModSum": "h1:GTUYiF9DMOZVe3FwyGT+dtSPceGFIgA+sPc5u6CBwko="
+    },
+    "honnef.co/go/tools": {
+      "Version": "v0.8.2",
+      "Sum": "h1:+jPbCzuYxYrcoOvCecYUFDj+XJQRmzIhJmlbpps21Zk=",
+      "GoModSum": "h1:xG1Q4n+mg3bKZrO6RWFA9jFlkqplflmDRHGeuexiLDs="
+    },
+    "github.com/santhosh-tekuri/jsonschema/v6": {
+      "Version": "v6.0.2",
+      "Sum": "h1:KRzFb2m7YtdldCEkzs6KqmJw4nqEVZGK7IN2kJkjTuQ=",
+      "GoModSum": "h1:JXeL+ps8p7/KNMjDQk3TCwPpBy0wYklyWTfbkIzdIFU="
+    }
+  },
+  "python": {
+    "jsonschema": "4.26.0",
+    "openapi-spec-validator": "0.9.0",
+    "grpcio-tools": "1.84.1"
+  },
+  "images": {
+    "postgres": {
+      "tag": "17-bookworm",
+      "digest": "sha256:858bb5e98eed02eb8cafbcdc007f9a65d1b613972028944a8ec2133ccaf80d27",
+      "image": "docker.io/library/postgres:17-bookworm@sha256:858bb5e98eed02eb8cafbcdc007f9a65d1b613972028944a8ec2133ccaf80d27"
+    },
+    "kafka": {
+      "tag": "4.0.2",
+      "digest": "sha256:836cafdad9f4825880d7cf1d5a21202915ae2527bd0ef1c3600c526ed7814d1f",
+      "image": "docker.io/apache/kafka:4.0.2@sha256:836cafdad9f4825880d7cf1d5a21202915ae2527bd0ef1c3600c526ed7814d1f"
+    },
+    "compose": {
+      "version": "v5.6.1",
+      "assets": {
+        "checksums.txt": {
+          "url": "https://github.com/docker/compose/releases/download/v5.6.1/checksums.txt",
+          "digest": "sha256:71a925494d98575a801f4332f372d41a83badaffa7755ccf42d841c1d8b38aa8"
+        },
+        "docker-compose-linux-aarch64": {
+          "url": "https://github.com/docker/compose/releases/download/v5.6.1/docker-compose-linux-aarch64",
+          "digest": "sha256:42cfa75f51ad0ccf290bad37899e0038a8c10a0069e85233ecc1d53e3ff1347d"
+        },
+        "docker-compose-linux-x86_64": {
+          "url": "https://github.com/docker/compose/releases/download/v5.6.1/docker-compose-linux-x86_64",
+          "digest": "sha256:47737f4236e6d3ccea7291995203f8f018058783b4c3a9469119811a0b5db8c0"
+        }
+      }
+    }
+  },
+  "contract_version": "1.0.0-draft.2",
+  "ci_actions": {
+    "actions/checkout": {
+      "version": "v7.0.1",
+      "commit": "3d3c42e5aac5ba805825da76410c181273ba90b1"
+    },
+    "actions/setup-go": {
+      "version": "v7.0.0",
+      "commit": "b7ad1dad31e06c5925ef5d2fc7ad053ef454303e"
+    },
+    "actions/setup-python": {
+      "version": "v7.1.0",
+      "commit": "6d4fd22b20465ccc0f7354476588e8df7c9ca0e0"
+    }
+  },
+  "ci_python": "3.14.8",
+  "workspace_pins": {
+    "services/admission": {
+      "github.com/IBM/sarama": "v1.46.3",
+      "github.com/jackc/pgx/v5": "v5.11.0",
+      "github.com/golang-jwt/jwt/v5": "v5.3.1",
+      "github.com/prometheus/client_golang": "v1.25.0"
+    },
+    "services/flash-sale": {
+      "github.com/IBM/sarama": "v1.46.3",
+      "github.com/jackc/pgx/v5": "v5.11.0",
+      "github.com/prometheus/client_golang": "v1.25.0"
+    },
+    "services/order": {
+      "github.com/IBM/sarama": "v1.46.3",
+      "github.com/jackc/pgx/v5": "v5.11.0",
+      "google.golang.org/grpc": "v1.84.0",
+      "github.com/prometheus/client_golang": "v1.25.0"
+    },
+    "services/analytics": {
+      "github.com/lovoo/goka": "v1.1.17",
+      "github.com/IBM/sarama": "v1.46.3",
+      "github.com/prometheus/client_golang": "v1.25.0"
+    },
+    "gateway": {
+      "github.com/golang-jwt/jwt/v5": "v5.3.1",
+      "github.com/prometheus/client_golang": "v1.25.0"
+    },
+    "frontend": {},
+    "internal/platform": {
+      "github.com/jackc/pgx/v5": "v5.11.0",
+      "github.com/golang-jwt/jwt/v5": "v5.3.1",
+      "github.com/prometheus/client_golang": "v1.25.0",
+      "github.com/IBM/sarama": "v1.46.3"
+    },
+    "contracts": {
+      "google.golang.org/grpc": "v1.84.0",
+      "google.golang.org/protobuf": "v1.36.12",
+      "golang.org/x/net": "v0.59.0",
+      "golang.org/x/sys": "v0.48.0",
+      "golang.org/x/text": "v0.42.0",
+      "google.golang.org/genproto/googleapis/rpc": "v0.0.0-20260706201446-f0a921348800"
+    },
+    "tests": {
+      "github.com/testcontainers/testcontainers-go": "v0.44.0",
+      "github.com/testcontainers/testcontainers-go/modules/kafka": "v0.44.0",
+      "github.com/testcontainers/testcontainers-go/modules/postgres": "v0.44.0",
+      "github.com/lovoo/goka": "v1.1.17",
+      "github.com/IBM/sarama": "v1.46.3"
+    }
+  }
+}
