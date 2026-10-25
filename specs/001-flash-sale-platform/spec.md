@@ -14,6 +14,14 @@
 supersede earlier suggestions. This specification covers one integrated release across all eight
 services and follows [Constitution v1.0.0](../../.specify/memory/constitution.md).
 
+## Clarifications
+
+### Session 2026-10-25
+
+- Q: Can two flash sales for the same product have overlapping sale windows? → A: Reject overlapping windows for the same product. Sales for different products may overlap.
+- Q: Should each shopper have a total purchase limit per sale across all their orders? → A: Use a configurable cumulative unit cap per shopper per sale, initially one. Active reservations and confirmed purchases count; failed or expired reservations release the allowance.
+- Q: Which purchase submissions should count in each sale’s demand and rejection analytics? → A: Count authenticated, well-formed requests for a known sale and its matching product, including business rejections and explicit retries. Track malformed, unauthorized, and unknown-target requests in operational metrics.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Publish a sale and browse its products (Priority: P1)
@@ -42,6 +50,13 @@ readiness responses. Verify the displayed offer and whether purchases are permit
 5. **Given** invalid sale values or an unauthorized visitor, **When** sale configuration is
    attempted, **Then** no configuration is accepted; cancelling a not-yet-started sale prevents
    subsequent activation.
+6. **Given** a non-cancelled sale for a product, **When** an operator creates or reschedules
+   another sale for that product with an overlapping window, including through concurrent
+   configuration requests, **Then** the conflicting configuration is rejected and at most one
+   overlapping configuration is accepted.
+7. **Given** valid sale configurations, **When** two windows for the same product are adjacent
+   without overlap, or windows for different products overlap, **Then** both configurations
+   can be accepted, subject to the other sale-validation rules.
 
 ---
 
@@ -76,6 +91,13 @@ Submit competing and repeated requests, then reconcile orders, reservations, and
 6. **Given** a shopper viewing order status, **When** another shopper's order is requested,
    **Then** its details are not disclosed. Invalid quantities and inactive sales are rejected
    without a reservation or payment.
+7. **Given** a sale's configured per-shopper unit cap, initially one, **When** one shopper submits
+   different purchase requests concurrently through multiple instances, **Then** the sum of that
+   shopper's unexpired held units and confirmed units never exceeds the cap; a request exceeding
+   the remaining allowance is rejected in full with a purchase-limit reason and no payment.
+8. **Given** a shopper's failed or expired reservation, **When** the shopper submits a new purchase
+   request while the sale is active, **Then** the released units no longer consume their allowance.
+   Confirmed purchases still count, and replaying an existing request key never consumes it twice.
 
 ---
 
@@ -158,6 +180,11 @@ arrivals, and a processing restart. Compare the resulting summaries with hand-ca
 4. **Given** an operator reading analytics, **When** purchase processing is busy or reporting is
    temporarily unavailable, **Then** reporting does not hold up purchases and the operator can
    distinguish provisional, finalized, and delayed results.
+5. **Given** a mix of authenticated, well-formed requests for known matching sale/product targets
+   and malformed, unauthorized, or unknown-target submissions, **When** metrics are calculated,
+   **Then** only the eligible requests contribute to sale attempts, distinct shoppers, admission
+   decisions, rejection rates, and response latency. Eligible business rejections and explicit
+   retries count; excluded traffic remains visible in operational metrics without invented identities.
 
 ---
 
@@ -223,6 +250,9 @@ run the declared workload, inspect operational evidence, and perform recovery de
 
 ### Edge Cases
 
+- Concurrent configuration requests cannot leave overlapping non-cancelled sales for the same
+  product. A sale starting exactly when another ends is allowed; a cancelled sale does not block
+  a replacement window. Sales for different products may overlap.
 - A sale's readiness acknowledgements refer to different configuration versions or arrive after
   cancellation; they cannot activate it.
 - A request starts before the sale ends but reaches reservation afterward; reservation time
@@ -231,6 +261,9 @@ run the declared workload, inspect operational evidence, and perform recovery de
   displays its price for shopper confirmation before submitting a purchase.
 - One purchase requests more units than remain, or supplies zero, negative, fractional, or
   excessive quantity; it is rejected in full without partial fulfillment.
+- Different request keys, concurrent submissions, additional instances, or restarts cannot bypass
+  a shopper's cumulative per-sale unit cap. Expired holds no longer consume allowance even if
+  cleanup is delayed; late payment cannot restore an expired hold or displace a newer purchase.
 - A response is lost after a reservation or order is recorded; a retry with the original request
   key resolves the same operation. An abandoned hold is eventually released on expiry.
 - A request key is reused by a different shopper or with a changed sale, product, or quantity;
@@ -243,6 +276,9 @@ run the declared workload, inspect operational evidence, and perform recovery de
   and retryable without reopening the order or duplicating the effect.
 - One catalog replica fails during a request, or two fail together; the success/quorum rule
   applies to completed responses and unavailable data is not reported as missing.
+- Malformed requests, unauthorized callers, and unknown or mismatched sale/product targets are
+  excluded from sale analytics and tracked in operational metrics; no placeholder shopper or sale
+  identities are invented. Known inactive sales and otherwise eligible business rejections still count.
 - Analytics receives no activity in a window, mixed currencies, or records after finalization;
   no division by zero or cross-currency revenue sum is presented, and late counts are explicit.
 - Adding instances, restarting workers, or recovering replicas cannot reset shared limits,
@@ -253,11 +289,14 @@ run the declared workload, inspect operational evidence, and perform recovery de
 ### Functional Requirements
 
 - **FR-001**: Authorized operators MUST configure a sale's product, positive price, currency,
-  positive integer allocation, and start/end times; invalid values and end-before-start or equal
-  times MUST be rejected. A not-yet-started sale MUST be cancellable.
+  positive integer allocation, a positive integer per-shopper unit cap initially one, and start/end
+  times; invalid values and end-before-start or equal times MUST be rejected. A not-yet-started sale MUST be cancellable. Creation and pre-start
+  rescheduling MUST reject a start-inclusive, end-exclusive window that overlaps another
+  non-cancelled sale for the same product, including concurrent configuration attempts. Adjacent
+  windows for the same product and overlapping windows for different products MUST be permitted.
 - **FR-002**: A sale MUST become purchasable only after Catalog, Admission, and Inventory have
   applied the same current configuration and allocation and the sale window is active. Price
-  and allocation MUST be immutable after the sale starts.
+  and allocation, together with the per-shopper unit cap, MUST be immutable after the sale starts.
 - **FR-003**: Shoppers MUST be able to browse product descriptions, image references, the current
   displayed offer, and upcoming/active/ended/unavailable sale status. Reservation eligibility
   MUST use the authoritative start-inclusive, end-exclusive window.
@@ -270,6 +309,11 @@ run the declared workload, inspect operational evidence, and perform recovery de
 - **FR-006**: Inventory MUST reserve a requested positive integer quantity atomically or reject
   it in full. At every committed inventory transition, available units plus held units plus
   confirmed sold units MUST equal the sale allocation, with all three quantities nonnegative.
+  The same reservation decision MUST enforce the configured cumulative unit cap for that shopper
+  and sale across all orders and instances. Unexpired held units plus confirmed units MUST NOT
+  exceed the cap. A request exceeding remaining allowance MUST be rejected in full with a
+  purchase-limit reason, without creating a reservation or initiating payment. Duplicate requests
+  MUST NOT consume additional allowance; confirmed units MUST continue consuming allowance.
 - **FR-007**: A pending order MUST be accepted only after a durable reservation exists and MUST
   include its identifier, reserved quantity, reservation expiry, and retrievable order identifier.
   No payment MUST be initiated for a purchase rejected before order acceptance.
@@ -290,10 +334,13 @@ run the declared workload, inspect operational evidence, and perform recovery de
   and MUST finish before Order reports confirmation; transitions MUST be safe to repeat.
 - **FR-013**: Holds MUST have a configurable expiry, initially 120 seconds. Unconfirmed holds
   MUST be ineligible for confirmation at or after expiry and MUST be reclaimed even when no
-  order was durably created. Expiry cleanup MUST not depend on shopper activity.
+  order was durably created. Expired holds MUST stop consuming shopper allowance at expiry,
+  even if cleanup is delayed. Expiry cleanup MUST not depend on shopper activity.
 - **FR-014**: A failed payment MUST release its hold if still held and leave its order failed;
-  an already expired reservation MUST instead leave the order expired. Expiry/release and
-  confirmation MUST resolve to one authoritative terminal result under concurrency.
+  an already expired reservation MUST instead leave the order expired. Released or expired units
+  MUST cease consuming shopper allowance exactly once; late outcomes MUST NOT make that
+  reservation consume allowance again. Expiry/release and confirmation MUST resolve to one
+  authoritative terminal result under concurrency.
 - **FR-015**: Successful payment for a hold that cannot be confirmed MUST create one durable
   simulated refund obligation. Retries MUST complete that obligation without duplicate refunds
   or reclaiming stock already offered to another shopper. The order MUST become or remain
@@ -313,15 +360,22 @@ run the declared workload, inspect operational evidence, and perform recovery de
 - **FR-020**: Analytics MUST report, by sale/product and reporting window, purchase attempts,
   distinct shoppers, admission decisions and rejection reasons, payment successes/failures,
   confirmed units, confirmed revenue separated by currency, and purchase-response latency.
+  Sale attempt, shopper, admission-decision, rejection-rate, and response-latency metrics MUST
+  include only authenticated, well-formed submissions identifying a known sale and its matching
+  product. Eligible business rejections, including inactive-sale, admission-limit, stock, and
+  purchase-limit rejections, and explicit shopper retries MUST count. Malformed, unauthorized,
+  and unknown or mismatched-target submissions MUST be excluded from these sale metrics and
+  tracked in operational metrics without fabricated shopper or sale identities.
 - **FR-021**: Analytics MUST use activity occurrence time and initially one-minute windows with
   a 60-second lateness allowance. Duplicate activity MUST count once. In-window corrections
   MUST update the same summary; post-finalization activity MUST be counted and inspectable as
   late without silently changing finalized totals. Provisional/final/delayed status MUST be shown.
 - **FR-022**: Analytics MUST publish windowed summaries separately from raw purchase activity
   and MUST recover completed summaries and processing progress after restart without duplicate
-  totals. Attempt counts MUST count distinct submitted attempts, including retries; confirmed
-  sales and revenue MUST count distinct confirmed orders. Latency MUST measure initial response
-  time for each attempt, including admission rejections, using documented measurement precision.
+  totals. Attempt counts MUST count distinct eligible submitted attempts under FR-020, including
+  explicit retries; confirmed sales and revenue MUST count distinct confirmed orders. Latency
+  MUST measure initial response time for each eligible attempt, including admission rejections,
+  using documented measurement precision.
 - **FR-023**: Catalog metadata MUST use three independently durable replicas without a permanent
   leader. Any replica MUST coordinate requests; successful writes MUST persist on two replicas
   and successful reads MUST receive two responses. One unavailable replica MUST be tolerated.
@@ -352,7 +406,9 @@ run the declared workload, inspect operational evidence, and perform recovery de
   instance counts, throughput, latency, rejection rates, and resource utilization over time.
 - **FR-031**: Operators MUST inspect request rates, errors, latency, queued-work age, resource
   use, and service/replica health and correlate structured logs for one purchase across all
-  eight services. Secrets and payment credentials MUST NOT appear in logs.
+  eight services. Operational metrics MUST expose counts of malformed, unauthorized, and
+  unknown or mismatched-target purchase submissions separately from sale analytics. Secrets and
+  payment credentials MUST NOT appear in logs.
 - **FR-032**: At least three distinct cloud storage products MUST be used with demonstrable
   responsibilities: transactional purchase state, product media and recovery artifacts, and
   independently persisted leaderless replicas. Application data ownership MUST remain explicit.
@@ -375,11 +431,14 @@ run the declared workload, inspect operational evidence, and perform recovery de
 - **Product Metadata**: Product identity, description, image references, and version context;
   replicated display information rather than authoritative purchase state.
 - **Sale Configuration**: Sale/product identities, version, authoritative price and currency,
-  allocation, schedule, cancellation, readiness confirmations, and effective status.
-- **Admission Decision**: Submitted attempt identity, shopper/sale, occurrence time, decision,
-  rejection reason, and retry delay; admission approval does not allocate stock.
+  allocation, per-shopper unit cap, schedule, cancellation, readiness confirmations, and effective
+  status.
+- **Admission Decision**: Eligible submitted attempt identity, authenticated shopper, known
+  sale/product, occurrence time, decision, rejection reason, and retry delay; admission approval
+  does not allocate stock. Excluded traffic is represented in operational metrics.
 - **Stock Allocation and Reservation**: Available/held/sold quantities and a reservation's
-  quantity, request identity, owner, expiry, and single terminal state.
+  quantity, request identity, shopper/sale ownership, expiry, and single terminal state; unexpired
+  held and confirmed quantities determine each shopper's consumed purchase allowance.
 - **Order**: Shopper, sale/product, request key and payload identity, reservation, price/version
   snapshot, quantity, total/currency, purchase state, and any compensation status.
 - **Payment Attempt and Refund**: Stable simulated result, order identity, processing status,
@@ -399,11 +458,15 @@ run the declared workload, inspect operational evidence, and perform recovery de
 
 ### Measurable Outcomes
 
-- **SC-001**: Every sale readiness, schedule-boundary, invalid-input, and cancellation scenario
-  produces its specified outcome; no purchase is accepted before readiness or outside its window.
+- **SC-001**: Every sale readiness, schedule-boundary, overlap-conflict, invalid-input, and
+  cancellation scenario produces its specified outcome. No purchase is accepted before readiness
+  or outside its window, and no two non-cancelled sales for the same product have overlapping
+  windows, including when configuration requests run concurrently.
 - **SC-002**: With a 100-unit allocation and at least 10,000 purchase attempts, confirmed units
   never exceed 100, available stock never becomes negative, and every recorded inventory
-  transition satisfies available plus held plus sold equals 100.
+  transition satisfies available plus held plus sold equals 100. For every shopper and sale,
+  unexpired held plus confirmed units never exceed the configured cap, initially one, including
+  concurrent distinct requests, duplicate retries, release/expiry races, and restart.
 - **SC-003**: In a ten-minute run with at least 10,000 attempts from at least 50 distinct shoppers,
   95% of browsing and initial purchase responses arrive within two seconds and 95% of explicit
   overload rejections within one second. Expected business rejections are reported separately;
@@ -426,9 +489,11 @@ run the declared workload, inspect operational evidence, and perform recovery de
   shopper within ten seconds of the outcome; retry tests produce no duplicate logical notices.
 - **SC-009**: For a known activity dataset, finalized per-minute summaries exactly match expected
   counts, distinct shoppers, confirmed units, and revenue by currency; reported latency
-  measurements match the dataset at the declared precision. Finalized summaries appear within
-  five seconds after the 60-second lateness allowance ends and remain identical after duplicate
-  replay and restart.
+  measurements match the dataset at the declared precision. Adding malformed, unauthorized,
+  or unknown/mismatched-target submissions leaves those sale metrics unchanged while increasing
+  the corresponding operational counts; eligible business rejections and explicit retries
+  contribute once per distinct attempt. Finalized summaries appear within five seconds after
+  the 60-second lateness allowance ends and remain identical after duplicate replay and restart.
 - **SC-010**: With one of three catalog replicas unavailable, every read/write in a fault test
   of 100 seeded products completes successfully while the remaining two are healthy. After
   connectivity is restored and concurrent edits are explicitly resolved, all three converge
@@ -483,18 +548,27 @@ run the declared workload, inspect operational evidence, and perform recovery de
   sufficient for the demonstration. Self-service registration and external identity federation
   are outside scope. Shoppers can view only their own records; operator-only writes are protected.
 - **Purchase boundaries**: Each order contains one product with a positive integer quantity;
-  partial fulfillment is excluded. An operator may cancel a sale before its start, and active
-  sale cancellation or edits to price/allocation are outside scope. An existing unexpired hold
-  may settle after the sale's end. Inventory's time and state decide expiry races.
+  partial fulfillment is excluded. A configurable cap, initially one unit per shopper per sale,
+  applies across all orders and is fixed once the sale starts. Unexpired holds and confirmed units
+  consume allowance; released or expired holds free it. Reattempting a recorded business rejection
+  requires a new request key; the original key retains its recorded outcome. An operator may cancel
+  a sale before its start, and active sale cancellation or edits to price/allocation are outside
+  scope. An existing unexpired hold may settle after the sale's end. Inventory's time and state
+  decide expiry races.
 - **Demonstration defaults**: The source suggests a two-minute hold and 100-unit sale; these are
-  adopted as initial defaults. The ten-minute/10,000-attempt workload, timing thresholds,
-  one-minute analytics windows, 60-second lateness, and 100-product recovery dataset are explicit
-  initial acceptance targets, not measurements or guarantees already established by the source.
+  adopted as initial defaults. The clarified per-shopper unit cap initially defaults to one. The
+  ten-minute/10,000-attempt workload, timing thresholds, one-minute analytics windows, 60-second
+  lateness, and 100-product recovery dataset are explicit initial acceptance targets, not
+  measurements or guarantees already established by the source.
   The plan MUST specify reproducible load, scaling thresholds, retry budgets, and capacity.
-- **Metric meanings**: An attempt is one uniquely identified submission seen by Admission; a
-  transport redelivery is not a new attempt, but a shopper's explicit retry is. Rejection rate is
-  rejected admission decisions divided by all admission decisions, with zero-denominator windows
-  shown as zero activity. Confirmed revenue is the sum of confirmed order totals per currency.
+- **Metric meanings**: A sale-analytics attempt is one uniquely identified, authenticated,
+  well-formed submission seen by Admission for a known sale and its matching product. It counts
+  even if a business rule rejects it, including inactive-sale, rate/capacity, stock, or shopper
+  purchase-limit rules. A transport redelivery is not a new attempt, but a shopper's explicit
+  retry is. Malformed, unauthorized, and unknown or mismatched-target submissions contribute
+  only to operational traffic metrics. Rejection rate is rejected eligible admission decisions
+  divided by all eligible admission decisions, with zero-denominator windows shown as zero
+  activity. Confirmed revenue is the sum of confirmed order totals per currency.
 - **Metadata conflicts**: Authorized manual reconciliation is the initial conflict policy. A
   conflicting product is unavailable for ordinary metadata browsing until resolution; accepted
   order processing uses its durable authoritative snapshot. Fixed replica membership is enough;

@@ -13,7 +13,11 @@ Your stack is Go, Goka and Sarama with PostgreSQL for your transactional state. 
 control of their languages, frameworks, database engines and deployment tools. Shared contracts
 preserve stock correctness, asynchronous payment, notifications, analytics and leaderless metadata.
 [Research](research.md), [data model](data-model.md), [contracts](contracts/README.md) and
-[validation guide](quickstart.md) complete Phase 1. No implementation or deployment is performed.
+[validation guide](quickstart.md) complete Phase 1. This refresh incorporates all three decisions
+from the 2026-10-25 clarification session: same-product schedules cannot overlap; a cumulative
+per-shopper unit cap defaults to one; sale analytics exclude malformed, unauthorized and unknown-target
+traffic. The subsequent Phase 1 implementation adds only workspace/setup tooling, generated bindings,
+local dependencies and startup shells. Business behavior and deployments remain future work.
 
 ## Technical Context
 
@@ -28,7 +32,9 @@ and its local cache. Share only generated contracts and small transport/auth/tel
 business rules and saga state stay with their owners. Pin all versions/digests in implementation.
 
 **Storage**: Your Flash Sale, Admission and Order each own PostgreSQL 17 databases/credentials.
-Admission uses SQL quota rows and expiring leases. Analytics state is authoritative in Kafka's
+Admission uses SQL quota rows and expiring leases. Flash Sale uses a PostgreSQL range exclusion
+constraint for non-cancelled same-product schedules; Inventory owns atomic shopper allowance
+enforcement alongside stock, without an engine being selected for Member 2. Analytics state is authoritative in Kafka's
 compacted Goka group table, with rebuildable local caches and a durable-state result relay.
 Raw retention is seven days; dedup/finalization retention is at least eight days. Inventory,
 Payment, Catalog, Notification and custom-replica engine choices belong to their respective owners;
@@ -41,7 +47,7 @@ compiles Inventory protobuf and validates JSON Schema events/examples. Teammates
 own unit-test frameworks and supply adapter/test commands for shared acceptance checks.
 
 **Target Platform**: Your Linux containers run on the agreed managed Kubernetes platform; local
-Docker Compose provides your PostgreSQL and Kafka KRaft dependencies. Goka Analytics joins the
+Compose provides your PostgreSQL and Kafka KRaft dependencies (Docker or a rootless Podman API). Goka Analytics joins the
 original six ordinary services as the seventh Kubernetes domain workload; Notifications remains
 event-triggered serverless. Provider, IaC/GitOps products, function platform and teammate runtimes
 are delegated to the platform/service owners. Kafka broker provisioning is your responsibility in
@@ -63,7 +69,26 @@ stream-runtime prescription. This does not change purchase or analytics business
 
 **Scale/Scope**: Eight domain services; three members with 4+2+2 ownership; three fixed leaderless
 metadata replicas (N=3/R=2/W=2); six analytics partitions; one-product orders, quantity 1..100;
-seven user stories. No cart, real payments, fulfillment, dynamic store membership or multi-region.
+seven user stories. The configurable `per_shopper_unit_cap` initially equals one and is frozen at
+sale start. It counts unexpired held plus confirmed units across all of a shopper's orders in a
+sale; release/expiry frees allowance. Different products may have concurrent sales; same-product
+windows may be adjacent. No cart, real payments, fulfillment, dynamic store membership or multi-region.
+
+### Phase 1 implementation pins and evidence
+
+Phase 1 T001–T008 uses pgx v5.11.0, grpc-go v1.84.0, Go protobuf v1.36.12,
+golang-jwt v5.3.1, Prometheus client v1.25.0, Testcontainers-Go v0.44.0 and staticcheck v0.8.2.
+Goka/Sarama and Go retain their previously selected exact versions. The local Kafka image is
+4.0.2; PostgreSQL 17-bookworm and both runtime images are locked to immutable registry digests.
+The standalone Compose client is v5.6.1 and supports the same Compose command/specification
+boundary through Docker or a rootless Podman API. Python contract tools and transitive
+requirements are version/hash locked. Go module/tool checksums and image/tool release checksums
+are recorded in `dev/tool-versions.json`; module sums/workspace files retain resolved dependencies.
+
+[Development instructions](../../docs/development.md) document the now-available setup commands.
+[Phase 1 evidence](../../docs/evidence/phase1.md) distinguishes compiler/unit/scaffold checks,
+real local dependency health and pending E4 adoption from later integration/runtime claims.
+No peer implementation or cloud runtime is provisioned. Foundation/story tasks remain unchecked.
 
 ### Architecture and boundaries
 
@@ -105,14 +130,44 @@ analytics copies durable with the same event ID. No cross-topic ordering is assu
 locked authoritative time decides expiry; an ambiguous successful Confirm is queried before
 Order confirms or compensates. [data-model.md](data-model.md) contains all transition/recovery rules.
 
+### Clarified sale and purchase rules
+
+Flash Sale stores `[starts_at, ends_at)` as a `tstzrange` and uses a GiST exclusion constraint over
+product equality and range overlap, applying only where `cancelled_at IS NULL`. Enable `btree_gist`
+in your database. Creation and pre-start replacement commit configuration plus outbox together;
+an advisory SELECT check alone cannot arbitrate concurrent writers. Map exclusion violations to
+HTTP 409 `SALE_WINDOW_CONFLICT`. Adjacent windows and different products are permitted, and
+cancellation frees that interval atomically. The sale's current version and original start guard
+still prevent conflicting edits or bypassing the freeze. [R9](research.md#r9-prevent-overlapping-same-product-sales)
+records the PostgreSQL sources and alternatives.
+
+Use the same normalized `per_shopper_unit_cap` in the operator form, public/internal offers,
+SaleConfigured/SaleActivated and readiness digest. An omitted SaleWrite input defaults to one;
+canonical responses/events always include it. A pre-start replacement changes the version and
+invalidates all readiness; no cap edit is allowed after the start boundary.
+
+Inventory must serialize the stock check, `(sale_id, shopper_id)` allowance check, reservation and
+outgoing effects as one protected decision. Existing matching Reserve results replay before a
+fresh limit check; distinct order IDs cannot bypass the cap. Expired holds stop counting at the
+locked authoritative time even when cleanup is late. Confirm transfers held to sold without
+freeing allowance; release/expiry frees it once. Order maps `PURCHASE_LIMIT_EXCEEDED` to a durable
+HTTP 409 rejection, with no payment; a later new purchase after allowance is freed requires a new
+request key. Your gateway displays the cap and specific rejection; it never authorizes allowance
+from an in-memory counter. Member 2 supplies the transactional implementation and verifier adapter.
+
+The 2026-10-25 `$speckit-tasks` refresh carries these decisions into Mukthish's 100 unchecked
+T001–T100 tasks, preserving IDs and completion state. It covers overlap/cap/eligibility scenarios,
+cap-aware load identities, peer handoffs and draft.2 adoption; no teammate backlog is generated.
+
 ### Your analytics design
 
 Use Goka's persisted group table keyed by sale/product/minute window. The input and table topics
 have six partitions and the same hash; producer partitioners and recovery tests enforce that
 mapping. Choose windows from occurrence time, and use broker LogAppendTime as stable arrival time.
 Your clock emitter queries Flash Sale's schedule endpoint and appends per-window heartbeat records
-once per second. The same ordered input partition therefore carries data and finalization markers,
-including empty windows. At/after end+60s, new input for that window is late; a marker finalizes it.
+once per second. It also schedules heartbeats for nonfinal keys in its recovered View, including
+windows created by eligible attempts before or after a sale's active interval. The same ordered
+input partition therefore carries data and finalization markers, including empty windows. At/after end+60s, new input for that window is late; a marker finalizes it.
 A replay does not substitute the current wall clock for the original record's arrival/cutoff.
 
 The processor persists counts, exact distinct/seen sets, revision/final flag and output identities;
@@ -128,6 +183,23 @@ startup cache rebuild and partition-reassignment evidence. Your one-second tick 
 leave three seconds for processing/projection within SC-009's five-second healthy-workload budget.
 A lagging emitter, unrecovered View or Kafka outage marks results delayed instead of reporting
 fresh zero sales. Avoid blind partition-count changes; rebuild/repartition with a reviewed migration.
+
+### Analytics eligibility and operational traffic
+
+Admission creates AttemptRecorded only after shopper authentication, request/schema/header
+validation and resolution of a known sale with its matching product. Known inactive, cancelled or
+not-ready sales still produce eligible attempts. Every explicit retry has a new attempt ID, while
+internal redelivery preserves it. Malformed, unauthorized and unknown/mismatched-target submissions
+produce operational exclusion counts at the rejecting boundary, with no placeholder identities or
+analytics event. Gateway and Admission classify a submission once; defense-in-depth checks do not
+multiply the count. Use bounded reason labels, never raw tokens, request bodies or shopper IDs.
+
+An admitted request that Order later rejects for stock or purchase cap remains `ADMITTED/NONE` for
+the admission decision. Its AttemptRecorded carries the final HTTP status and `response_error_code`.
+It contributes one attempt and response latency, not an extra admission rejection. Admission
+rejection rate remains rejected eligible admission decisions divided by all eligible admission
+decisions. Golden mixed-traffic fixtures verify unchanged sale totals for excluded traffic and
+separate operational counts. [R11](research.md#r11-define-sale-analytics-eligibility) records this boundary.
 
 ### Team ownership and delegated choices
 
@@ -187,31 +259,35 @@ workspace-root `./...` covers every module. No teammate test framework is mandat
 | `make fmt-check lint typecheck contracts-check` | Your gofmt/vet/staticcheck/compiler; JSON/OpenAPI/protobuf; generated-client drift; teammate checks through supplied adapters |
 | `make test-unit` | Your Go rules, Goka tester, clocks, validation and template/HTTP behavior |
 | `make test-integration` | PostgreSQL/Kafka, outbox/inbox, Goka table/view relay, rebalance/rebuild and teammate interfaces |
-| `make test-races` | Oversell, same-key concurrency, expiry/Confirm and lost-response recovery |
+| `make test-races` | Schedule overlap conflicts, shopper-cap races across distinct keys/instances, oversell, same-key concurrency, expiry/Confirm and lost-response recovery |
 | `make test-e2e` | All seven stories through real service adapters and access checks |
 | `make demo SCENARIO=...` | Deterministic scenario reports with IDs, outcomes and invariant evidence |
-| `make load PROFILE=correctness` | 100-unit/10,000-attempt workload, timings and stock-transition ledger |
+| `make load PROFILE=correctness` | 100 units/10,000 attempts from at least 100 shoppers at cap=1; timings, stock and per-shopper allowance ledgers |
 | `make load PROFILE=scaling` | Sustained real demand, both HPA increases, resource/limit evidence |
 
 | Requirements / outcomes | Verification | Owner |
 | --- | --- | --- |
-| FR-001-FR-004; SC-001/014 | Sale readiness/version, boundaries, offer/role and own-record checks | Mukthish + Member 3 |
-| FR-005-FR-010; SC-002/003/004 | Shared quotas, durable request identity, stock ledger, offer mismatch | Mukthish + Member 2 |
+| FR-001-FR-004; SC-001/014 | Sale readiness/version/cap digest, overlap races/adjacency/cancellation, offer/role and own-record checks | Mukthish + Member 3 |
+| FR-005-FR-010; SC-002/003/004 | Shared quotas, cross-key shopper cap and expiry/release allowance, durable request identity, stock ledger, offer mismatch | Mukthish + Member 2 |
 | FR-011-FR-017; SC-005/006/007 | Payment/refund stability, races, interrupted transitions, retry/quarantine | Mukthish + Member 2 |
 | FR-018-FR-019; SC-008 | Canonical notices, failure/replay and independent progress | Member 3 |
-| FR-020-FR-022; SC-009 | Event-time/broker cutoffs, golden totals, stable output, rebalance/cache rebuild | Mukthish |
+| FR-020-FR-022; SC-009 | Eligible/excluded mixed traffic, admission vs downstream outcomes, event-time cutoffs, golden totals, stable output and recovery | Mukthish |
 | FR-023-FR-026; SC-010 | Quorums, conflicts, uncertain writes, durable recovery and repair | Member 3 |
 | FR-027-FR-033; SC-011/012/013/015 | Platform access, IaC/GitOps/rollback, HPA, storage and all-service evidence | Member 2 + all |
 | FR-034-FR-035 | Ownership, command documentation, quality gates and contracts review | All |
 
 ### Design validation performed
 
-On 2026-10-25, all three OpenAPI 3.1 documents passed schema validation and local-reference checks.
-The event schema passed all 22 type examples and 44 rejection controls; three HTTP request/response
-example pairs validated. Inventory protobuf compiled with its four RPCs. Spec Kit prerequisites,
-template hierarchy, local links, placeholders, whitespace and quickstart shell syntax passed.
-Temporary validators and protobuf descriptor output were kept under `/tmp`; no application or
-cloud command was executed. These checks validate design artifacts, not the planned runtime.
+On 2026-10-25, the clarification refresh passed validation of all three OpenAPI 3.1 documents,
+127 local schema references, 24 event examples, 72 malformed-event rejection controls, five HTTP
+request/response examples, and 20 cap/error contract controls. The readiness digest fixture is
+synchronized with its cap-aware configuration. Inventory protobuf compiled with four RPCs and the
+appended PURCHASE_LIMIT_EXCEEDED result code. Shared schema copies, Markdown links and eight
+quickstart shell blocks passed; the accepted spec and existing task state were preserved.
+
+These checks validate design artifacts. No application/runtime/cloud checks or teammate approvals
+are claimed. The complete validation run and descriptors were kept under `/tmp`; Spec Kit
+prerequisites and final repository whitespace are checked again after applying the refresh.
 
 ## Constitution Check
 
@@ -220,9 +296,9 @@ cloud command was executed. These checks validate design artifacts, not the plan
 | Gate | Before research | After Phase 1 | Evidence / required follow-through |
 | --- | --- | --- | --- |
 | I. Readable, Consistent Code | PASS | PASS | Mukthish's Go stack, small shared helpers, explicit quality commands |
-| II. Explicit Boundaries and Contracts | PASS | PASS | Owned state; REST/protobuf/replica/events; teammate stacks delegated |
-| III. Behavior-Based Verification | PASS | PASS | FR/SC mapping, controlled clocks, real-adapter scenario guide |
-| IV. Distributed Correctness Under Failure | PASS | PASS | Inventory races/saga recovery; Goka durable state/relay; concept repair |
+| II. Explicit Boundaries and Contracts | PASS | PASS | Owned state; revised REST/protobuf/events; cap digest and draft migration/review gate; teammate stacks delegated |
+| III. Behavior-Based Verification | PASS | PASS | FR/SC mapping, overlap/cap/mixed-traffic fixtures, controlled clocks and real-adapter guide |
+| IV. Distributed Correctness Under Failure | PASS | PASS | Atomic stock/allowance and expiry races; database schedule exclusion; Goka durable state/relay; concept repair |
 | V. Maintainability and Operational Clarity | PASS | PASS | Owners, command contracts, health/logs/metrics and rollout/recovery |
 | Latest user/source scope | PASS | PASS | Explicit Goka/Sarama amendment, Kafka retained, no teammate stack mandates |
 
@@ -251,7 +327,7 @@ specs/001-flash-sale-platform/
 │   ├── inventory.proto
 │   ├── events.schema.json
 │   └── examples.json
-└── tasks.md                     # Future speckit-tasks output
+└── tasks.md                     # Mukthish backlog refreshed for the accepted clarifications
 ```
 
 ### Source Code (repository root)
@@ -282,9 +358,12 @@ go.work                        # Your Go modules only
 ```
 
 **Structure Decision**: One monorepo; your components are independently testable Go modules.
-Teammate directories are boundaries, not generated code or chosen build systems. Source paths do
-not exist yet. This phase writes feature-local design/contracts plus the narrow specification
-amendment; `$speckit-tasks` creates implementation tasks next, with owner planning dependencies.
+Teammate directories are boundaries, not generated code or chosen build systems. Source paths
+now include Mukthish's Phase 1 modules and startup shells; peer paths and later story files are
+future artifacts. This design updates feature-local design/contracts using the already clarified
+specification. The subsequent `$speckit-tasks` refresh updates only Mukthish's implementation
+backlog, with the same owner handoff boundaries. Draft contract revision 2 and its coordinated adoption plan are in the
+[compatibility gate](contracts/README.md#compatibility-and-review-gate).
 
 ## Complexity Tracking
 

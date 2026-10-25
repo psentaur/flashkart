@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package flashsale.inventory.v1;
+
+// Go binding location for Mukthish's Order client; other owners choose their bindings.
+option go_package = "flash-sale/contracts/gen/inventory/v1;inventoryv1";
+
+import "google/protobuf/timestamp.proto";
+
+// Only Order's authenticated service identity may invoke these methods.
+// Metadata: x-correlation-id (UUID). A two-second caller budget applies.
+// Business conflicts use OperationResult; transport failures use gRPC status.
+service InventoryReservation {
+  // Enforce stock and applied per-shopper sale cap atomically across distinct order IDs.
+  // Count unexpired HELD + CONFIRMED units; replay an existing matching outcome first.
+  // Expired holds free allowance at authoritative time, even with cleanup delayed.
+  rpc Reserve(ReserveRequest) returns (OperationResult);
+  rpc GetReservation(GetReservationRequest) returns (Reservation);
+  rpc Confirm(TransitionRequest) returns (OperationResult);
+  rpc Release(TransitionRequest) returns (OperationResult);
+}
+
+enum ReservationState {
+  RESERVATION_STATE_UNSPECIFIED = 0;
+  HELD = 1;
+  CONFIRMED = 2;
+  RELEASED = 3;
+  EXPIRED = 4;
+}
+
+enum ResultCode {
+  RESULT_CODE_UNSPECIFIED = 0;
+  APPLIED = 1;
+  REPLAYED = 2;
+  SOLD_OUT = 3;
+  INSUFFICIENT_STOCK = 4;
+  SALE_INACTIVE = 5;
+  SALE_NOT_READY = 6;
+  OFFER_VERSION_MISMATCH = 7;
+  PAYLOAD_MISMATCH = 8;
+  RESERVATION_EXPIRED = 9;
+  ALREADY_FINAL = 10;
+  PURCHASE_LIMIT_EXCEEDED = 11; // No reservation/payment; stable proposed-order rejection.
+}
+
+message ReserveRequest {
+  string order_id = 1; // Stable operation key, even before an Order is accepted.
+  string shopper_id = 2;
+  string sale_id = 3;
+  string product_id = 4;
+  uint32 quantity = 5; // 1..100; reserve the entire quantity or reject it.
+  uint64 config_version = 6;
+}
+
+message GetReservationRequest {
+  oneof lookup {
+    string reservation_id = 1;
+    string order_id = 2; // Resolve an ambiguous Reserve response.
+  }
+}
+
+message TransitionRequest {
+  string reservation_id = 1;
+  string order_id = 2; // Must match the reservation's order.
+}
+
+message Reservation {
+  string reservation_id = 1;
+  string order_id = 2;
+  string shopper_id = 3;
+  string sale_id = 4;
+  string product_id = 5;
+  uint32 quantity = 6;
+  uint64 config_version = 7;
+  ReservationState state = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp expires_at = 10;
+  uint64 version = 11;
+}
+
+message OperationResult {
+  ResultCode code = 1;
+  Reservation reservation = 2; // Present for applied/replayed/terminal transitions.
+  string message = 3;
+}

@@ -128,6 +128,12 @@
                 ]
               },
               "uniqueItems": true
+            },
+            "per_shopper_unit_cap": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
             }
           },
           "required": [
@@ -141,7 +147,8 @@
             "status",
             "allocated_units",
             "admission_limits",
-            "ready_participants"
+            "ready_participants",
+            "per_shopper_unit_cap"
           ],
           "additionalProperties": false
         }
@@ -226,7 +233,8 @@
             },
             "allocation_digest": {
               "type": "string",
-              "pattern": "^[a-f0-9]{64}$"
+              "pattern": "^[a-f0-9]{64}$",
+              "description": "SHA-256 over normalized stable configuration terms including per_shopper_unit_cap; see contract README for exact inputs."
             },
             "status": {
               "type": "string",
@@ -380,6 +388,12 @@
                 ]
               },
               "uniqueItems": true
+            },
+            "per_shopper_unit_cap": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
             }
           },
           "required": [
@@ -393,7 +407,8 @@
             "status",
             "allocated_units",
             "admission_limits",
-            "ready_participants"
+            "ready_participants",
+            "per_shopper_unit_cap"
           ],
           "additionalProperties": false
         }
@@ -556,7 +571,8 @@
               "enum": [
                 "ADMITTED",
                 "REJECTED"
-              ]
+              ],
+              "description": "Admission gate decision only; an admitted downstream business rejection remains ADMITTED."
             },
             "reason": {
               "type": "string",
@@ -567,7 +583,8 @@
                 "SALE_INACTIVE",
                 "SALE_NOT_READY",
                 "DEPENDENCY_UNAVAILABLE"
-              ]
+              ],
+              "description": "Admission gate reason; NONE after admission even if Order subsequently rejects the purchase."
             },
             "response_status": {
               "type": "integer",
@@ -577,6 +594,23 @@
             "response_latency_ms": {
               "type": "integer",
               "minimum": 0
+            },
+            "response_error_code": {
+              "type": "string",
+              "enum": [
+                "RATE_LIMITED",
+                "OVERLOADED",
+                "SALE_INACTIVE",
+                "SALE_NOT_READY",
+                "DEPENDENCY_UNAVAILABLE",
+                "OFFER_CHANGED",
+                "SOLD_OUT",
+                "INSUFFICIENT_STOCK",
+                "PURCHASE_LIMIT_EXCEEDED",
+                "IDEMPOTENCY_CONFLICT",
+                "REQUEST_IN_PROGRESS"
+              ],
+              "description": "Final HTTP Error code for eligible non-success responses; separate from the admission decision/reason."
             }
           },
           "required": [
@@ -589,7 +623,27 @@
             "response_status",
             "response_latency_ms"
           ],
-          "additionalProperties": false
+          "additionalProperties": false,
+          "description": "Authenticated SHOPPER, schema/header-valid known matching sale/product submission only. Explicit retry has a new attempt_id; internal redelivery preserves it. Excluded traffic has no AttemptRecorded.",
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "response_status": {
+                    "minimum": 400
+                  }
+                },
+                "required": [
+                  "response_status"
+                ]
+              },
+              "then": {
+                "required": [
+                  "response_error_code"
+                ]
+              }
+            }
+          ]
         }
       },
       "required": [
@@ -2764,6 +2818,12 @@
             "UNAVAILABLE",
             "CANCELLED"
           ]
+        },
+        "per_shopper_unit_cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
         }
       },
       "required": [
@@ -2774,7 +2834,8 @@
         "currency",
         "starts_at",
         "ends_at",
-        "status"
+        "status",
+        "per_shopper_unit_cap"
       ],
       "additionalProperties": false
     },
@@ -2838,6 +2899,13 @@
             "max_in_flight"
           ],
           "additionalProperties": false
+        },
+        "per_shopper_unit_cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start. Omission normalizes to one on creation and replacement.",
+          "default": 1
         }
       },
       "required": [
@@ -2935,6 +3003,12 @@
             ]
           },
           "uniqueItems": true
+        },
+        "per_shopper_unit_cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
         }
       },
       "required": [
@@ -2948,7 +3022,8 @@
         "status",
         "allocated_units",
         "admission_limits",
-        "ready_participants"
+        "ready_participants",
+        "per_shopper_unit_cap"
       ],
       "additionalProperties": false
     },
@@ -3296,7 +3371,9 @@
             "METADATA_CONFLICT",
             "QUORUM_UNAVAILABLE",
             "DEPENDENCY_UNAVAILABLE",
-            "VERSION_CONFLICT"
+            "VERSION_CONFLICT",
+            "SALE_WINDOW_CONFLICT",
+            "PURCHASE_LIMIT_EXCEEDED"
           ]
         },
         "message": {
@@ -3414,5 +3491,6 @@
       ],
       "additionalProperties": false
     }
-  }
+  },
+  "$comment": "Contract 1.0.0-draft.2, amended before first release; see README compatibility gate. Schema version 1 is the planned first released envelope."
 }

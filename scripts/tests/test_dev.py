@@ -1,0 +1,54 @@
+"""Local configuration must remain private, isolated and non-destructive."""
+import importlib.util
+import os
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+
+SPEC=importlib.util.spec_from_file_location('flashkart_dev',Path(__file__).resolve().parents[1]/'dev.py')
+DEV=importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(DEV)
+
+class EnvironmentTest(unittest.TestCase):
+    def test_initialize_creates_distinct_private_credentials_and_does_not_overwrite(self):
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name);(root/'dev').mkdir()
+            (root/'dev/lead.env.example').write_text((DEV.ROOT/'dev/lead.env.example').read_text())
+            with patch.object(DEV,'ROOT',root),patch.dict(os.environ,{},clear=True):
+                DEV.initialize();before=(root/'.env').read_bytes();env=DEV.load_env()
+                self.assertEqual((root/'.env').stat().st_mode&0o777,0o600)
+                passwords=[env[k] for k in ('POSTGRES_ADMIN_PASSWORD','ADMISSION_DB_PASSWORD','FLASH_SALE_DB_PASSWORD','ORDER_DB_PASSWORD')]
+                self.assertEqual(len(set(passwords)),4)
+                self.assertTrue(all(len(p)==48 for p in passwords))
+                self.assertIn(env['ADMISSION_DB_PASSWORD'],env['ADMISSION_DATABASE_URL'])
+                with self.assertRaises(SystemExit):DEV.initialize()
+                self.assertEqual((root/'.env').read_bytes(),before)
+
+    def test_environment_override_is_preserved_and_file_is_not_evaluated(self):
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name);(root/'.env').write_text('RUN_ID=file-run\nCATALOG_URL=literal value with spaces\n')
+            with patch.object(DEV,'ROOT',root),patch.dict(os.environ,{'RUN_ID':'explicit-run'},clear=True):
+                self.assertEqual(DEV.load_env()['RUN_ID'],'explicit-run')
+                self.assertEqual(DEV.load_env()['CATALOG_URL'],'literal value with spaces')
+
+    def test_invalid_environment_key_is_rejected(self):
+        with tempfile.TemporaryDirectory() as name:
+            root=Path(name);(root/'.env').write_text('invalid-key=value\n')
+            with patch.object(DEV,'ROOT',root),patch.dict(os.environ,{},clear=True):
+                with self.assertRaises(SystemExit):DEV.load_env()
+
+class ProcessBoundaryTest(unittest.TestCase):
+    def test_gateway_receives_no_database_or_signing_credentials(self):
+        source={'ADMISSION_DATABASE_URL':'admission-private','FLASH_SALE_DATABASE_URL':'sale-private','ORDER_DATABASE_URL':'order-private','POSTGRES_ADMIN_PASSWORD':'admin-private','ADMISSION_DB_PASSWORD':'password','JWT_PRIVATE_KEY_FILE':'private.pem','SEEDED_TOKENS_FILE':'tokens.json','CATALOG_URL':'http://localhost:8090'}
+        with patch.object(DEV,'load_env',return_value=source):
+            environment=DEV.application_environment('gateway')
+        self.assertEqual(environment,{'CATALOG_URL':'http://localhost:8090'})
+
+    def test_domain_process_receives_only_its_own_database_url(self):
+        source={'ADMISSION_DATABASE_URL':'admission-private','FLASH_SALE_DATABASE_URL':'sale-private','ORDER_DATABASE_URL':'order-private','ORDER_DB_PASSWORD':'password','KAFKA_BROKERS':'localhost:19092'}
+        with patch.object(DEV,'load_env',return_value=source):
+            environment=DEV.application_environment('order')
+        self.assertEqual(environment,{'ORDER_DATABASE_URL':'order-private','KAFKA_BROKERS':'localhost:19092'})
+
+if __name__=='__main__':unittest.main()

@@ -1,11 +1,12 @@
 # Quickstart and Validation Guide: Flash Sale Platform
 
-**Status**: Phase 1 design guide; application and deployment code do not exist yet.
+**Status**: Phase 1 setup is implemented for Mukthish; the business/integration/deployment scenarios below remain planned.
 **Date**: 2026-10-25
 
-The `make`, service, frontend, cloud, and scenario commands below are the command contract that
-implementation must supply. They have not been run against an application. The existing Spec Kit
-command in the next section is usable now. Expected outcomes come from [spec.md](spec.md),
+The available Phase 1 commands and their dependency/runtime requirements are in
+[development instructions](../../docs/development.md): bootstrap, check, dev-init, deps-up/check/down
+and startup shells. Broader business/cloud/scenario commands below remain future command contracts
+and deliberately fail until implemented. The existing Spec Kit command in the next section is usable now. Expected outcomes come from [spec.md](spec.md),
 [data-model.md](data-model.md), and [service contracts](contracts/README.md).
 
 ## Validate planning prerequisites now
@@ -19,7 +20,10 @@ python3 .specify/scripts/python/check_prerequisites.py --json --require-spec
 
 Expected: active feature resolves to `specs/001-flash-sale-platform`, plan/spec exist, and
 `research.md`, `data-model.md`, `contracts/`, and this guide are discoverable. Do not require
-`tasks.md` until `$speckit-tasks` has generated it. No application build/test result is implied.
+`tasks.md` for this design-only check. The 2026-10-25 Mukthish task refresh preserves all 100
+unchecked task IDs and includes the clarified scenarios below; implementation checks still
+require runnable code and the declared peer adapters.
+No application build/test result is implied.
 
 ## Prerequisites for implemented local scenarios
 
@@ -31,7 +35,8 @@ Expected: active feature resolves to `specs/001-flash-sale-platform`, plan/spec 
 - Container images and tools are version/digest pinned. Do not use floating `latest` tags.
 - A developer configuration contains service addresses and disposable local database credentials.
   Local signing keys and seeded JWTs are generated during setup and excluded from version control.
-- Seeded operator and shopper identities, one product, one 100-unit sale, a controllable clock for
+- Seeded operator and at least 100 shopper identities, one product, one 100-unit sale with
+  `per_shopper_unit_cap=1`, a controllable clock for
   deterministic tests, and a payment simulator with stable success/failure/delay fixtures.
 - Distinct named volumes for the three metadata nodes and separate logical service databases.
   Topic prefixes, fixture identifiers and verifier permissions are isolated by run ID.
@@ -110,7 +115,10 @@ curl --fail-with-body "$FLASHSALE_BASE_URL/v1/notifications" \
 With the success fixture, the Order becomes CONFIRMED and one confirmation notice appears within
 the specified timing targets. Repeat the original POST with the same key and payload: it resolves
 the same Order, with no additional stock or payment effect. Changing quantity with that key returns
-409 IDEMPOTENCY_CONFLICT. An operator can retrieve conflicting catalog versions and resolve them
+409 IDEMPOTENCY_CONFLICT. A new request key for the same shopper after their unit is confirmed
+returns 409 PURCHASE_LIMIT_EXCEEDED with no new hold or payment. A failed/expired hold frees the
+allowance for a new key while the sale remains active. The offer and frontend show the configured
+cap; client-side checks cannot authorize it. An operator can retrieve conflicting catalog versions and resolve them
 using the admin GET/PUT contract; shoppers cannot invoke those operations.
 
 ## Deterministic acceptance scenarios
@@ -121,7 +129,9 @@ than print a plausible demonstration transcript.
 
 | Planned command | Required observation | Acceptance references |
 | --- | --- | --- |
-| `make demo SCENARIO=sale-readiness` | Missing/current/obsolete acknowledgements, cancellation and start/end boundaries behave correctly; price/allocation freeze holds | US1; SC-001 |
+| `make demo SCENARIO=sale-readiness` | Missing/current/obsolete acknowledgements, cancellation and start/end boundaries behave correctly; price/allocation/cap freeze and readiness digest hold | US1; SC-001 |
+| `make demo SCENARIO=sale-overlap` | Concurrent same-product creates/reschedules cannot both commit; 409 SALE_WINDOW_CONFLICT; adjacent windows, different products and pre-start cancelled-window replacement succeed | US1.6/7; SC-001 |
+| `make demo SCENARIO=shopper-cap` | Distinct keys on multiple instances cannot exceed cap; duplicates replay; release/expiry (with delayed cleanup) frees allowance; confirmation retains it; restart/orphan hold/late success cannot bypass it; test cap=1 and a larger cap with quantity >1 | US2.7/8; SC-002/004/006 |
 | `make demo SCENARIO=purchase-success` | One live hold -> pending Order -> stable successful charge -> confirmed hold/Order -> one notice | US2; SC-004/005/008 |
 | `make demo SCENARIO=payment-failure` | Failed charge releases once; Order fails; stock returns | US3.1; SC-006 |
 | `make demo SCENARIO=expiry-race` | 120-second hold expires; simultaneous Confirm/Release/Expire has one winner; confirmation at expiry fails | US3.2/3; SC-006 |
@@ -131,13 +141,17 @@ than print a plausible demonstration transcript.
 | `make demo SCENARIO=poison-record` | Finite retries, inspectable original payload, unrelated-key progress, authorized replay | US3.6; SC-007 |
 | `make demo SCENARIO=notice-recovery` | Notifications catch up after failure; duplicate Order/Inventory expiry yields one expiry notice | US4; SC-008 |
 | `make demo SCENARIO=analytics-replay` | Golden per-minute results, distinct shoppers, lateness corrections, explicit FINAL, ordered quiet-input heartbeats, View/relay repair and empty-cache restore | US5; SC-009 |
+| `make demo SCENARIO=analytics-eligibility` | Authenticated valid known-target retries and business rejections count; unauthorized/malformed/unknown/mismatched submissions change only operational counters; downstream cap rejection stays admission-ADMITTED; quiet pre/post-sale attempt windows finalize | US5.5; SC-009 |
 | `make demo SCENARIO=catalog-quorum` | Requests coordinate via every node; one down works; two down report unavailability, not absence | US6.1/2/5; SC-010 |
 | `make demo SCENARIO=catalog-conflict-repair` | Concurrent siblings survive, explicit resolution dominates observed contexts, stale node/durable restart converge | US6.3/4; SC-010 |
 | `make demo SCENARIO=access-boundaries` | Own records allowed; other shoppers/operator-only/internal stock/payment routes denied | US2.6, US4.3, US7.1; SC-014 |
 
 The verifier records every Inventory commit or transition-ledger entry and checks
 `available + held + sold = allocation` and nonnegativity, not just a final count. It also checks
-stable payment/refund and canonical notice counts. Independent database inspection is read-only
+every shopper's `unexpired held + confirmed <= per_shopper_unit_cap`, including holds without
+an Order, and stable payment/refund and canonical notice counts. At expiry, allowance is available
+even while an asynchronous cleanup test is paused; confirmation then fails and any late charge
+is refunded. A double cannot certify the real Inventory implementation. Independent database inspection is read-only
 and uses the verifier role; normal services never bypass each other's ownership.
 
 ## Sustained workload and actual autoscaling
@@ -148,13 +162,18 @@ make load PROFILE=scaling
 ```
 
 The correctness profile uses a 100-unit sale, at least 10,000 attempts over ten minutes and at
-least 50 distinct shoppers. Export p50/p95/p99 response latency, rate/overload/business rejections,
+least 100 distinct shoppers at the default cap=1 (which exceeds SC-003's minimum of 50), so
+stock can actually sell out. Seed fresh run-isolated identities and include same-shopper distinct-key
+races, release/expiry reuse and original-key replay. Export p50/p95/p99 response latency,
+rate/overload/business rejections,
 unexpected errors, queue age, payment/refund timings and the full stock invariant report. Keep
 expected sold-out/limit outcomes separate from unexpected errors. Count browse and purchase
 latencies separately; include unsuccessful attempts in response distributions.
 
 The scaling profile uses a separate sale with ample preallocated units so demand reaches Order
-throughout the run. Raise admission limits in the versioned pre-start configuration. Calibrate
+throughout the run. Use enough distinct shoppers, or explicitly raise the configurable purchase
+cap together with admission limits in the versioned pre-start configuration. Record both caps and
+identities; do not disable the cap or reclassify a bypass as scaling evidence. Calibrate
 real purchase load to exceed the initial pods' 60% CPU target; record request rates and all
 thresholds. Do not inject fake CPU work or claim one replica count proves HPA scale-out. Both
 Admission and Order must gain a ready running instance within ten minutes of sustained demand,

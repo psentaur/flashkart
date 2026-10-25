@@ -1,0 +1,3496 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flash-sale.example/contracts/events.schema.json",
+  "title": "Flash Sale Event Envelope v1",
+  "description": "Each type has a constrained data payload; topic/producer authorization is in README.md.",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "SaleConfigured"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "unit_price_minor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "starts_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "ends_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "UPCOMING",
+                "ACTIVE",
+                "ENDED",
+                "UNAVAILABLE",
+                "CANCELLED"
+              ]
+            },
+            "allocated_units": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "admission_limits": {
+              "type": "object",
+              "properties": {
+                "shopper_per_second": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "sale_per_second": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "max_in_flight": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "shopper_per_second",
+                "sale_per_second",
+                "max_in_flight"
+              ],
+              "additionalProperties": false
+            },
+            "ready_participants": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "catalog",
+                  "admission",
+                  "inventory"
+                ]
+              },
+              "uniqueItems": true
+            },
+            "per_shopper_unit_cap": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
+            }
+          },
+          "required": [
+            "sale_id",
+            "product_id",
+            "version",
+            "unit_price_minor",
+            "currency",
+            "starts_at",
+            "ends_at",
+            "status",
+            "allocated_units",
+            "admission_limits",
+            "ready_participants",
+            "per_shopper_unit_cap"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "SaleReady"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "participant": {
+              "type": "string",
+              "enum": [
+                "catalog",
+                "admission",
+                "inventory"
+              ]
+            },
+            "allocation_digest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$",
+              "description": "SHA-256 over normalized stable configuration terms including per_shopper_unit_cap; see contract README for exact inputs."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "READY",
+                "FAILED"
+              ]
+            },
+            "error_code": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "sale_id",
+            "product_id",
+            "version",
+            "participant",
+            "allocation_digest",
+            "status"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "SaleActivated"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "unit_price_minor": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "starts_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "ends_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "status": {
+              "const": "ACTIVE"
+            },
+            "allocated_units": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "admission_limits": {
+              "type": "object",
+              "properties": {
+                "shopper_per_second": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "sale_per_second": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "max_in_flight": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "shopper_per_second",
+                "sale_per_second",
+                "max_in_flight"
+              ],
+              "additionalProperties": false
+            },
+            "ready_participants": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "catalog",
+                  "admission",
+                  "inventory"
+                ]
+              },
+              "uniqueItems": true
+            },
+            "per_shopper_unit_cap": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991,
+              "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
+            }
+          },
+          "required": [
+            "sale_id",
+            "product_id",
+            "version",
+            "unit_price_minor",
+            "currency",
+            "starts_at",
+            "ends_at",
+            "status",
+            "allocated_units",
+            "admission_limits",
+            "ready_participants",
+            "per_shopper_unit_cap"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "SaleCancelled"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "sale_id",
+            "product_id",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "AttemptRecorded"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "attempt_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "decision": {
+              "type": "string",
+              "enum": [
+                "ADMITTED",
+                "REJECTED"
+              ],
+              "description": "Admission gate decision only; an admitted downstream business rejection remains ADMITTED."
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "NONE",
+                "RATE_LIMITED",
+                "OVERLOADED",
+                "SALE_INACTIVE",
+                "SALE_NOT_READY",
+                "DEPENDENCY_UNAVAILABLE"
+              ],
+              "description": "Admission gate reason; NONE after admission even if Order subsequently rejects the purchase."
+            },
+            "response_status": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 599
+            },
+            "response_latency_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "response_error_code": {
+              "type": "string",
+              "enum": [
+                "RATE_LIMITED",
+                "OVERLOADED",
+                "SALE_INACTIVE",
+                "SALE_NOT_READY",
+                "DEPENDENCY_UNAVAILABLE",
+                "OFFER_CHANGED",
+                "SOLD_OUT",
+                "INSUFFICIENT_STOCK",
+                "PURCHASE_LIMIT_EXCEEDED",
+                "IDEMPOTENCY_CONFLICT",
+                "REQUEST_IN_PROGRESS"
+              ],
+              "description": "Final HTTP Error code for eligible non-success responses; separate from the admission decision/reason."
+            }
+          },
+          "required": [
+            "attempt_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "decision",
+            "reason",
+            "response_status",
+            "response_latency_ms"
+          ],
+          "additionalProperties": false,
+          "description": "Authenticated SHOPPER, schema/header-valid known matching sale/product submission only. Explicit retry has a new attempt_id; internal redelivery preserves it. Excluded traffic has no AttemptRecorded.",
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "response_status": {
+                    "minimum": 400
+                  }
+                },
+                "required": [
+                  "response_status"
+                ]
+              },
+              "then": {
+                "required": [
+                  "response_error_code"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "ReservationHeld"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "config_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "state": {
+              "const": "HELD"
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "reservation_id",
+            "order_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "config_version",
+            "quantity",
+            "state",
+            "expires_at",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "ReservationConfirmed"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "config_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "state": {
+              "const": "CONFIRMED"
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "reservation_id",
+            "order_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "config_version",
+            "quantity",
+            "state",
+            "expires_at",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "ReservationReleased"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "config_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "state": {
+              "const": "RELEASED"
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "reservation_id",
+            "order_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "config_version",
+            "quantity",
+            "state",
+            "expires_at",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "ReservationExpired"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "reservation_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "config_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "state": {
+              "const": "EXPIRED"
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "reservation_id",
+            "order_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "config_version",
+            "quantity",
+            "state",
+            "expires_at",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "PaymentRequested"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "attempt_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "reservation_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "amount_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            }
+          },
+          "required": [
+            "attempt_id",
+            "order_id",
+            "reservation_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "amount_minor",
+            "currency"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "PaymentSucceeded"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "attempt_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "reservation_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "amount_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "state": {
+              "const": "SUCCEEDED"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "attempt_id",
+            "order_id",
+            "reservation_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "amount_minor",
+            "currency",
+            "state",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "PaymentFailed"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "attempt_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "reservation_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "amount_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "state": {
+              "const": "FAILED"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "attempt_id",
+            "order_id",
+            "reservation_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "amount_minor",
+            "currency",
+            "state",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "OrderPending"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "reservation_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "offer_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "unit_price_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "total_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "state": {
+              "const": "PENDING_PAYMENT"
+            },
+            "refund_status": {
+              "type": "string",
+              "enum": [
+                "NONE",
+                "PENDING",
+                "COMPLETED",
+                "REPAIR_REQUIRED"
+              ]
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "order_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "reservation_id",
+            "quantity",
+            "offer_version",
+            "unit_price_minor",
+            "total_minor",
+            "currency",
+            "state",
+            "refund_status",
+            "expires_at",
+            "created_at",
+            "updated_at",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "OrderConfirmed"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "reservation_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "offer_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "unit_price_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "total_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "state": {
+              "const": "CONFIRMED"
+            },
+            "refund_status": {
+              "type": "string",
+              "enum": [
+                "NONE",
+                "PENDING",
+                "COMPLETED",
+                "REPAIR_REQUIRED"
+              ]
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "order_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "reservation_id",
+            "quantity",
+            "offer_version",
+            "unit_price_minor",
+            "total_minor",
+            "currency",
+            "state",
+            "refund_status",
+            "expires_at",
+            "created_at",
+            "updated_at",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "OrderFailed"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "reservation_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "offer_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "unit_price_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "total_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "state": {
+              "const": "FAILED"
+            },
+            "refund_status": {
+              "type": "string",
+              "enum": [
+                "NONE",
+                "PENDING",
+                "COMPLETED",
+                "REPAIR_REQUIRED"
+              ]
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "order_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "reservation_id",
+            "quantity",
+            "offer_version",
+            "unit_price_minor",
+            "total_minor",
+            "currency",
+            "state",
+            "refund_status",
+            "expires_at",
+            "created_at",
+            "updated_at",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "OrderExpired"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "reservation_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "quantity": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "offer_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "unit_price_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "total_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "state": {
+              "const": "EXPIRED"
+            },
+            "refund_status": {
+              "type": "string",
+              "enum": [
+                "NONE",
+                "PENDING",
+                "COMPLETED",
+                "REPAIR_REQUIRED"
+              ]
+            },
+            "expires_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "created_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "updated_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "order_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "reservation_id",
+            "quantity",
+            "offer_version",
+            "unit_price_minor",
+            "total_minor",
+            "currency",
+            "state",
+            "refund_status",
+            "expires_at",
+            "created_at",
+            "updated_at",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "RefundRequested"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "refund_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "attempt_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "amount_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            }
+          },
+          "required": [
+            "refund_id",
+            "attempt_id",
+            "order_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "amount_minor",
+            "currency"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "RefundCompleted"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "refund_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "attempt_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "amount_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "state": {
+              "const": "COMPLETED"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "refund_id",
+            "attempt_id",
+            "order_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "amount_minor",
+            "currency",
+            "state",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "AnalyticsHeartbeat"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sale_id",
+            "product_id",
+            "window_start",
+            "window_end"
+          ],
+          "properties": {
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "window_start": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "window_end": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            }
+          }
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "WindowSummaryUpdated"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "summary_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "window_start": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "window_end": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "revision": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "PROVISIONAL",
+                "FINAL"
+              ]
+            },
+            "attempts": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "distinct_shoppers": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "admitted": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "rejected": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "rejection_counts": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "payment_successes": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "payment_failures": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "confirmed_units": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "revenue_by_currency": {
+              "type": "object",
+              "patternProperties": {
+                "^[A-Z]{3}$": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "additionalProperties": false
+            },
+            "latency_buckets_ms": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "minItems": 8,
+              "maxItems": 8
+            },
+            "latency_count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "computed_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            }
+          },
+          "required": [
+            "summary_id",
+            "sale_id",
+            "product_id",
+            "window_start",
+            "window_end",
+            "revision",
+            "status",
+            "attempts",
+            "distinct_shoppers",
+            "admitted",
+            "rejected",
+            "rejection_counts",
+            "payment_successes",
+            "payment_failures",
+            "confirmed_units",
+            "revenue_by_currency",
+            "latency_buckets_ms",
+            "latency_count",
+            "computed_at"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "LateActivityObserved"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "original_event_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "window_start": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "window_end": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "received_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "Z$"
+            },
+            "reason": {
+              "const": "AFTER_FINALIZATION"
+            },
+            "original_event_json": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "original_event_id",
+            "sale_id",
+            "product_id",
+            "window_start",
+            "window_end",
+            "received_at",
+            "reason",
+            "original_event_json"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "type": {
+          "const": "RefundPending"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "producer": {
+          "type": "string",
+          "enum": [
+            "flash-sale",
+            "catalog",
+            "admission",
+            "inventory",
+            "order",
+            "payment",
+            "analytics"
+          ]
+        },
+        "aggregate_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "aggregate_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "data": {
+          "type": "object",
+          "properties": {
+            "refund_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "attempt_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "shopper_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "sale_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "product_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "amount_minor": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "state": {
+              "const": "PENDING"
+            },
+            "version": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "refund_id",
+            "attempt_id",
+            "order_id",
+            "shopper_id",
+            "sale_id",
+            "product_id",
+            "amount_minor",
+            "currency",
+            "state",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "event_id",
+        "schema_version",
+        "type",
+        "occurred_at",
+        "producer",
+        "aggregate_id",
+        "aggregate_version",
+        "correlation_id",
+        "data"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$defs": {
+    "Offer": {
+      "type": "object",
+      "properties": {
+        "sale_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "product_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "unit_price_minor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "starts_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "ends_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "UPCOMING",
+            "ACTIVE",
+            "ENDED",
+            "UNAVAILABLE",
+            "CANCELLED"
+          ]
+        },
+        "per_shopper_unit_cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
+        }
+      },
+      "required": [
+        "sale_id",
+        "product_id",
+        "version",
+        "unit_price_minor",
+        "currency",
+        "starts_at",
+        "ends_at",
+        "status",
+        "per_shopper_unit_cap"
+      ],
+      "additionalProperties": false
+    },
+    "SaleWrite": {
+      "type": "object",
+      "properties": {
+        "sale_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "product_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "expected_version": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unit_price_minor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "allocated_units": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "starts_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "ends_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "admission_limits": {
+          "type": "object",
+          "properties": {
+            "shopper_per_second": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sale_per_second": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_in_flight": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "shopper_per_second",
+            "sale_per_second",
+            "max_in_flight"
+          ],
+          "additionalProperties": false
+        },
+        "per_shopper_unit_cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start. Omission normalizes to one on creation and replacement.",
+          "default": 1
+        }
+      },
+      "required": [
+        "sale_id",
+        "product_id",
+        "expected_version",
+        "unit_price_minor",
+        "currency",
+        "allocated_units",
+        "starts_at",
+        "ends_at",
+        "admission_limits"
+      ],
+      "additionalProperties": false
+    },
+    "Sale": {
+      "type": "object",
+      "properties": {
+        "sale_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "product_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "unit_price_minor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "starts_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "ends_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "UPCOMING",
+            "ACTIVE",
+            "ENDED",
+            "UNAVAILABLE",
+            "CANCELLED"
+          ]
+        },
+        "allocated_units": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "admission_limits": {
+          "type": "object",
+          "properties": {
+            "shopper_per_second": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "sale_per_second": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max_in_flight": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "shopper_per_second",
+            "sale_per_second",
+            "max_in_flight"
+          ],
+          "additionalProperties": false
+        },
+        "ready_participants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "catalog",
+              "admission",
+              "inventory"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "per_shopper_unit_cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991,
+          "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
+        }
+      },
+      "required": [
+        "sale_id",
+        "product_id",
+        "version",
+        "unit_price_minor",
+        "currency",
+        "starts_at",
+        "ends_at",
+        "status",
+        "allocated_units",
+        "admission_limits",
+        "ready_participants",
+        "per_shopper_unit_cap"
+      ],
+      "additionalProperties": false
+    },
+    "Purchase": {
+      "type": "object",
+      "properties": {
+        "sale_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "product_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "expected_offer_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "expected_unit_price_minor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        }
+      },
+      "required": [
+        "sale_id",
+        "product_id",
+        "quantity",
+        "expected_offer_version",
+        "expected_unit_price_minor",
+        "currency"
+      ],
+      "additionalProperties": false
+    },
+    "Order": {
+      "type": "object",
+      "properties": {
+        "order_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "shopper_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sale_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "product_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "reservation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "offer_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "unit_price_minor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "total_minor": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "PENDING_PAYMENT",
+            "CONFIRMED",
+            "FAILED",
+            "EXPIRED"
+          ]
+        },
+        "refund_status": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "PENDING",
+            "COMPLETED",
+            "REPAIR_REQUIRED"
+          ]
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "order_id",
+        "shopper_id",
+        "sale_id",
+        "product_id",
+        "reservation_id",
+        "quantity",
+        "offer_version",
+        "unit_price_minor",
+        "total_minor",
+        "currency",
+        "state",
+        "refund_status",
+        "expires_at",
+        "created_at",
+        "updated_at",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "Notice": {
+      "type": "object",
+      "properties": {
+        "notice_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "shopper_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "order_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "CONFIRMED",
+            "FAILED",
+            "EXPIRED",
+            "REFUND_PENDING",
+            "REFUND_COMPLETED"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "delivery_state": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "DELIVERED",
+            "REPAIR_REQUIRED"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "notice_id",
+        "shopper_id",
+        "order_id",
+        "outcome",
+        "message",
+        "delivery_state",
+        "created_at"
+      ],
+      "additionalProperties": false
+    },
+    "WindowSummary": {
+      "type": "object",
+      "properties": {
+        "summary_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "sale_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "product_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "window_start": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "window_end": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PROVISIONAL",
+            "FINAL"
+          ]
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "distinct_shoppers": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "admitted": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejected": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rejection_counts": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "payment_successes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "payment_failures": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confirmed_units": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "revenue_by_currency": {
+          "type": "object",
+          "patternProperties": {
+            "^[A-Z]{3}$": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "additionalProperties": false
+        },
+        "latency_buckets_ms": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 8,
+          "maxItems": 8
+        },
+        "latency_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "computed_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "summary_id",
+        "sale_id",
+        "product_id",
+        "window_start",
+        "window_end",
+        "revision",
+        "status",
+        "attempts",
+        "distinct_shoppers",
+        "admitted",
+        "rejected",
+        "rejection_counts",
+        "payment_successes",
+        "payment_failures",
+        "confirmed_units",
+        "revenue_by_currency",
+        "latency_buckets_ms",
+        "latency_count",
+        "computed_at"
+      ],
+      "additionalProperties": false
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "INVALID_ARGUMENT",
+            "UNAUTHENTICATED",
+            "FORBIDDEN",
+            "NOT_FOUND",
+            "SALE_INACTIVE",
+            "SALE_NOT_READY",
+            "OFFER_CHANGED",
+            "SOLD_OUT",
+            "INSUFFICIENT_STOCK",
+            "RATE_LIMITED",
+            "OVERLOADED",
+            "IDEMPOTENCY_CONFLICT",
+            "REQUEST_IN_PROGRESS",
+            "METADATA_CONFLICT",
+            "QUORUM_UNAVAILABLE",
+            "DEPENDENCY_UNAVAILABLE",
+            "VERSION_CONFLICT",
+            "SALE_WINDOW_CONFLICT",
+            "PURCHASE_LIMIT_EXCEEDED"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "correlation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "retry_after_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "current_offer": {
+          "$ref": "#/$defs/Offer"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "correlation_id",
+        "retryable"
+      ],
+      "additionalProperties": false
+    },
+    "MetadataWrite": {
+      "type": "object",
+      "properties": {
+        "operation_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "context": {
+          "type": "object",
+          "properties": {
+            "node-a": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "node-b": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "node-c": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "value": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "description": {
+              "type": "string",
+              "maxLength": 10000
+            },
+            "image_refs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uri"
+              },
+              "maxItems": 10
+            }
+          },
+          "required": [
+            "name",
+            "description",
+            "image_refs"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "operation_id",
+        "context",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "ReplicaHealth": {
+      "type": "object",
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "enum": [
+            "node-a",
+            "node-b",
+            "node-c"
+          ]
+        },
+        "healthy": {
+          "type": "boolean"
+        },
+        "last_seen_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        }
+      },
+      "required": [
+        "node_id",
+        "healthy",
+        "last_seen_at"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$comment": "Contract 1.0.0-draft.2, amended before first release; see README compatibility gate. Schema version 1 is the planned first released envelope."
+}

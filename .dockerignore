@@ -1,0 +1,19 @@
+.git
+.agents
+.specify
+Microservices architecture design*.md
+.env
+.env.*
+.secrets
+.aws
+.codex
+.tools
+.cache
+.venv
+coverage
+*.log*
+*.key
+*.crt
+node_modules
+Dockerfile*
+.dockerignore

@@ -1,0 +1,19 @@
+{
+  "contract_version": "1.0.0-draft.2",
+  "source": "specs/001-flash-sale-platform/contracts",
+  "status": "pending_producer_consumer_review",
+  "required_reviewers": [
+    "Mukthish",
+    "Member 2",
+    "Member 3"
+  ],
+  "approved_reviewers": [],
+  "integration_gate": "Required before cross-service contract adoption; Phase 1 contains bindings and startup scaffolds only.",
+  "analysis_follow_up": [
+    "early contract agreement gate",
+    "durable admission attempt recovery",
+    "accepted-key replay precedence",
+    "canonical timestamp digest normalization",
+    "AttemptRecorded aggregate identity"
+  ]
+}
