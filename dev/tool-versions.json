@@ -181,5 +181,10 @@
       "github.com/lovoo/goka": "v1.1.17",
       "github.com/IBM/sarama": "v1.46.3"
     }
+  },
+  "browser_checks": {
+    "node_tested": "22.23.1",
+    "playwright": "1.64.1",
+    "runtime_dependency": false
   }
 }

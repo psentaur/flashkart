@@ -2,9 +2,8 @@
 
 **Version**: 1.0.0-draft.2 | **Date**: 2026-10-25 | **Status**: Draft for producer/consumer review
 
-These are Phase 1 design contracts. They describe intended behavior; no endpoint is implemented
-by generating these files. They remain feature-local until implementation introduces the root
-contract release and generated bindings. [Data ownership and transitions](../data-model.md) are
+These draft contracts are promoted into root `contracts/` for independent local implementation.
+Generation and fixture tests do not grant producer/consumer adoption or imply a released runtime. [Data ownership and transitions](../data-model.md) are
 normative alongside the wire schemas. Changes require the owner and affected consumers to review.
 
 ## Contract inventory and review ownership
@@ -85,6 +84,14 @@ normative alongside the wire schemas. Changes require the owner and affected con
 - Internal Order POST is callable only by Admission. It receives the verified shopper and unique
   attempt ID, uses the same request key, fetches the authoritative offer, reserves stock, commits
   pending Order + PaymentRequested, and only then returns acceptance. Gateway has no saga logic.
+
+### Operator readiness reads
+
+`GET /v1/admin/sales/{sale_id}` requires OPERATOR and returns the existing canonical Sale,
+including effective status and matching current-version `ready_participants`. Sale admin responses
+include `X-Sale-Freeze-At`, the earliest original/current start instant, so an editor can freeze
+correctly after a pre-start reschedule. These Phase 3 draft additions require the same E4 review;
+no consumer approval or prior-draft compatibility is implied.
 
 ## Inventory gRPC and ambiguity handling
 

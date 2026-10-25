@@ -19,7 +19,10 @@ type correlationKey struct{}
 func Correlation(ctx context.Context) string { s, _ := ctx.Value(correlationKey{}).(string); return s }
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := r.Header.Get("X-Correlation-ID")
+		id := Correlation(r.Context())
+		if id == "" {
+			id = r.Header.Get("X-Correlation-ID")
+		}
 		if value.UUID(id) != nil {
 			id = clock.UUID()
 		}

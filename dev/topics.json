@@ -1,0 +1,15 @@
+{
+  "mode": "local_fixture",
+  "topics": [
+    "sale.config.v1",
+    "sale.ready.v1",
+    "analytics.activity.v1"
+  ],
+  "partitions": 6,
+  "replication_factor": 1,
+  "config": {
+    "cleanup.policy": "delete",
+    "retention.ms": "604800000",
+    "message.timestamp.type": "LogAppendTime"
+  }
+}

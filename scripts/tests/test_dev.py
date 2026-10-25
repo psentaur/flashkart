@@ -52,3 +52,88 @@ class ProcessBoundaryTest(unittest.TestCase):
         self.assertEqual(environment,{'ORDER_DATABASE_URL':'order-private','KAFKA_BROKERS':'localhost:19092'})
 
 if __name__=='__main__':unittest.main()
+
+class StartupIdentityTest(unittest.TestCase):
+    def test_exited_child_fails_startup(self):
+        from unittest.mock import Mock
+        alive=Mock();alive.poll.return_value=None
+        exited=Mock();exited.poll.return_value=1
+        DEV.assert_children_alive([('gateway',alive)])
+        with self.assertRaisesRegex(RuntimeError,'flash-sale exited'):
+            DEV.assert_children_alive([('gateway',alive),('flash-sale',exited)])
+
+    def test_occupied_listener_stops_before_launch(self):
+        values={'CATALOG_URL':'http://127.0.0.1:8090','NOTIFICATION_URL':'http://127.0.0.1:8091','INVENTORY_GRPC_ADDRESS':'127.0.0.1:8092'}
+        with patch.object(DEV.socket,'create_server',side_effect=OSError('occupied')):
+            with self.assertRaisesRegex(RuntimeError,'no application processes started'):
+                DEV.check_listeners(values)
+
+class FailedLaunchCleanupTest(unittest.TestCase):
+    def run_failed_launch(self, root, build, child=None):
+        from unittest.mock import Mock
+        process = child or Mock()
+        with patch.object(DEV, 'ROOT', root), \
+                patch.object(DEV, 'load_env', return_value={}), \
+                patch.object(DEV, 'check_listeners'), \
+                patch.object(DEV.subprocess, 'run', side_effect=build), \
+                patch.object(DEV.subprocess, 'Popen', return_value=process), \
+                patch.object(DEV.os, 'kill') as kill:
+            with self.assertRaises(DEV.subprocess.CalledProcessError):
+                DEV.launch()
+        return kill
+
+    def test_initial_build_failure_does_not_block_next_launch(self):
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            failure = DEV.subprocess.CalledProcessError(1, ['go', 'build'])
+            for _ in range(2):
+                self.run_failed_launch(root, failure)
+                self.assertFalse((root / '.cache/processes.json').exists())
+
+    def test_exited_children_do_not_leave_a_process_record(self):
+        from unittest.mock import Mock
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            child = Mock(pid=123)
+            child.poll.side_effect = [None, 0]
+            kill = self.run_failed_launch(root, [None, DEV.subprocess.CalledProcessError(1, ['go', 'build'])], child)
+            kill.assert_called_once_with(123, DEV.signal.SIGTERM)
+            self.assertFalse((root / '.cache/processes.json').exists())
+
+    def test_children_still_exiting_keep_their_process_record(self):
+        from unittest.mock import Mock
+        import json
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            child = Mock(pid=123)
+            child.poll.return_value = None
+            kill = self.run_failed_launch(root, [None, DEV.subprocess.CalledProcessError(1, ['go', 'build'])], child)
+            kill.assert_called_once_with(123, DEV.signal.SIGTERM)
+            records = json.loads((root / '.cache/processes.json').read_text())
+            self.assertEqual([item['pid'] for item in records], [123])
+
+class ListenerURLTest(unittest.TestCase):
+    def check_urls(self, catalog, notification):
+        values = {'CATALOG_URL': catalog, 'NOTIFICATION_URL': notification,
+                  'INVENTORY_GRPC_ADDRESS': '127.0.0.1:8092'}
+        DEV.check_listeners(values)
+
+    def test_http_and_https_default_ports(self):
+        with patch.object(DEV.socket, 'create_server') as listener:
+            self.check_urls('http://127.0.0.1/catalog', 'https://[::1]')
+        listener.assert_any_call(('127.0.0.1', 80), family=DEV.socket.AF_INET)
+        listener.assert_any_call(('::1', 443), family=DEV.socket.AF_INET6)
+
+    def test_explicit_ports_are_preserved(self):
+        with patch.object(DEV.socket, 'create_server') as listener:
+            self.check_urls('https://127.0.0.1:8090', 'http://[::1]:8091')
+        listener.assert_any_call(('127.0.0.1', 8090), family=DEV.socket.AF_INET)
+        listener.assert_any_call(('::1', 8091), family=DEV.socket.AF_INET6)
+        listener.assert_any_call(('127.0.0.1', 8092), family=DEV.socket.AF_INET)
+
+    def test_invalid_urls_have_configuration_errors_before_binding(self):
+        for url in ['http://', 'localhost', 'ftp://localhost', 'http://localhost:bad', 'http://[::1']:
+            with self.subTest(url=url), patch.object(DEV.socket, 'create_server') as listener:
+                with self.assertRaisesRegex(RuntimeError, 'CATALOG_URL.*HTTP\\(S\\).*port'):
+                    self.check_urls(url, 'http://127.0.0.1:8091')
+                listener.assert_not_called()

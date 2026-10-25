@@ -1,4 +1,4 @@
-name: Mukthish foundation checks
+name: Mukthish implementation checks
 on:
   push:
     branches: [001-mukthish-implementation]
@@ -23,6 +23,11 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: 3.14.8
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22.23.1
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
       - name: Install pinned local tools
         run: make bootstrap
       - name: Verify Mukthish's workspace and contracts
@@ -32,6 +37,12 @@ jobs:
           make dev-init deps-config
           make dev-up
           make test-integration smoke-foundation
+
+      - name: Verify storefront and operator browser journey
+        run: |
+          make browser-bootstrap
+          PLAYWRIGHT_BROWSERS_PATH="${GITHUB_WORKSPACE}/.cache/playwright" frontend/node_modules/.bin/playwright install-deps chromium
+          make test-frontend test-browser
 
       - name: Stop local processes and containers
         if: always()

@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"flash-sale/internal/platform/auth"
 	"flash-sale/internal/platform/clock"
+	"flash-sale/internal/platform/value"
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"math/big"
@@ -29,7 +30,10 @@ func write(path string, b []byte, mode os.FileMode) error {
 	}
 	return os.Chmod(path, mode)
 }
-func Seed() error {
+func Seed() error { return SeedAt(time.Now().UTC()) }
+
+// SeedAt refreshes tokens without replacing the retained dataset's subjects.
+func SeedAt(now time.Time) error {
 	private := os.Getenv("JWT_PRIVATE_KEY_FILE")
 	public := os.Getenv("JWT_PUBLIC_KEY_FILE")
 	tokens := os.Getenv("SEEDED_TOKENS_FILE")
@@ -59,13 +63,37 @@ func Seed() error {
 	if e = write(public, pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: der}), 0644); e != nil {
 		return e
 	}
-	now := time.Now().UTC()
+	now = now.UTC()
 	type identity struct {
 		Subject string `json:"subject"`
 		Role    string `json:"role"`
 		Token   string `json:"token"`
 	}
 	items := []identity{}
+	prior := []identity{}
+	if manifest, err := os.ReadFile(tokens); err == nil {
+		var saved struct {
+			Identities []identity `json:"identities"`
+		}
+		if json.Unmarshal(manifest, &saved) != nil || len(saved.Identities) != 101 {
+			return fmt.Errorf("existing identity manifest invalid; preserve it for repair")
+		}
+		seen := map[string]bool{}
+		for i, item := range saved.Identities {
+			role := "SHOPPER"
+			if i == 0 {
+				role = "OPERATOR"
+			}
+			if value.UUID(item.Subject) != nil || item.Role != role || seen[item.Subject] {
+				return fmt.Errorf("existing identity manifest has invalid or duplicate participants")
+			}
+			seen[item.Subject] = true
+		}
+		prior = saved.Identities
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("existing identity manifest unavailable")
+	}
+
 	issuer := os.Getenv("JWT_ISSUER")
 	if issuer == "" {
 		issuer = "flashkart-local"
@@ -80,6 +108,9 @@ func Seed() error {
 			role = "OPERATOR"
 		}
 		subject := clock.UUID()
+		if len(prior) > 0 {
+			subject = prior[i].Subject
+		}
 		claims := auth.Claims{Role: role, RegisteredClaims: jwt.RegisteredClaims{Subject: subject, Issuer: issuer, Audience: jwt.ClaimStrings{audience}, IssuedAt: jwt.NewNumericDate(now), ExpiresAt: jwt.NewNumericDate(now.Add(15 * time.Minute))}}
 		token, e := jwt.NewWithClaims(jwt.SigningMethodRS256, claims).SignedString(key)
 		if e != nil {

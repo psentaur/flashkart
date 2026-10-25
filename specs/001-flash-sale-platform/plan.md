@@ -18,7 +18,7 @@ from the 2026-10-25 clarification session: same-product schedules cannot overlap
 per-shopper unit cap defaults to one; sale analytics exclude malformed, unauthorized and unknown-target
 traffic. The subsequent Phase 1 implementation adds only workspace/setup tooling, generated bindings,
 local dependencies and startup shells. Phase 2 now adds foundation primitives, real SQL/Kafka recovery checks and local lifecycle tooling.
-Business behavior and deployments remain future work.
+Phase 3 implements the sale publication/browsing slice; purchase behavior and deployments remain future work.
 
 ## Technical Context
 
@@ -105,6 +105,27 @@ metrics/log correlation, health/readiness and local key/token/service-certificat
 Foundation readiness explicitly reports `business_ready=false`. [Phase 2 evidence](../../docs/evidence/phase2.md)
 records real PostgreSQL/Kafka failure/recovery and local mTLS/runtime checks. E4 approval, real
 E1/E2 acceptance, story behavior and cloud infrastructure remain pending.
+
+### Phase 3 implementation and CLI browser checks
+
+T021–T030 implement sale configuration/readiness, schedule exclusion, Admission projection,
+explicit gateway routes and Go-served operator/storefront pages. Database exclusion is retained
+alongside per-product transaction locks to prevent GiST check deadlocks. Operator GET sale and
+`X-Sale-Freeze-At` are draft contract additions for readiness polling and original-boundary UI freeze;
+E4 remains pending. No teammate service or storage is implemented.
+
+The user explicitly requested Playwright from the CLI for browser verification. Development-only
+Node.js 22+ and exact `@playwright/test` 1.64.1 are recorded in `frontend/package.json`/lockfile and
+`dev/tool-versions.json`; Go remains the application runtime. `make browser-bootstrap` installs the
+locked test dependency and matching Chromium under ignored local paths. `make test-browser` runs
+real sale APIs with controlled Catalog browser responses and records desktop/mobile screenshots;
+`make test-frontend` runs fast DOM-boundary checks. No browser extension is required.
+
+Local setup precreates only three US1 fixture topics from `dev/topics.json`, six partitions and one
+broker. This is separate from later shared topic/IaC/GitOps work. Forward foundation repairs preserve
+migration checksums, nullable poison records, dictionary validation, retry-pool capacity, stable
+seeded subjects and visible outbox delivery failures. [US1 evidence](../../docs/evidence/us1.md)
+distinguishes these local checks from unavailable real peer/platform acceptance.
 
 ### Architecture and boundaries
 

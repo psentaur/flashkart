@@ -3,6 +3,7 @@
 from test_report import run_report
 from dev import ROOT,load_env
 values=load_env();values['GOCACHE']=str(ROOT/'.cache/go-build')
-values['JWT_PUBLIC_KEY_FILE']=str(ROOT/values['JWT_PUBLIC_KEY_FILE'])
+for key in ['JWT_PUBLIC_KEY_FILE','SEEDED_TOKENS_FILE']:
+    values[key]=str(ROOT/values[key])
 values.setdefault('ANALYTICS_URL','http://127.0.0.1:8084');values.setdefault('GATEWAY_URL','http://127.0.0.1:8080')
 raise SystemExit(run_report(['-race','-count=1','-tags=runtime','-v','./integration'],values,'foundation-runtime'))

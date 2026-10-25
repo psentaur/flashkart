@@ -13,6 +13,10 @@ require (
 )
 
 require (
+	flash-sale/frontend v0.0.0
+	flash-sale/gateway v0.0.0
+	flash-sale/services/admission v0.0.0
+	flash-sale/services/flash-sale v0.0.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eapache/go-resiliency v1.7.0 // indirect
 	github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 // indirect
@@ -47,3 +51,11 @@ require (
 replace flash-sale/internal/platform => ../internal/platform
 
 replace flash-sale/contracts => ../contracts
+
+replace flash-sale/services/flash-sale => ../services/flash-sale
+
+replace flash-sale/services/admission => ../services/admission
+
+replace flash-sale/gateway => ../gateway
+
+replace flash-sale/frontend => ../frontend

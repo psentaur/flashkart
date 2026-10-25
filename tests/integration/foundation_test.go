@@ -4,10 +4,13 @@ package integration
 
 import (
 	"context"
+	"flash-sale/internal/platform/clock"
 	"flash-sale/internal/platform/postgres"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"os"
+	"strings"
 	"testing"
+	"time"
 )
 
 func database(t *testing.T) *pgxpool.Pool {
@@ -20,8 +23,28 @@ func database(t *testing.T) *pgxpool.Pool {
 	if e != nil {
 		t.Fatal(e)
 	}
-	t.Cleanup(p.Close)
-	return p
+	schema := "foundation_" + strings.ReplaceAll(clock.UUID(), "-", "")
+	if _, e = p.Exec(context.Background(), "CREATE SCHEMA "+schema); e != nil {
+		p.Close()
+		t.Fatal(e)
+	}
+	cfg := p.Config()
+	cfg.ConnConfig.RuntimeParams["search_path"] = schema + ",public"
+	isolated, e := pgxpool.NewWithConfig(context.Background(), cfg)
+	if e != nil {
+		p.Close()
+		t.Fatal(e)
+	}
+	t.Cleanup(func() {
+		isolated.Close()
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if _, e := p.Exec(ctx, "DROP SCHEMA "+schema+" CASCADE"); e != nil {
+			t.Error(e)
+		}
+		p.Close()
+	})
+	return isolated
 }
 func TestMigrationRollbackAndChecksum(t *testing.T) {
 	ctx := context.Background()

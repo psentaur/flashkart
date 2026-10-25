@@ -3,10 +3,12 @@ package messaging
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"flash-sale/internal/platform/auth"
 	"flash-sale/internal/platform/clock"
 	"flash-sale/internal/platform/events"
 	"flash-sale/internal/platform/eventstore"
+	"flash-sale/internal/platform/fault"
 	"fmt"
 	"github.com/IBM/sarama"
 	"github.com/jackc/pgx/v5"
@@ -35,6 +37,7 @@ type FailedWork struct {
 	Timestamp                   time.Time
 }
 type RetryStore struct {
+	Fault fault.Injector
 	Pool  *pgxpool.Pool
 	Clock clock.Clock
 }
@@ -94,40 +97,57 @@ func (s RetryStore) Inspect(ctx context.Context, id int64) (FailedWork, error) {
 	return scanWork(s.Pool.QueryRow(ctx, "SELECT "+columns+" FROM platform_failed_work WHERE id=$1", id))
 }
 
-// RunOne retries one due key. Dependency outages pause without spending its retry budget.
-// The handler must commit through an inbox transaction; a crash before this row update replays it.
+// RunOne claims work durably, then releases the connection before the inbox
+// handler runs. A crash after its business commit replays through the inbox;
+// the fencing token prevents an expired claimant changing a newer result.
 func (s RetryStore) RunOne(ctx context.Context, consumer string, handle func(context.Context, FailedWork) error, outage func(error) bool) (bool, error) {
-	tx, e := s.Pool.Begin(ctx)
-	if e != nil {
-		return false, e
-	}
-	defer func() { _ = tx.Rollback(context.Background()) }()
-	f, e := scanWork(tx.QueryRow(ctx, "SELECT "+columns+" FROM platform_failed_work WHERE consumer_name=$1 AND state='RETRY' AND next_attempt_at<=$2 ORDER BY next_attempt_at FOR UPDATE SKIP LOCKED LIMIT 1", consumer, s.now()))
-	if e == pgx.ErrNoRows {
+	token := clock.UUID()
+	now := s.now()
+	f, e := scanWork(s.Pool.QueryRow(ctx, `UPDATE platform_failed_work SET claim_token=$3,claim_until=$4 WHERE id=(SELECT id FROM platform_failed_work WHERE consumer_name=$1 AND state='RETRY' AND next_attempt_at<=$2 AND (claim_until IS NULL OR claim_until<=$2) ORDER BY next_attempt_at FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING `+columns, consumer, now, token, now.Add(30*time.Second)))
+	if errors.Is(e, pgx.ErrNoRows) {
 		return false, nil
 	}
 	if e != nil {
 		return false, e
 	}
-	err := handle(ctx, f)
+	workCtx, cancel := context.WithTimeout(ctx, 25*time.Second)
+	err := handle(workCtx, f)
+	if err == nil && workCtx.Err() != nil {
+		err = workCtx.Err()
+	}
+	cancel()
+	if ctx.Err() != nil {
+		return false, ctx.Err()
+	}
+	if s.Fault != nil {
+		if e = s.Fault.Hit(ctx, "after_retry_handle"); e != nil {
+			return false, e
+		}
+	}
 	state := "REPLAYED"
 	attempts := f.Attempts + 1
 	next := s.now()
 	if err != nil {
 		state = "QUARANTINED"
-		if outage != nil && outage(err) {
+		var invalid *events.QuarantineError
+		if !errors.As(err, &invalid) && outage != nil && outage(err) {
 			state = "PAUSED"
 			attempts = f.Attempts
-		} else if delay, ok := RetryDelay(attempts); ok {
-			state = "RETRY"
-			next = next.Add(delay)
+		} else if !errors.As(err, &invalid) {
+			if delay, ok := RetryDelay(attempts); ok {
+				state = "RETRY"
+				next = next.Add(delay)
+			}
 		}
 	}
-	_, e = tx.Exec(ctx, "UPDATE platform_failed_work SET state=$2,attempts=$3,next_attempt_at=$4,last_seen_at=$5 WHERE id=$1", f.ID, state, attempts, next, s.now())
+	tag, e := s.Pool.Exec(ctx, "UPDATE platform_failed_work SET state=$2,attempts=$3,next_attempt_at=$4,last_seen_at=$5,claim_token=NULL,claim_until=NULL WHERE id=$1 AND claim_token=$6", f.ID, state, attempts, next, s.now(), token)
 	if e != nil {
 		return false, e
 	}
-	return true, tx.Commit(ctx)
+	if tag.RowsAffected() != 1 {
+		return false, fmt.Errorf("retry claim superseded")
+	}
+	return true, nil
 }
 func (s RetryStore) Resume(ctx context.Context, consumer string) error {
 	_, e := s.Pool.Exec(ctx, "UPDATE platform_failed_work SET state='RETRY',next_attempt_at=$2 WHERE consumer_name=$1 AND state='PAUSED'", consumer, s.now())
@@ -142,7 +162,7 @@ func (s RetryStore) Replay(ctx context.Context, id int64, operator auth.Principa
 		return e
 	}
 	defer func() { _ = tx.Rollback(context.Background()) }()
-	tag, e := tx.Exec(ctx, "UPDATE platform_failed_work SET state='RETRY',attempts=0,next_attempt_at=$2,last_seen_at=$2 WHERE id=$1 AND state IN ('QUARANTINED','PAUSED')", id, s.now())
+	tag, e := tx.Exec(ctx, "UPDATE platform_failed_work SET state='RETRY',attempts=0,next_attempt_at=$2,last_seen_at=$2,claim_token=NULL,claim_until=NULL WHERE id=$1 AND state IN ('QUARANTINED','PAUSED')", id, s.now())
 	if e != nil {
 		return e
 	}
@@ -167,8 +187,10 @@ func DurableHandler(store eventstore.Store, retries RetryStore, consumer string,
 		if e == nil {
 			return nil
 		}
-		paused := outage != nil && outage(e)
-		if saved := retries.Schedule(ctx, consumer, en.EventID, "HANDLER_FAILED", m, false, paused); saved != nil {
+		var invalid *events.QuarantineError
+		quarantined := errors.As(e, &invalid)
+		paused := !quarantined && outage != nil && outage(e)
+		if saved := retries.Schedule(ctx, consumer, en.EventID, "HANDLER_FAILED", m, quarantined, paused); saved != nil {
 			return saved
 		}
 		if paused {

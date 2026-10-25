@@ -9,7 +9,6 @@ import (
 	"flash-sale/internal/platform/events"
 	"flash-sale/internal/platform/fault"
 	"flash-sale/internal/platform/postgres"
-	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
@@ -18,8 +17,11 @@ import (
 //go:embed schema.sql
 var Schema string
 
+//go:embed repair.sql
+var repairSchema string
+
 func Migrate(ctx context.Context, p *pgxpool.Pool) error {
-	return postgres.Migrate(ctx, p, []postgres.Migration{{Name: "000_platform_events", SQL: Schema}})
+	return postgres.Migrate(ctx, p, []postgres.Migration{{Name: "000_platform_events", SQL: Schema}, {Name: "000_platform_events_002_repair", SQL: repairSchema}})
 }
 
 type Store struct {
@@ -63,7 +65,7 @@ func (s Store) Consume(ctx context.Context, consumer, id string, raw []byte, fn 
 				return e
 			}
 			if !bytes.Equal(prior, sum[:]) {
-				return fmt.Errorf("event identity reused with different payload")
+				return &events.QuarantineError{Reason: "event identity reused with different payload"}
 			}
 			return nil
 		}
@@ -89,7 +91,7 @@ func Enqueue(ctx context.Context, tx pgx.Tx, e events.Envelope) error {
 		return err
 	}
 	if !bytes.Equal(prior, raw) {
-		return fmt.Errorf("outbox identity reused")
+		return &events.QuarantineError{Reason: "outbox identity reused"}
 	}
 	dest := map[string]string{topic: key}
 	if topic != "analytics.activity.v1" && e.Producer != "analytics" {
@@ -109,6 +111,7 @@ type Publish func(context.Context, string, string, []byte) error
 // DispatchOne holds only a delivery row lock. A crash after publish repeats the same event.
 func (s Store) DispatchOne(ctx context.Context, now time.Time, publish Publish) (bool, error) {
 	sent := false
+	var deliveryFailure error
 	e := s.Transaction(ctx, func(tx pgx.Tx) error {
 		var id, dest, key string
 		var raw []byte
@@ -120,6 +123,7 @@ func (s Store) DispatchOne(ctx context.Context, now time.Time, publish Publish) 
 			return err
 		}
 		if err = publish(ctx, dest, key, raw); err != nil {
+			deliveryFailure = &DeliveryError{Destination: dest, Cause: err}
 			_, update := tx.Exec(ctx, "UPDATE platform_delivery SET attempts=attempts+1,next_attempt_at=$3 WHERE event_id=$1 AND destination=$2", id, dest, now.Add(time.Second))
 			return update
 		}
@@ -130,7 +134,10 @@ func (s Store) DispatchOne(ctx context.Context, now time.Time, publish Publish) 
 		sent = err == nil
 		return err
 	})
-	return sent && e == nil, e
+	if e != nil {
+		return false, e
+	}
+	return sent, deliveryFailure
 }
 
 // Prune never removes a missing destination receipt or records inside replay retention.
@@ -138,3 +145,12 @@ func (s Store) Prune(ctx context.Context, now time.Time) (int64, error) {
 	tag, e := s.Pool.Exec(ctx, `DELETE FROM platform_outbox o WHERE created_at<$1 AND NOT EXISTS(SELECT 1 FROM platform_delivery d WHERE d.event_id=o.event_id AND d.published_at IS NULL) AND EXISTS(SELECT 1 FROM platform_delivery d WHERE d.event_id=o.event_id)`, now.Add(-8*24*time.Hour))
 	return tag.RowsAffected(), e
 }
+
+// DeliveryError reports the publication failure after its retry receipt commits.
+type DeliveryError struct {
+	Destination string
+	Cause       error
+}
+
+func (e *DeliveryError) Error() string { return "outbox delivery failed: " + e.Destination }
+func (e *DeliveryError) Unwrap() error { return e.Cause }

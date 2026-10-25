@@ -3,7 +3,7 @@ COMPONENT ?= gateway
 PROFILE ?= foundation
 CONTRACT_PYTHON := .tools/contracts/bin/python
 
-.PHONY: bootstrap fmt fmt-check lint typecheck test-unit verify-deps generate contracts-sync contracts-check contracts-integration-check tooling-check smoke-phase1 smoke-foundation check dev-init deps-config deps-up deps-down deps-status deps-check run dev-up dev-down migrate seed wait-ready test-integration test-races test-e2e demo load cloud-preflight cloud-plan cloud-apply release
+.PHONY: bootstrap fmt fmt-check lint typecheck test-unit verify-deps generate contracts-sync contracts-check contracts-integration-check test-browser browser-bootstrap test-frontend tooling-check smoke-phase1 smoke-foundation check dev-init deps-config deps-up deps-down deps-status deps-check run dev-up dev-down topics-local migrate seed wait-ready test-integration test-races test-e2e demo load cloud-preflight cloud-plan cloud-apply release
 
 bootstrap fmt fmt-check lint typecheck test-unit verify-deps:
 	$(PYTHON) scripts/project.py $@
@@ -22,6 +22,16 @@ contracts-check:
 contracts-integration-check:
 	@test -x $(CONTRACT_PYTHON) || { echo 'Run make bootstrap first' >&2; exit 1; }
 	$(CONTRACT_PYTHON) scripts/validate_contracts.py --require-adopted
+
+browser-bootstrap:
+	npm ci --prefix frontend --cache .cache/npm --ignore-scripts --no-audit --no-fund
+	PLAYWRIGHT_BROWSERS_PATH=$(CURDIR)/.cache/playwright frontend/node_modules/.bin/playwright install chromium
+
+test-browser:
+	$(PYTHON) scripts/test_browser.py
+
+test-frontend:
+	node --test frontend/tests/sales.test.cjs
 
 tooling-check:
 	$(PYTHON) -B -m unittest discover -s scripts/tests
@@ -56,12 +66,12 @@ deps-check:
 run:
 	$(PYTHON) scripts/dev.py run --component $(COMPONENT)
 
-# These belong to later task phases. Never return a false passing application check.
+# Seed refreshes identities; business fixture datasets are owned by their story scenarios.
 seed:
 	@test "$(PROFILE)" = foundation || { echo "Business seed profiles arrive in story phases; use PROFILE=foundation" >&2; exit 2; }
 	$(PYTHON) scripts/command.py seed
 
-dev-up dev-down migrate wait-ready:
+dev-up dev-down topics-local migrate wait-ready:
 	$(PYTHON) scripts/command.py $@
 
 test-integration:
@@ -72,5 +82,5 @@ demo:
 
 # Business races, browser journeys, load and cloud deployment arrive in later phases.
 test-races test-e2e load cloud-preflight cloud-plan cloud-apply release:
-	@echo '$@ is not implemented in Phase 1; see tasks.md. Use deps-up/deps-down for local dependencies.' >&2
+	@echo '$@ belongs to later phases; see tasks.md. Use test-integration for the implemented sale races.' >&2
 	@exit 2

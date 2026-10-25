@@ -1,9 +1,37 @@
-# Embedded frontend assets
+# Flashkart frontend
 
-Owned by Mukthish. Phase 2 supplies dependency readiness, metrics and graceful shutdown; business behavior is
-scheduled in the [task backlog](../specs/001-flash-sale-platform/tasks.md).
+Owned by Mukthish. Go-embedded templates and plain JavaScript provide the operator sale desk and shopper product
+views. The form defaults cap to one, displays canonical terms/readiness, explains overlaps and
+freezes at the original boundary. Tokens remain in page memory.
 
-From the repository root, run `make bootstrap`, `make dev-init`, then `make dev-up`.
-Use `make dev-down` to stop the managed local processes and dependencies while retaining volumes.
-Run `make check` for the workspace quality gates. Configuration, dependency startup, readiness,
-SIGTERM shutdown and volume-preserving cleanup are in the [development guide](../docs/development.md).
+From the repository root:
+
+```sh
+make bootstrap
+make dev-init  # Once; preserves existing .env and volumes
+make dev-up
+make check test-integration smoke-foundation
+make demo SCENARIO=sale-readiness
+make dev-down
+```
+
+The gateway serves `/` and `/operator/sales` from this module. Catalog is display metadata;
+current sale terms are fetched from Flash Sale. Checkout is a later story.
+
+Configuration, private identities, SQL migrations, Kafka topics and retained-state recovery are in
+[development instructions](../docs/development.md). `make dev-up` uses explicit local fixtures;
+real E1/E2 acceptance and E4 contract review remain pending. [US1 evidence](../docs/evidence/us1.md)
+records verification and its limits. Restart using retained volumes; pending events replay through
+inbox/outbox identities. Do not use schema rollback or delete business data as a recovery shortcut.
+
+CLI browser tests need development-only Node.js 22+:
+
+```sh
+make browser-bootstrap
+make test-frontend test-browser
+```
+
+`frontend/package-lock.json` pins Playwright; Chromium and reports/screenshots stay in ignored
+`.cache/`. The browser journey uses real sale APIs and controlled Catalog metadata. Browser tests
+refresh expiring local tokens without changing subjects, disable network traces and cancel their
+own pre-start sale fixtures. Node/Playwright are not application runtime dependencies.

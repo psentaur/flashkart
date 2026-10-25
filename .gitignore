@@ -37,3 +37,10 @@ Thumbs.db
 kubeconfig*
 *.key
 *.crt
+
+# Development-only frontend test dependencies.
+node_modules/
+playwright-report/
+test-results/
+venv/
+*.egg-info/
