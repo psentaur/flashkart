@@ -7,6 +7,7 @@ import (
 	"flash-sale/gateway/internal/catalog"
 	"flash-sale/internal/platform/auth"
 	"flash-sale/internal/platform/httpapi"
+	"flash-sale/internal/platform/telemetry"
 	"flash-sale/internal/platform/value"
 	"io"
 	"net/http"
@@ -14,14 +15,20 @@ import (
 )
 
 type Config struct {
-	Verifier            auth.Verifier
-	SaleURL, CatalogURL string
-	Client              *http.Client
-	Frontend            http.Handler
+	Verifier               auth.Verifier
+	SaleURL, CatalogURL    string
+	AdmissionURL, OrderURL string
+	Metrics                *telemetry.Metrics
+	Client                 *http.Client
+	Frontend               http.Handler
 }
 
 func Handler(c Config) http.Handler {
+	if c.Metrics == nil {
+		c.Metrics = telemetry.New()
+	}
 	mux := http.NewServeMux()
+	purchases(mux, c)
 	cat := catalog.Client{BaseURL: c.CatalogURL, HTTP: c.Client}
 	mux.Handle("GET /v1/products", cat)
 	mux.Handle("GET /v1/products/{product_id}", cat)

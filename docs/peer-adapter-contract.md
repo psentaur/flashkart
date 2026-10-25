@@ -40,3 +40,21 @@ or reservation ID and current terminal state. Matching successful and rejected r
 retain identity; distinct keys must serialize cumulative allowance. Exercise cap=1 and larger
 caps, concurrent calls, expiry with cleanup paused, confirmation, release, orphan hold and restart.
 The verifier does not inspect or migrate the owner's database. Fixture success is never E1 proof.
+
+## Phase 4 complete-dataset verification boundary
+
+`tests/us2.VerifyOwner` is separate from fixture scenario checks. Supply an explicit
+`OwnerExpectation` (run/sale/product, allocated units, cap, all tested shopper and proposed Order
+IDs) and the real Inventory adapter after E4 adoption. The response must additionally identify
+`run_id`, `sale_id`, `product_id`, protected UTC `sampled_at`, and a complete `reservations` array.
+Each reservation contains reservation/order/shopper/sale/product IDs, quantity, state and UTC
+expiry. `stable_reserve_results` must be an array containing proposed `order_id`, the stable
+64-character hexadecimal `payload_hash`, `result_code` and optional `reservation_id`.
+
+The verifier compares reservation totals with held/sold stock, derives unexpired held/confirmed
+allowance at the supplied authoritative instant, checks every tested shopper/order and rejects
+rejections containing holds. Run it after each owner-controlled reserve/confirm/release/expiry/
+restart transition and compare stable outcomes across samples. Fault acknowledgements and the
+complete real acceptance orchestration remain external inputs; no such run is claimed in Phase 4.
+An empty/null/mismatched snapshot is insufficient evidence, not a passed test. The default generic
+`Snapshot.Verify` alone does not establish this complete-dataset guarantee (T120 remains open).

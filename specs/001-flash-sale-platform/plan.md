@@ -18,7 +18,8 @@ from the 2026-10-25 clarification session: same-product schedules cannot overlap
 per-shopper unit cap defaults to one; sale analytics exclude malformed, unauthorized and unknown-target
 traffic. The subsequent Phase 1 implementation adds only workspace/setup tooling, generated bindings,
 local dependencies and startup shells. Phase 2 now adds foundation primitives, real SQL/Kafka recovery checks and local lifecycle tooling.
-Phase 3 implements the sale publication/browsing slice; purchase behavior and deployments remain future work.
+Phase 3 implements sale publication/browsing. Phase 4 now implements Admission quotas and the
+Order purchase/payment-success slice; failure recovery/refunds and deployments remain future work.
 
 ## Technical Context
 
@@ -126,6 +127,21 @@ broker. This is separate from later shared topic/IaC/GitOps work. Forward founda
 migration checksums, nullable poison records, dictionary validation, retry-pool capacity, stable
 seeded subjects and visible outbox delivery failures. [US1 evidence](../../docs/evidence/us1.md)
 distinguishes these local checks from unavailable real peer/platform acceptance.
+
+### Phase 4 purchase implementation
+
+T031–T045 add ordered SQL quotas and two-second Admission leases, eligible attempt snapshots,
+fenced durable PurchaseIntents, authoritative offer checks, the mTLS/gRPC Inventory client,
+Order acceptance/payment-success, explicit gateway routes and checkout/status pages. Production
+quota time comes from PostgreSQL after row locks; tests supply controlled time. Worker claims last
+five seconds and always retain the proposed Order ID. Successful payment uses its event correlation
+on downstream RPCs. No new dependency version or peer implementation is introduced.
+
+The three purchase demos use isolated owner SQL and contract scripts; purchase-success also
+crosses actual gRPC/Kafka. The test owner verifier requires complete matching run/sale/shoppers/
+reservation/outcome evidence and rejects fixture-mode or insufficient evidence. E1 remains
+unavailable for actual cap/no-oversell/settlement acceptance; E4 remains pending. Phase 5 owns the
+autonomous intent/saga reconciliation and failure/refund work. See [US2 evidence](../../docs/evidence/us2.md).
 
 ### Architecture and boundaries
 

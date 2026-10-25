@@ -3,8 +3,8 @@
 Flashkart is an eight-service flash-sale project for demonstrating limited-stock purchases,
 asynchronous settlement, stream analytics, and leaderless catalog metadata recovery.
 Mukthish's implementation branch includes sale configuration/readiness, Admission's sale projection,
-operator/storefront pages and the Go authentication/SQL/Kafka foundation. Business purchase flows
-are not implemented yet; Catalog/Inventory acceptance remains external.
+shared SQL quotas, durable purchase keys, Order acceptance/payment success, checkout/status pages
+and the Go authentication/SQL/Kafka foundation. Recovery/refunds and real peer acceptance remain pending.
 
 Start with the [architecture and ownership](docs/architecture.md),
 [feature specification](specs/001-flash-sale-platform/spec.md),
@@ -39,15 +39,19 @@ make dev-up
 make test-integration smoke-foundation
 make demo SCENARIO=sale-readiness
 make demo SCENARIO=sale-overlap
+make demo SCENARIO=purchase-success
+make demo SCENARIO=shopper-cap
+make demo SCENARIO=duplicate-replay
 make dev-down
 ```
 
 Use Linux, Go toolchain download support, Python/venv, Make and a C compiler. Dependency containers
 need Docker or a rootless Podman API socket. See [development instructions](docs/development.md)
 for prerequisites, configuration, foundation readiness, peer-review gates and cleanup.
-[Phase 3 evidence](docs/evidence/us1.md) records local sale, readiness, schedule and browsing checks;
+[Phase 3 evidence](docs/evidence/us1.md) records sale/browsing checks and
+[Phase 4 evidence](docs/evidence/us2.md) records purchase, race and browser checks;
 real peer acceptance and E4 review are pending. The storefront is `/` and the operator desk is
-`/operator/sales` on `http://127.0.0.1:8080`. CLI browser checks use Node.js 22+ and pinned Playwright:
+`/operator/sales`; checkout is `/checkout` and order polling is `/orders` on `http://127.0.0.1:8080`. CLI browser checks use Node.js 22+ and pinned Playwright:
 `make browser-bootstrap test-frontend test-browser` while the local processes are running. The broader quickstart
 contains later-phase command contracts; those targets fail clearly until implemented.
 
