@@ -7,6 +7,7 @@ import (
 	"flash-sale/internal/platform/eventstore"
 	"github.com/IBM/sarama"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"log/slog"
 	"net"
 	"time"
@@ -105,6 +106,10 @@ func dependencyOutage(err error) bool {
 		return false
 	}
 	if errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+	var database *pgconn.PgError
+	if errors.As(err, &database) && (database.Code == "57P03" || database.Code == "53300") {
 		return true
 	}
 	var network net.Error

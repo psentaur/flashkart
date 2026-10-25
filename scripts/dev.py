@@ -71,7 +71,15 @@ def assert_children_alive(children):
 
 def check_listeners(values):
     addresses=[values.get(prefix+'_LISTEN_ADDR',default) for prefix,default in [('GATEWAY','127.0.0.1:8080'),('ADMISSION','127.0.0.1:8081'),('FLASH_SALE','127.0.0.1:8082'),('ORDER','127.0.0.1:8083'),('ANALYTICS','127.0.0.1:8084'),('FLASH_SALE_INTERNAL','127.0.0.1:8442')]]
-    addresses += [urlsplit(values[key]).netloc for key in ['CATALOG_URL','NOTIFICATION_URL']]
+    for key in ['CATALOG_URL','NOTIFICATION_URL']:
+        try:
+            endpoint=urlsplit(values[key])
+            if endpoint.scheme not in ('http','https') or not endpoint.hostname:raise ValueError('invalid HTTP(S) URL')
+            port=endpoint.port if endpoint.port is not None else {'http':80,'https':443}[endpoint.scheme]
+        except ValueError as exc:
+            raise RuntimeError(f'{key} must be an HTTP(S) URL with a hostname and valid port') from exc
+        host=endpoint.hostname
+        addresses.append(f'[{host}]:{port}' if ':' in host else f'{host}:{port}')
     addresses.append(values['INVENTORY_GRPC_ADDRESS'])
     for address in addresses:
         host,port=address.rsplit(':',1);host=host.strip('[]')

@@ -111,3 +111,29 @@ class FailedLaunchCleanupTest(unittest.TestCase):
             kill.assert_called_once_with(123, DEV.signal.SIGTERM)
             records = json.loads((root / '.cache/processes.json').read_text())
             self.assertEqual([item['pid'] for item in records], [123])
+
+class ListenerURLTest(unittest.TestCase):
+    def check_urls(self, catalog, notification):
+        values = {'CATALOG_URL': catalog, 'NOTIFICATION_URL': notification,
+                  'INVENTORY_GRPC_ADDRESS': '127.0.0.1:8092'}
+        DEV.check_listeners(values)
+
+    def test_http_and_https_default_ports(self):
+        with patch.object(DEV.socket, 'create_server') as listener:
+            self.check_urls('http://127.0.0.1/catalog', 'https://[::1]')
+        listener.assert_any_call(('127.0.0.1', 80), family=DEV.socket.AF_INET)
+        listener.assert_any_call(('::1', 443), family=DEV.socket.AF_INET6)
+
+    def test_explicit_ports_are_preserved(self):
+        with patch.object(DEV.socket, 'create_server') as listener:
+            self.check_urls('https://127.0.0.1:8090', 'http://[::1]:8091')
+        listener.assert_any_call(('127.0.0.1', 8090), family=DEV.socket.AF_INET)
+        listener.assert_any_call(('::1', 8091), family=DEV.socket.AF_INET6)
+        listener.assert_any_call(('127.0.0.1', 8092), family=DEV.socket.AF_INET)
+
+    def test_invalid_urls_have_configuration_errors_before_binding(self):
+        for url in ['http://', 'localhost', 'ftp://localhost', 'http://localhost:bad', 'http://[::1']:
+            with self.subTest(url=url), patch.object(DEV.socket, 'create_server') as listener:
+                with self.assertRaisesRegex(RuntimeError, 'CATALOG_URL.*HTTP\\(S\\).*port'):
+                    self.check_urls(url, 'http://127.0.0.1:8091')
+                listener.assert_not_called()
