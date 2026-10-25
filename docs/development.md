@@ -1,8 +1,8 @@
 # Local development
 
-Mukthish's Phase 3 implements sale configuration/readiness, Admission's applied projection,
-explicit sale/Catalog gateway routes and operator/storefront pages on the Go foundation.
-Purchase processing, quotas and analytics remain later work. E4 contract review and E1/E2
+Mukthish's Phases 3–4 implement sale configuration/readiness, shared SQL Admission quotas,
+durable purchase keys, Order acceptance/payment success and operator/storefront/checkout/status pages.
+Failure/expiry reconciliation, refunds and analytics remain later work. E4 contract review and E1/E2
 real peer acceptance remain pending; local fixture behavior never substitutes for those gates.
 
 ## Prerequisites and setup
@@ -29,7 +29,7 @@ run-specific Compose project. It refuses to overwrite an existing environment. K
 and RUN_ID with their named volumes. No reset/delete-volume action runs implicitly. Existing
 Phase 1 environments work; new optional defaults are documented in `dev/lead.env.example`.
 
-`dev-up` defaults to explicit local fixture mode. It starts this run's PostgreSQL/Kafka, precreates the three US1 topics from `dev/topics.json`, applies
+`dev-up` defaults to explicit local fixture mode. It starts this run's PostgreSQL/Kafka, precreates the seven sale/purchase fixture topics from `dev/topics.json`, applies
 each owner's foundation and applicable domain migrations, seeds disposable identities/certificates, builds five
 application binaries and the contract fixture process, and waits on readiness under a deadline.
 `DEV_PEER_MODE=real` fails with an explicit handoff result until reviewed peer integration exists.
@@ -172,3 +172,54 @@ For recovery, keep PostgreSQL/Kafka volumes and rerun `make dev-up`; pending des
 and inbox identities are retained. Do not roll deployed schemas back: foundation repairs use a new
 checksummed migration, and incomplete retries use expiring fenced claims. A publication failure now
 returns an inspectable error after its retry metadata commits. See [US1 evidence](evidence/us1.md).
+
+
+## Purchase slice and retained keys
+
+Open `/checkout` or `/orders` at the gateway. Use a seeded SHOPPER token; tokens remain in page
+memory. Review the authoritative offer, quantity and cap before submitting. Transport timeouts,
+429 and retryable 503 retain the original request key and payload. A recorded cap rejection stays
+409 with no Retry-After; an explicitly new purchase after allowance release needs a new key.
+OFFER_CHANGED displays the returned terms for explicit reconfirmation. Reloading the page loses
+in-memory checkout state; keep it open for retries and retain the displayed request key when
+using the API directly. Never reuse a different payload with that key.
+
+The gateway calls Admission over mTLS at `ADMISSION_INTERNAL_URL` (default
+`https://127.0.0.1:8441`); Admission calls Order at `ORDER_INTERNAL_URL` (default
+`https://127.0.0.1:8443`). Override the matching `*_INTERNAL_LISTEN_ADDR` with each URL. These
+listeners authenticate the caller's certificate; shopper/service headers supplied publicly are
+stripped. Order uses its mTLS identity for the private Flash Sale offer and Inventory gRPC.
+The ordinary `ORDER_URL` serves JWT-authenticated, subject-filtered status reads. Neither Inventory
+nor Payment operations are publicly proxied. Metrics include bounded
+`purchase_excluded_submissions_total{reason="unauthorized|malformed|unknown_target"}` at the first
+rejecting boundary; authenticated known inactive/cancelled/unready targets still emit attempts.
+
+Admission uses configured shopper/sale counters and in-flight leases (defaults 5/100/50 and two
+seconds). It samples the database clock after ordered quota row locks; expired leases cease to
+consume capacity. Order retains keys for the dataset lifetime, fences five-second worker claims,
+reserves before acceptance, and commits OrderPending + PaymentRequested with the Order. A lost
+Reserve response is unknown; retry with the same key after REQUEST_IN_PROGRESS. Reserve replay
+uses the original proposed order and trusted terms before fresh offer checks. Successful payment
+confirms/queries Inventory before confirming the Order. Contradictory identities are quarantined.
+
+```sh
+make demo SCENARIO=purchase-success
+make demo SCENARIO=shopper-cap
+make demo SCENARIO=duplicate-replay
+make test-integration
+make test-frontend test-browser
+```
+
+These demos create isolated owned SQL schemas and explicitly scripted peer outcomes. The success
+journey also crosses actual gRPC/Kafka. The default long-running fixture process has no general
+stock/payment simulator: arbitrary purchases will not settle without matching owner responses or
+explicit scripts. No fixture output certifies no-oversell, cumulative allowance or charge effects.
+[US2 evidence](evidence/us2.md) records current results and the live E1/E4 gates.
+
+Restart with retained volumes and keys. Accepted work retains outbox receipts; uncertain intents
+can be retried after their lease using their original key. Phase 5 supplies the autonomous
+one-second reconciliation loop, payment failure/expiry handling and refund obligations. Until
+then, an unresolved successful payment is durably marked RECONCILING, and unsupported failure/refund
+records remain in inspectable failed work. Do not reset keys, manually reopen reservations or
+claim full failure recovery. Revert application revisions only with compatible forward migrations;
+never drop retained intents/orders or roll a checksummed migration back.

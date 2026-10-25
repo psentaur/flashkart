@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository contains shared planning artifacts and Mukthish's Phase 3 sale/browsing implementation and Go foundation for an eight-service flash-sale system. Business purchase services are not implemented yet.
+This repository contains shared planning artifacts and Mukthish's Phase 4 sale/browsing/purchase implementation and Go foundation for an eight-service flash-sale system. Admission and the Order happy path are implemented against contract fixtures; recovery/refunds and real peer acceptance remain pending.
 
 - `docs/architecture.md` records the shared architecture, current decisions and ownership. The original conversation remains local and must not be committed.
 - `.specify/templates/` contains specification, plan, and task templates.

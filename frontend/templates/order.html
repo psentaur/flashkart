@@ -1,0 +1,5 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Order status · Flashkart</title><link rel="stylesheet" href="/assets/base.css"><script defer src="/assets/order-status.js"></script></head>
+<body><header><a href="/">Flashkart</a><nav><a href="/checkout">Checkout</a></nav></header><main><h1>Your order</h1>
+<form id="order-identity"><label>Shopper token <input name="token" type="password" autocomplete="off" required></label><button>Use token</button><button id="clear-order-token" type="button">Sign out</button></form>
+<form id="order-lookup"><label>Order ID <input name="order_id" required></label><button>Check order</button></form><p id="order-message" role="status" aria-live="polite">Enter your token and order ID. Pending orders refresh automatically.</p><dl id="order-details"></dl></main></body></html>

@@ -1,0 +1,41 @@
+const { test, expect } = require('@playwright/test');
+const { randomUUID } = require('node:crypto');
+
+test('checkout preserves retry identity, explains caps, reconfirms offers and polls status', async ({ page }, testInfo) => {
+  const sale = randomUUID(), product = randomUUID(), order = randomUUID();
+  const errors = []; page.on('pageerror', (e) => errors.push(e.message));
+  const offer = { sale_id: sale, product_id: product, version: 1, unit_price_minor: 2500, currency: 'INR', starts_at: new Date(Date.now() - 1000).toISOString(), ends_at: new Date(Date.now() + 600000).toISOString(), status: 'ACTIVE', per_shopper_unit_cap: 1 };
+  const submissions = [];
+  await page.route(`**/v1/sales/${sale}/offer`, (route) => route.fulfill({ json: offer }));
+  await page.route('**/v1/purchases', async (route) => {
+    submissions.push({ key: route.request().headers()['idempotency-key'], body: route.request().postDataJSON() });
+    if (submissions.length === 1) return route.abort('failed');
+    if (submissions.length === 2) return route.fulfill({ status: 409, json: { code: 'PURCHASE_LIMIT_EXCEEDED', retryable: false } });
+    if (submissions.length === 3) return route.fulfill({ status: 409, json: { code: 'OFFER_CHANGED', current_offer: { ...offer, version: 2, unit_price_minor: 3000 } } });
+    return route.fulfill({ status: 202, json: { order_id: order, state: 'PENDING_PAYMENT' } });
+  });
+  await page.goto('/checkout');
+  await page.getByLabel('Shopper token', { exact: true }).fill('fixture-token'); await page.getByRole('button', { name: 'Use token', exact: true }).click();
+  await expect(page.getByLabel('Shopper token', { exact: true })).toHaveValue('');
+  await page.getByLabel('Sale ID', { exact: true }).fill(sale); await page.getByRole('button', { name: 'Review offer', exact: true }).click();
+  await expect(page.locator('#offer-terms')).toContainText('Per-shopper unit cap');
+  await page.getByRole('button', { name: 'Buy at these terms', exact: true }).click(); await expect(page.locator('#purchase-message')).toContainText('outcome is unknown');
+  await page.getByLabel('Quantity', { exact: true }).fill('2'); await page.getByRole('button', { name: 'Retry the same purchase', exact: true }).click();
+  await expect(page.locator('#purchase-message')).toContainText('purchase limit'); expect(submissions[0]).toEqual(submissions[1]);
+  await expect(page.locator('#retry-purchase')).toBeHidden();
+  await page.screenshot({ path: testInfo.outputPath('checkout-cap-desktop.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Start an explicit new purchase', exact: true }).click(); await page.getByRole('button', { name: 'Review offer', exact: true }).click();
+  await page.getByRole('button', { name: 'Buy at these terms', exact: true }).click(); await expect(page.locator('#purchase-message')).toContainText('offer changed');
+  expect(submissions.length).toBe(3);
+  await page.getByRole('button', { name: 'Buy at these terms', exact: true }).click(); await expect(page.locator('#order-link')).toBeVisible();
+  expect(submissions[3].body.expected_unit_price_minor).toBe(3000); expect(submissions[3].key).not.toBe(submissions[2].key);
+  await page.setViewportSize({ width: 390, height: 844 }); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('checkout-mobile.png'), fullPage: true });
+  let reads = 0;
+  await page.route(`**/v1/orders/${order}`, (route) => { reads++; return route.fulfill({ json: { order_id: order, state: reads > 1 ? 'CONFIRMED' : 'PENDING_PAYMENT', quantity: 2, total_minor: 6000, currency: 'INR', expires_at: offer.ends_at, refund_status: 'NONE' } }); });
+  await page.locator('#order-link').click(); await expect(page.getByLabel('Order ID', { exact: true })).toHaveValue(order);
+  await page.getByLabel('Shopper token', { exact: true }).fill('fixture-token'); await page.getByRole('button', { name: 'Use token', exact: true }).click();
+  await page.getByRole('button', { name: 'Check order', exact: true }).click(); await expect(page.locator('#order-message')).toHaveText('Order confirmed.');
+  await page.screenshot({ path: testInfo.outputPath('order-mobile.png'), fullPage: true });
+  expect(errors).toEqual([]);
+});

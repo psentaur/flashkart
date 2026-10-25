@@ -1,12 +1,12 @@
 # Quickstart and Validation Guide: Flash Sale Platform
 
-**Status**: Phases 1–3 sale/readiness/browsing and the foundation are implemented for Mukthish. Purchase and deployment scenarios remain planned.
+**Status**: Phases 1–4 sale/browsing, Admission quotas and the Order purchase/payment-success slice are implemented for Mukthish with contract fixtures. Recovery/refunds, live peer acceptance and deployments remain pending.
 **Date**: 2026-10-25
 
 The available foundation commands and their dependency/runtime requirements are in
 [development instructions](../../docs/development.md): bootstrap/check, dev-init/dev-up/dev-down,
 owned migrations, identity seed, readiness, real foundation integration tests and runtime smoke.
-The sale-readiness and sale-overlap demos are implemented; broader purchase/cloud scenarios remain future command contracts and fail until implemented. The existing Spec Kit command in the next section is usable now. Expected outcomes come from [spec.md](spec.md),
+The sale-readiness, sale-overlap, purchase-success, shopper-cap and duplicate-replay fixture demos are implemented; recovery/notification/analytics/cloud scenarios remain future command contracts. The existing Spec Kit command in the next section is usable now. Expected outcomes come from [spec.md](spec.md),
 [data-model.md](data-model.md), and [service contracts](contracts/README.md).
 
 ## Validate planning prerequisites now
@@ -21,7 +21,7 @@ python3 .specify/scripts/python/check_prerequisites.py --json --require-spec
 Expected: active feature resolves to `specs/001-flash-sale-platform`, plan/spec exist, and
 `research.md`, `data-model.md`, `contracts/`, and this guide are discoverable. Do not require
 `tasks.md` for this design-only check. The 2026-10-25 Mukthish task refresh preserves all 100
-task IDs; T001–T030 are now implemented and includes the clarified scenarios below; implementation checks still
+task IDs; T001–T045 are now implemented and includes the clarified scenarios below; implementation checks still
 require runnable code and the declared peer adapters.
 No application build/test result is implied.
 
@@ -56,7 +56,7 @@ make wait-ready
 Kafka, four foundation runtimes, gateway/frontend and explicitly marked contract fixtures.
 Real peer adapters require their owners and E4 review.
 `migrate` runs the foundation and the owned Flash Sale/Admission domain migrations. `dev-up` also
-precreates the six-partition US1 topics from `dev/topics.json` in explicit local fixture mode. `seed PROFILE=foundation` refreshes
+precreates the six-partition sale/purchase topics from `dev/topics.json` in explicit local fixture mode. `seed PROFILE=foundation` refreshes
 operator/shopper tokens while retaining their subjects and local service certificates. It does not seed products, sale schedules
 or payment modes; those fixtures and `PROFILE=baseline` arrive with the story implementations. `wait-ready` waits on explicit health/readiness
 conditions with a deadline, rather than sleeping for an arbitrary duration.
@@ -109,9 +109,13 @@ make test-frontend test-browser
 Browser checks use real sale APIs and controlled Catalog metadata; they refresh expiring fixture
 tokens without replacing subjects and retain reports/screenshots under `.cache/evidence/`. Local
 SQL checks use unique schemas and clocks. See [US1 evidence](../../docs/evidence/us1.md) and the
-[pending contract review](../../docs/contract-review.md). No purchase acceptance is claimed.
+[pending contract review](../../docs/contract-review.md). See [US2 evidence](../../docs/evidence/us2.md) for the purchase fixture checks; actual peer acceptance remains unverified.
 
 ## Validate one purchase through the public contract
+
+Phase 4 fixture demos are runnable now. The manual success flow below requires live E1 or
+explicit matching Inventory/Payment scripts; the default fixture process is deliberately unscripted.
+Notification delivery remains Phase 6/E2 work. An unavailable peer is never a passed acceptance check.
 
 After seeding, obtain the disposable `SHOPPER_TOKEN`, `SALE_ID`, and `PRODUCT_ID` from the local
 fixture report. The baseline unit price is 2500 minor units of INR and offer version is 1.
@@ -156,7 +160,7 @@ than print a plausible demonstration transcript.
 | `make demo SCENARIO=sale-readiness` | Missing/current/obsolete acknowledgements, cancellation and start/end boundaries behave correctly; price/allocation/cap freeze and readiness digest hold | US1; SC-001 |
 | `make demo SCENARIO=sale-overlap` | Concurrent same-product creates/reschedules cannot both commit; 409 SALE_WINDOW_CONFLICT; adjacent windows, different products and pre-start cancelled-window replacement succeed | US1.6/7; SC-001 |
 | `make demo SCENARIO=shopper-cap` | Distinct keys on multiple instances cannot exceed cap; duplicates replay; release/expiry (with delayed cleanup) frees allowance; confirmation retains it; restart/orphan hold/late success cannot bypass it; test cap=1 and a larger cap with quantity >1 | US2.7/8; SC-002/004/006 |
-| `make demo SCENARIO=purchase-success` | One live hold -> pending Order -> stable successful charge -> confirmed hold/Order -> one notice | US2; SC-004/005/008 |
+| `make demo SCENARIO=purchase-success` | Fixture: scripted hold -> durable pending Order -> scripted Payment through Kafka -> confirmed Order; real charge/notice acceptance needs E1/E2 | US2; SC-004/005/008 |
 | `make demo SCENARIO=payment-failure` | Failed charge releases once; Order fails; stock returns | US3.1; SC-006 |
 | `make demo SCENARIO=expiry-race` | 120-second hold expires; simultaneous Confirm/Release/Expire has one winner; confirmation at expiry fails | US3.2/3; SC-006 |
 | `make demo SCENARIO=late-payment` | Expired/released hold is never reopened; later success creates/completes one visible refund | US3.4; SC-006 |

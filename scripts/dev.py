@@ -70,7 +70,7 @@ def assert_children_alive(children):
             raise RuntimeError(f'{component} exited during startup; inspect .cache/logs/{component}.log')
 
 def check_listeners(values):
-    addresses=[values.get(prefix+'_LISTEN_ADDR',default) for prefix,default in [('GATEWAY','127.0.0.1:8080'),('ADMISSION','127.0.0.1:8081'),('FLASH_SALE','127.0.0.1:8082'),('ORDER','127.0.0.1:8083'),('ANALYTICS','127.0.0.1:8084'),('FLASH_SALE_INTERNAL','127.0.0.1:8442')]]
+    addresses=[values.get(prefix+'_LISTEN_ADDR',default) for prefix,default in [('GATEWAY','127.0.0.1:8080'),('ADMISSION','127.0.0.1:8081'),('FLASH_SALE','127.0.0.1:8082'),('ORDER','127.0.0.1:8083'),('ANALYTICS','127.0.0.1:8084'),('FLASH_SALE_INTERNAL','127.0.0.1:8442'),('ADMISSION_INTERNAL','127.0.0.1:8441'),('ORDER_INTERNAL','127.0.0.1:8443')]]
     for key in ['CATALOG_URL','NOTIFICATION_URL']:
         try:
             endpoint=urlsplit(values[key])

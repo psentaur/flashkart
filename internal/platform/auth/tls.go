@@ -25,3 +25,15 @@ func ServerTLS(dir, service string) (*tls.Config, error) {
 	}
 	return &tls.Config{MinVersion: tls.VersionTLS13, Certificates: []tls.Certificate{cert}, ClientAuth: tls.RequireAndVerifyClientCert, ClientCAs: ca}, nil
 }
+
+// ClientTLS presents the caller's service identity and verifies the server chain.
+func ClientTLS(dir, service string) (*tls.Config, error) {
+	cfg, err := ServerTLS(dir, service)
+	if err != nil {
+		return nil, err
+	}
+	cfg.RootCAs = cfg.ClientCAs
+	cfg.ClientCAs = nil
+	cfg.ClientAuth = tls.NoClientCert
+	return cfg, nil
+}

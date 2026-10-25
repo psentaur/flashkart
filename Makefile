@@ -31,7 +31,7 @@ test-browser:
 	$(PYTHON) scripts/test_browser.py
 
 test-frontend:
-	node --test frontend/tests/sales.test.cjs
+	node --test frontend/tests/*.test.cjs
 
 tooling-check:
 	$(PYTHON) -B -m unittest discover -s scripts/tests

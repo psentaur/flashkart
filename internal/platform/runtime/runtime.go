@@ -58,6 +58,7 @@ func (l Lifecycle) Handler(frontend http.Handler) http.Handler {
 }
 
 type Application struct {
+	Metrics      *telemetry.Metrics
 	Private      *http.Server
 	Handler      http.Handler
 	Worker       func(context.Context) error
@@ -135,6 +136,9 @@ func RunApplication(ctx context.Context, component string, build Build) error {
 		checks[name] = check
 	}
 	l := Lifecycle{Capabilities: app.Capabilities, Component: component, Checks: checks, Metrics: telemetry.New(), Revision: env("APP_REVISION", "development")}
+	if app.Metrics != nil {
+		l.Metrics = app.Metrics
+	}
 	listener, e := net.Listen("tcp", cfg.ListenAddress)
 	if e != nil {
 		return e

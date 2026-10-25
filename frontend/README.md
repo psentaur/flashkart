@@ -16,7 +16,9 @@ make dev-down
 ```
 
 The gateway serves `/` and `/operator/sales` from this module. Catalog is display metadata;
-current sale terms are fetched from Flash Sale. Checkout is a later story.
+current sale terms are fetched from Flash Sale. `/checkout` keeps purchase keys across transport
+retries, displays the cap and requires offer reconfirmation. `/orders` polls subject-filtered status.
+Tokens and checkout state remain in page memory; keep the page open while retrying.
 
 Configuration, private identities, SQL migrations, Kafka topics and retained-state recovery are in
 [development instructions](../docs/development.md). `make dev-up` uses explicit local fixtures;
@@ -35,3 +37,6 @@ make test-frontend test-browser
 `.cache/`. The browser journey uses real sale APIs and controlled Catalog metadata. Browser tests
 refresh expiring local tokens without changing subjects, disable network traces and cancel their
 own pre-start sale fixtures. Node/Playwright are not application runtime dependencies.
+
+[US2 evidence](../docs/evidence/us2.md) records checkout/status DOM and Chromium desktop/mobile
+checks. See the [purchase retry/recovery guide](../docs/development.md#purchase-slice-and-retained-keys).

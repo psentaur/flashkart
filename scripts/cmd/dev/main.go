@@ -12,6 +12,7 @@ import (
 	"flash-sale/scripts/internal/fixtures"
 	admission "flash-sale/services/admission"
 	flashsale "flash-sale/services/flash-sale"
+	order "flash-sale/services/order"
 	"fmt"
 	"github.com/IBM/sarama"
 	"net/http"
@@ -106,6 +107,8 @@ func migrate(ctx context.Context) error {
 				e = admission.Migrate(ctx, p)
 			case "flash-sale":
 				e = flashsale.Migrate(ctx, p)
+			case "order":
+				e = order.Migrate(ctx, p)
 			}
 		}
 		p.Close()

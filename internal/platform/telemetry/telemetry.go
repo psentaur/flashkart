@@ -19,7 +19,7 @@ type Metrics struct {
 
 func New() *Metrics {
 	r := prometheus.NewRegistry()
-	m := &Metrics{r, prometheus.NewCounterVec(prometheus.CounterOpts{Name: "flashkart_http_requests_total", Help: "Requests by registered route and status class"}, []string{"route", "status"}), prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: "flashkart_http_seconds", Help: "Initial response latency", Buckets: prometheus.DefBuckets}, []string{"route"}), prometheus.NewCounterVec(prometheus.CounterOpts{Name: "flashkart_excluded_submissions_total", Help: "Traffic excluded from sale analytics"}, []string{"reason"})}
+	m := &Metrics{r, prometheus.NewCounterVec(prometheus.CounterOpts{Name: "flashkart_http_requests_total", Help: "Requests by registered route and status class"}, []string{"route", "status"}), prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: "flashkart_http_seconds", Help: "Initial response latency", Buckets: prometheus.DefBuckets}, []string{"route"}), prometheus.NewCounterVec(prometheus.CounterOpts{Name: "purchase_excluded_submissions_total", Help: "Traffic excluded from sale analytics"}, []string{"reason"})}
 	r.MustRegister(m.Requests, m.Latency, m.Excluded)
 	return m
 }
@@ -28,7 +28,7 @@ func (m *Metrics) Handler() http.Handler {
 }
 func (m *Metrics) Exclude(reason string) {
 	switch reason {
-	case "malformed", "unauthorized", "unknown_target", "mismatched_target":
+	case "malformed", "unauthorized", "unknown_target":
 		m.Excluded.WithLabelValues(reason).Inc()
 	default:
 		m.Excluded.WithLabelValues("other").Inc()

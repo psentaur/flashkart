@@ -17,6 +17,14 @@ import (
 type correlationKey struct{}
 
 func Correlation(ctx context.Context) string { s, _ := ctx.Value(correlationKey{}).(string); return s }
+
+// WithCorrelation carries event/request identity into background downstream calls.
+func WithCorrelation(ctx context.Context, id string) context.Context {
+	if value.UUID(id) != nil {
+		id = clock.UUID()
+	}
+	return context.WithValue(ctx, correlationKey{}, id)
+}
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := Correlation(r.Context())

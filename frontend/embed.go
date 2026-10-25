@@ -30,5 +30,11 @@ func Handler() (http.Handler, error) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_ = page.ExecuteTemplate(w, "sales.html", nil)
 	})
+	for path, name := range map[string]string{"/checkout": "checkout.html", "/orders": "order.html"} {
+		mux.HandleFunc("GET "+path, func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_ = page.ExecuteTemplate(w, name, nil)
+		})
+	}
 	return mux, nil
 }

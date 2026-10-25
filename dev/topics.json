@@ -3,7 +3,11 @@
   "topics": [
     "sale.config.v1",
     "sale.ready.v1",
-    "analytics.activity.v1"
+    "analytics.activity.v1",
+    "payment.requests.v1",
+    "payment.events.v1",
+    "order.events.v1",
+    "inventory.events.v1"
   ],
   "partitions": 6,
   "replication_factor": 1,

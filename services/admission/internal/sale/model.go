@@ -10,7 +10,6 @@ import (
 	"flash-sale/internal/platform/eventstore"
 	"flash-sale/internal/platform/postgres"
 	"flash-sale/services/admission/migrations"
-	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"time"
@@ -28,8 +27,10 @@ func (s Store) now() time.Time {
 	return time.Now().UTC()
 }
 func Migrate(ctx context.Context, p *pgxpool.Pool) error {
-	return postgres.Migrate(ctx, p, []postgres.Migration{{Name: "001_sales", SQL: migrations.Sales}})
+	return postgres.Migrate(ctx, p, []postgres.Migration{{Name: "001_sales", SQL: migrations.Sales}, {Name: "002_quotas", SQL: migrations.Quotas}})
 }
+
+var ErrNotFound = errors.New("known configuration not found")
 
 type Projection struct {
 	events.SaleConfigured
@@ -43,7 +44,7 @@ func (s Store) Get(ctx context.Context, id string) (Projection, error) {
 	var version int64
 	e := s.Pool.QueryRow(ctx, "SELECT configuration,version,cancelled,activated_version FROM applied_sales WHERE sale_id=$1", id).Scan(&raw, &version, &p.Cancelled, &p.ActivatedVersion)
 	if errors.Is(e, pgx.ErrNoRows) || e == nil && raw == nil {
-		return p, fmt.Errorf("known configuration not found")
+		return p, ErrNotFound
 	}
 	if e != nil {
 		return p, e

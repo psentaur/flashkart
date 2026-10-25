@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Checkout · Flashkart</title><link rel="stylesheet" href="/assets/base.css"><script defer src="/assets/purchase.js"></script></head>
+<body data-page="checkout"><header><a href="/">Flashkart</a><nav><a href="/checkout">Checkout</a> <a href="/orders">Order status</a></nav></header><main>
+<h1>Confirm your purchase</h1><p>Review the current offer before buying. Inventory checks stock and your sale allowance when reserving.</p>
+<form id="shopper-identity"><label>Shopper token <input name="token" type="password" autocomplete="off" required></label><button>Use token</button><button id="clear-shopper" type="button">Sign out</button></form>
+<p id="identity-message" role="status">Tokens stay in memory for this page.</p>
+<form id="checkout-offer"><label>Sale ID <input name="sale_id" required></label><button>Review offer</button></form>
+<section id="checkout-terms" hidden><h2>Current offer</h2><dl id="offer-terms"></dl>
+<form id="purchase-form"><label>Quantity <input name="quantity" type="number" min="1" max="100" value="1" required></label><button id="purchase-submit">Buy at these terms</button></form></section>
+<p id="purchase-message" role="status" aria-live="polite"></p>
+<button id="retry-purchase" hidden>Retry the same purchase</button>
+<button id="new-purchase" hidden>Start an explicit new purchase</button>
+<p id="purchase-key"></p><a id="order-link" hidden>View order status</a>
+</main></body></html>
