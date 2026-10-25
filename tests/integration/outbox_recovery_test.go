@@ -66,6 +66,11 @@ func TestInboxOutboxCrashRecovery(t *testing.T) {
 	}
 	if _, e = s.Consume(ctx, consumer, en.EventID, []byte("changed"), apply); e == nil {
 		t.Fatal("identity mutation")
+	} else {
+		var poison *events.QuarantineError
+		if !errors.As(e, &poison) {
+			t.Fatal("identity collision is not classifiable poison", e)
+		}
 	}
 	published := map[string]int{}
 	publish := func(_ context.Context, d, k string, b []byte) error {

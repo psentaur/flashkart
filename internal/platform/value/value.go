@@ -123,7 +123,8 @@ func Schema(document, fragment string, additive bool) (*jsonschema.Schema, error
 func allowAdditions(v any) {
 	switch x := v.(type) {
 	case map[string]any:
-		if x["additionalProperties"] == false {
+		_, record := x["properties"]
+		if x["additionalProperties"] == false && record && x["patternProperties"] == nil && x["propertyNames"] == nil {
 			x["additionalProperties"] = true
 		}
 		for _, v := range x {

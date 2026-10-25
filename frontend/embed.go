@@ -12,7 +12,7 @@ import (
 var content embed.FS
 
 func Handler() (http.Handler, error) {
-	page, err := template.ParseFS(content, "templates/index.html")
+	page, err := template.ParseFS(content, "templates/*.html")
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +24,11 @@ func Handler() (http.Handler, error) {
 	mux.Handle("GET /assets/", http.StripPrefix("/assets/", http.FileServerFS(assets)))
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_ = page.ExecuteTemplate(w, "index.html", nil)
+		_ = page.ExecuteTemplate(w, "products.html", nil)
+	})
+	mux.HandleFunc("GET /operator/sales", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_ = page.ExecuteTemplate(w, "sales.html", nil)
 	})
 	return mux, nil
 }

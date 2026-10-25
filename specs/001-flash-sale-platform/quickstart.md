@@ -1,12 +1,12 @@
 # Quickstart and Validation Guide: Flash Sale Platform
 
-**Status**: Phases 1–2 foundation is implemented for Mukthish; business and deployment scenarios below remain planned.
+**Status**: Phases 1–3 sale/readiness/browsing and the foundation are implemented for Mukthish. Purchase and deployment scenarios remain planned.
 **Date**: 2026-10-25
 
 The available foundation commands and their dependency/runtime requirements are in
 [development instructions](../../docs/development.md): bootstrap/check, dev-init/dev-up/dev-down,
 owned migrations, identity seed, readiness, real foundation integration tests and runtime smoke.
-Broader business/cloud/scenario commands remain future command contracts and fail until implemented. The existing Spec Kit command in the next section is usable now. Expected outcomes come from [spec.md](spec.md),
+The sale-readiness and sale-overlap demos are implemented; broader purchase/cloud scenarios remain future command contracts and fail until implemented. The existing Spec Kit command in the next section is usable now. Expected outcomes come from [spec.md](spec.md),
 [data-model.md](data-model.md), and [service contracts](contracts/README.md).
 
 ## Validate planning prerequisites now
@@ -21,7 +21,7 @@ python3 .specify/scripts/python/check_prerequisites.py --json --require-spec
 Expected: active feature resolves to `specs/001-flash-sale-platform`, plan/spec exist, and
 `research.md`, `data-model.md`, `contracts/`, and this guide are discoverable. Do not require
 `tasks.md` for this design-only check. The 2026-10-25 Mukthish task refresh preserves all 100
-task IDs; T001–T020 are now complete and includes the clarified scenarios below; implementation checks still
+task IDs; T001–T030 are now implemented and includes the clarified scenarios below; implementation checks still
 require runnable code and the declared peer adapters.
 No application build/test result is implied.
 
@@ -55,8 +55,9 @@ make wait-ready
 `bootstrap` checks your tools and installs locked dependencies; `dev-up` starts your PostgreSQL,
 Kafka, four foundation runtimes, gateway/frontend and explicitly marked contract fixtures.
 Real peer adapters require their owners and E4 review.
-`migrate` currently runs only your foundation migrations. `seed PROFILE=foundation` generates
-operator/shopper tokens and local service certificates. It does not seed products, sale schedules
+`migrate` runs the foundation and the owned Flash Sale/Admission domain migrations. `dev-up` also
+precreates the six-partition US1 topics from `dev/topics.json` in explicit local fixture mode. `seed PROFILE=foundation` refreshes
+operator/shopper tokens while retaining their subjects and local service certificates. It does not seed products, sale schedules
 or payment modes; those fixtures and `PROFILE=baseline` arrive with the story implementations. `wait-ready` waits on explicit health/readiness
 conditions with a deadline, rather than sleeping for an arbitrary duration.
 
@@ -88,6 +89,27 @@ Do not run Go workspace-root `go test ./...` and assume it covered all modules. 
 enumerates your modules and runs `go test -race ./...` there. Use Goka tester for pure callbacks
 and real Kafka for group-state/View recovery, relay failures, duplicate replay and rebalancing.
 A controlled clock and failpoints drive tests; ordinary end-to-end runs also verify real time.
+
+## Publish and browse a sale now
+
+Open `http://127.0.0.1:8080/` for products or `/operator/sales` for the operator desk. Use the
+operator token from the ignored seeded manifest; keep it private. The form defaults the shopper
+cap to one. Configure a future window, publish, then refresh readiness. Only Admission acknowledges
+automatically in local mode; controlled Catalog/Inventory acknowledgements are supplied by tests,
+not inferred from a running fixture process. Actual Catalog browsing still requires E2 or explicitly
+scripted fixture responses. Current sale offers come from Flash Sale.
+
+```sh
+make demo SCENARIO=sale-readiness
+make demo SCENARIO=sale-overlap
+make browser-bootstrap  # Development-only Node.js 22+ and matching Chromium
+make test-frontend test-browser
+```
+
+Browser checks use real sale APIs and controlled Catalog metadata; they refresh expiring fixture
+tokens without replacing subjects and retain reports/screenshots under `.cache/evidence/`. Local
+SQL checks use unique schemas and clocks. See [US1 evidence](../../docs/evidence/us1.md) and the
+[pending contract review](../../docs/contract-review.md). No purchase acceptance is claimed.
 
 ## Validate one purchase through the public contract
 

@@ -52,3 +52,18 @@ class ProcessBoundaryTest(unittest.TestCase):
         self.assertEqual(environment,{'ORDER_DATABASE_URL':'order-private','KAFKA_BROKERS':'localhost:19092'})
 
 if __name__=='__main__':unittest.main()
+
+class StartupIdentityTest(unittest.TestCase):
+    def test_exited_child_fails_startup(self):
+        from unittest.mock import Mock
+        alive=Mock();alive.poll.return_value=None
+        exited=Mock();exited.poll.return_value=1
+        DEV.assert_children_alive([('gateway',alive)])
+        with self.assertRaisesRegex(RuntimeError,'flash-sale exited'):
+            DEV.assert_children_alive([('gateway',alive),('flash-sale',exited)])
+
+    def test_occupied_listener_stops_before_launch(self):
+        values={'CATALOG_URL':'http://127.0.0.1:8090','NOTIFICATION_URL':'http://127.0.0.1:8091','INVENTORY_GRPC_ADDRESS':'127.0.0.1:8092'}
+        with patch.object(DEV.socket,'create_server',side_effect=OSError('occupied')):
+            with self.assertRaisesRegex(RuntimeError,'no application processes started'):
+                DEV.check_listeners(values)

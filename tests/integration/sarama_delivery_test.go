@@ -6,8 +6,10 @@ import (
 	"context"
 	"errors"
 	"flash-sale/internal/platform/clock"
+	"flash-sale/internal/platform/eventstore"
 	"flash-sale/internal/platform/messaging"
 	"github.com/IBM/sarama"
+	"github.com/jackc/pgx/v5"
 	"os"
 	"strings"
 	"testing"
@@ -46,8 +48,29 @@ func TestSaramaDurableAcknowledgementAndRedelivery(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
+	pool := database(t)
+	if e = eventstore.Migrate(ctx, pool); e != nil {
+		t.Fatal(e)
+	}
+	if _, e = pool.Exec(ctx, "CREATE TABLE kafka_effects(id uuid PRIMARY KEY)"); e != nil {
+		t.Fatal(e)
+	}
+	sqlStore := eventstore.Store{Pool: pool}
+	effectID := clock.UUID()
+	durable := func(ctx context.Context, m *sarama.ConsumerMessage) error {
+		_, e := sqlStore.Consume(ctx, "kafka-offset-test", effectID, m.Value, func(tx pgx.Tx) error {
+			_, e := tx.Exec(ctx, "INSERT INTO kafka_effects VALUES($1)", effectID)
+			return e
+		})
+		return e
+	}
 	sentinel := errors.New("crash before commit")
-	if e = messaging.Consume(ctx, group, []string{topic}, func(context.Context, *sarama.ConsumerMessage) error { return sentinel }); !errors.Is(e, sentinel) {
+	if e = messaging.Consume(ctx, group, []string{topic}, func(ctx context.Context, m *sarama.ConsumerMessage) error {
+		if e := durable(ctx, m); e != nil {
+			return e
+		}
+		return sentinel
+	}); !errors.Is(e, sentinel) {
 		t.Fatal(e)
 	}
 	_ = group.Close()
@@ -61,7 +84,10 @@ func TestSaramaDurableAcknowledgementAndRedelivery(t *testing.T) {
 	defer cancelSecond()
 	handled := make(chan struct{}, 1)
 	go func() {
-		done <- messaging.Consume(second, group, []string{topic}, func(_ context.Context, m *sarama.ConsumerMessage) error {
+		done <- messaging.Consume(second, group, []string{topic}, func(ctx context.Context, m *sarama.ConsumerMessage) error {
+			if e := durable(ctx, m); e != nil {
+				return e
+			}
 			if string(m.Value) != "durable-event" {
 				return errors.New("payload changed")
 			}
@@ -92,4 +118,8 @@ func TestSaramaDurableAcknowledgementAndRedelivery(t *testing.T) {
 	}
 	cancelSecond()
 	<-done
+	var effects int
+	if e := pool.QueryRow(ctx, "SELECT count(*) FROM kafka_effects").Scan(&effects); e != nil || effects != 1 {
+		t.Fatal("SQL effect repeated across uncommitted offset", effects, e)
+	}
 }

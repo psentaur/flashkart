@@ -567,6 +567,16 @@
                   "$ref": "#/components/schemas/Sale"
                 }
               }
+            },
+            "headers": {
+              "X-Sale-Freeze-At": {
+                "description": "Earliest immutable original/current start boundary; operator editors freeze at this UTC instant.",
+                "schema": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "Z$"
+                }
+              }
             }
           },
           "400": {
@@ -677,6 +687,16 @@
                   "$ref": "#/components/schemas/Sale"
                 }
               }
+            },
+            "headers": {
+              "X-Sale-Freeze-At": {
+                "description": "Earliest immutable original/current start boundary; operator editors freeze at this UTC instant.",
+                "schema": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "Z$"
+                }
+              }
             }
           },
           "400": {
@@ -761,6 +781,114 @@
         },
         "x-required-role": "OPERATOR",
         "description": "Normalize omitted per_shopper_unit_cap to one. Reject overlapping non-cancelled [starts_at,ends_at) windows for the same product atomically, including concurrent requests; adjacency and different products are allowed. Cap is frozen at the original start boundary."
+      },
+      "get": {
+        "operationId": "getSale",
+        "summary": "Read current sale configuration and readiness",
+        "parameters": [
+          {
+            "name": "sale_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sale"
+                }
+              }
+            },
+            "headers": {
+              "X-Sale-Freeze-At": {
+                "description": "Earliest immutable original/current start boundary; operator editors freeze at this UTC instant.",
+                "schema": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "Z$"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or absent identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Role denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing or not owned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SALE_WINDOW_CONFLICT for same-product overlap, or version/key/freeze conflict; no configuration mutation on rejection.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporary dependency/quorum unavailability",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Whole seconds before retry",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          }
+        },
+        "x-required-role": "OPERATOR",
+        "description": "Operator only. Returns the canonical current configuration, effective status and matching current-version readiness participants."
       }
     },
     "/v1/admin/sales/{sale_id}/cancel": {
@@ -785,6 +913,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Sale"
+                }
+              }
+            },
+            "headers": {
+              "X-Sale-Freeze-At": {
+                "description": "Earliest immutable original/current start boundary; operator editors freeze at this UTC instant.",
+                "schema": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "Z$"
                 }
               }
             }

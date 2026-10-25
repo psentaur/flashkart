@@ -74,3 +74,29 @@ func TestRequiredCapAndResponseOutcome(t *testing.T) {
 		}
 	}
 }
+
+func TestRevenueDictionaryKeepsConstraints(t *testing.T) {
+	raw, _ := contracts.Assets.ReadFile("examples.json")
+	var fixtures struct {
+		Events []map[string]any `json:"events"`
+	}
+	if e := json.Unmarshal(raw, &fixtures); e != nil {
+		t.Fatal(e)
+	}
+	for _, v := range fixtures.Events {
+		if v["type"] != "WindowSummaryUpdated" {
+			continue
+		}
+		data := v["data"].(map[string]any)
+		for _, revenue := range []map[string]any{{"usd": "wrong"}, {"USD": -1}, {"USD": 9007199254740992.0}, {"USD": 1.5}} {
+			data["revenue_by_currency"] = revenue
+			b, _ := json.Marshal(v)
+			var en Envelope
+			_ = json.Unmarshal(b, &en)
+			topic, key := Destination(en)
+			if _, e := Decode(topic, key, b); e == nil {
+				t.Fatalf("invalid currency dictionary accepted: %v", revenue)
+			}
+		}
+	}
+}

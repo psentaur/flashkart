@@ -27,6 +27,7 @@ type Lifecycle struct {
 	Checks        map[string]Check
 	Metrics       *telemetry.Metrics
 	Revision      string
+	Capabilities  []string
 	BusinessReady bool
 }
 
@@ -47,7 +48,7 @@ func (l Lifecycle) Handler(frontend http.Handler) http.Handler {
 				checks[name] = "unavailable"
 			}
 		}
-		httpapi.WriteJSON(w, status, map[string]any{"component": l.Component, "status": map[bool]string{true: "foundation_ready", false: "dependency_unavailable"}[status == 200], "mode": "foundation", "business_ready": l.BusinessReady, "revision": l.Revision, "checks": checks})
+		httpapi.WriteJSON(w, status, map[string]any{"component": l.Component, "status": map[bool]string{true: "foundation_ready", false: "dependency_unavailable"}[status == 200], "mode": "foundation", "business_ready": l.BusinessReady, "capabilities": l.Capabilities, "revision": l.Revision, "checks": checks})
 	})
 	mux.Handle("GET /metrics", l.Metrics.Handler())
 	if frontend != nil {
@@ -55,12 +56,30 @@ func (l Lifecycle) Handler(frontend http.Handler) http.Handler {
 	}
 	return httpapi.Middleware(l.Metrics.Observe("foundation", mux))
 }
+
+type Application struct {
+	Private      *http.Server
+	Handler      http.Handler
+	Worker       func(context.Context) error
+	Checks       map[string]Check
+	Capabilities []string
+}
+type Build func(*pgxpool.Pool, auth.Verifier) (Application, error)
+
 func Run(ctx context.Context, component string, frontend http.Handler) error {
+	return RunApplication(ctx, component, func(_ *pgxpool.Pool, _ auth.Verifier) (Application, error) {
+		return Application{Handler: frontend}, nil
+	})
+}
+func RunApplication(ctx context.Context, component string, build Build) error {
+	ctx, cancelApplication := context.WithCancel(ctx)
+	defer cancelApplication()
 	cfg, e := bootstrap.Load(component)
 	if e != nil {
 		return e
 	}
-	if _, e = auth.Load(os.Getenv("JWT_PUBLIC_KEY_FILE"), env("JWT_ISSUER", "flashkart-local"), env("JWT_AUDIENCE", "flashkart")); e != nil {
+	verifier, e := auth.Load(os.Getenv("JWT_PUBLIC_KEY_FILE"), env("JWT_ISSUER", "flashkart-local"), env("JWT_AUDIENCE", "flashkart"))
+	if e != nil {
 		return e
 	}
 	checks := map[string]Check{}
@@ -108,16 +127,52 @@ func Run(ctx context.Context, component string, frontend http.Handler) error {
 			return e
 		}
 	}
-	l := Lifecycle{Component: component, Checks: checks, Metrics: telemetry.New(), Revision: env("APP_REVISION", "development")}
+	app, e := build(pool, verifier)
+	if e != nil {
+		return e
+	}
+	for name, check := range app.Checks {
+		checks[name] = check
+	}
+	l := Lifecycle{Capabilities: app.Capabilities, Component: component, Checks: checks, Metrics: telemetry.New(), Revision: env("APP_REVISION", "development")}
 	listener, e := net.Listen("tcp", cfg.ListenAddress)
 	if e != nil {
 		return e
 	}
-	server := &http.Server{Handler: l.Handler(frontend), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 30 * time.Second}
-	done := make(chan error, 1)
+	server := &http.Server{Handler: l.Handler(app.Handler), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 30 * time.Second}
+	done := make(chan error, 2)
+	if app.Private != nil {
+		privateListener, err := net.Listen("tcp", app.Private.Addr)
+		if err != nil {
+			_ = listener.Close()
+			return err
+		}
+		defer app.Private.Close()
+		go func() { done <- app.Private.ServeTLS(privateListener, "", "") }()
+	}
 	go func() { done <- server.Serve(listener) }()
-	slog.Info("foundation started", "component", component, "revision", l.Revision, "business_ready", false)
+	defer server.Close()
+	workerDone := make(chan error, 1)
+	if app.Worker != nil {
+		go func() { workerDone <- app.Worker(ctx) }()
+	} else {
+		workerDone = nil
+	}
+	defer func() {
+		cancelApplication()
+		if workerDone != nil {
+			<-workerDone
+		}
+	}()
+	slog.Info("service started", "capabilities", app.Capabilities, "component", component, "revision", l.Revision, "business_ready", false)
 	select {
+	case e := <-workerDone:
+		workerDone = nil
+		_ = server.Close()
+		if e == nil && ctx.Err() == nil {
+			return fmt.Errorf("application worker stopped")
+		}
+		return e
 	case e := <-done:
 		if errors.Is(e, http.ErrServerClosed) {
 			return nil
@@ -126,6 +181,12 @@ func Run(ctx context.Context, component string, frontend http.Handler) error {
 	case <-ctx.Done():
 		shutdown, cancel := context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 		defer cancel()
+		if app.Private != nil {
+			if err := app.Private.Shutdown(shutdown); err != nil {
+				_ = server.Close()
+				return err
+			}
+		}
 		if e = server.Shutdown(shutdown); e != nil {
 			_ = server.Close()
 			return e

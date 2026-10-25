@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Run only local dependency containers and Mukthish's Phase 1 binaries."""
 from __future__ import annotations
-import argparse,json,os,re,secrets,shlex,shutil,subprocess,sys,signal,time
+import argparse,json,os,re,secrets,shlex,shutil,socket,subprocess,sys,signal,time
+from urllib.parse import urlsplit
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -63,11 +64,28 @@ def run_component(component):
     # Run the binary directly so SIGINT/SIGTERM reaches its shutdown handler.
     os.chdir(ROOT);os.execve(target,[str(target)],env)
 
+def assert_children_alive(children):
+    for component, process in children:
+        if process.poll() is not None:
+            raise RuntimeError(f'{component} exited during startup; inspect .cache/logs/{component}.log')
+
+def check_listeners(values):
+    addresses=[values.get(prefix+'_LISTEN_ADDR',default) for prefix,default in [('GATEWAY','127.0.0.1:8080'),('ADMISSION','127.0.0.1:8081'),('FLASH_SALE','127.0.0.1:8082'),('ORDER','127.0.0.1:8083'),('ANALYTICS','127.0.0.1:8084'),('FLASH_SALE_INTERNAL','127.0.0.1:8442')]]
+    addresses += [urlsplit(values[key]).netloc for key in ['CATALOG_URL','NOTIFICATION_URL']]
+    addresses.append(values['INVENTORY_GRPC_ADDRESS'])
+    for address in addresses:
+        host,port=address.rsplit(':',1);host=host.strip('[]')
+        try:
+            with socket.create_server((host,int(port)),family=socket.AF_INET6 if ':' in host else socket.AF_INET):pass
+        except OSError as exc:
+            raise RuntimeError(f'Configured listener {address} is unavailable; no application processes started') from exc
+
 def launch():
     state=ROOT/'.cache/processes.json'
     if state.exists():raise SystemExit('Local processes already recorded; use make wait-ready or make dev-down')
     paths={'admission':'services/admission','flash-sale':'services/flash-sale','order':'services/order','analytics':'services/analytics','gateway':'gateway','doubles':'tests/doubles'}
-    processes=[]
+    check_listeners(load_env())
+    processes=[];children=[]
     try:
         for component,path in paths.items():
             target=ROOT/'.cache/bin'/component;target.parent.mkdir(parents=True,exist_ok=True)
@@ -82,8 +100,11 @@ def launch():
             with logpath.open('ab') as log:
                 p=subprocess.Popen([str(target)],cwd=ROOT,env=values,stdout=log,stderr=log,start_new_session=True)
             processes.append({'component':component,'pid':p.pid,'binary':str(target)})
+            children.append((component,p));assert_children_alive(children)
+        assert_children_alive(children)
         state.write_text(json.dumps(processes))
     except BaseException:
+        state.write_text(json.dumps(processes))
         for p in processes:
             try:os.kill(p['pid'],signal.SIGTERM)
             except ProcessLookupError:pass
@@ -138,4 +159,4 @@ def main():
 
 if __name__=='__main__':
     try:raise SystemExit(main())
-    except (subprocess.CalledProcessError,OSError) as exc:print(f'Development command failed: {exc}',file=sys.stderr);raise SystemExit(1)
+    except (subprocess.CalledProcessError,OSError,RuntimeError) as exc:print(f'Development command failed: {exc}',file=sys.stderr);raise SystemExit(1)
