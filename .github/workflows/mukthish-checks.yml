@@ -1,4 +1,4 @@
-name: Mukthish Phase 1 checks
+name: Mukthish foundation checks
 on:
   push:
     branches: [001-mukthish-implementation]
@@ -27,7 +27,12 @@ jobs:
         run: make bootstrap
       - name: Verify Mukthish's workspace and contracts
         run: bash ci/lead-checks.sh
-      - name: Validate local configuration and real startup shells
+      - name: Validate local dependencies, crash recovery and foundation runtime
         run: |
           make dev-init deps-config
-          make smoke-phase1
+          make dev-up
+          make test-integration smoke-foundation
+
+      - name: Stop local processes and containers
+        if: always()
+        run: make dev-down

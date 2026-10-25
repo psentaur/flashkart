@@ -2,13 +2,13 @@
 
 ## Project Structure & Module Organization
 
-This repository contains shared planning artifacts and Mukthish's Phase 1 Go workspace for an eight-service flash-sale system. Business purchase services are not implemented yet.
+This repository contains shared planning artifacts and Mukthish's Phase 2 Go foundation for an eight-service flash-sale system. Business purchase services are not implemented yet.
 
 - `docs/architecture.md` records the shared architecture, current decisions and ownership. The original conversation remains local and must not be committed.
 - `.specify/templates/` contains specification, plan, and task templates.
 - `.specify/scripts/python/` and `.specify/scripts/bash/` contain workflow utilities; Python is the configured script variant.
 - `.specify/memory/constitution.md` is the adopted v1.0.0 engineering constitution.
-- Shared behavior/data/contracts are in `specs/001-flash-sale-platform/`. Personal plans and tasks belong on contributor implementation branches; Mukthish's branch is `001-mukthish-implementation`. Phase 1 startup shells are under `services/`, `gateway/`, `frontend/`, `internal/platform/`, `contracts/` and `tests/`; teammate source directories are not created.
+- Shared behavior/data/contracts are in `specs/001-flash-sale-platform/`. Personal plans and tasks belong on contributor implementation branches; Mukthish's branch is `001-mukthish-implementation`. Foundation runtimes and test fixtures are under `services/`, `gateway/`, `frontend/`, `internal/platform/`, `contracts/` and `tests/`; teammate source directories are not created.
 
 ## Build, Test, and Development Commands
 
@@ -20,7 +20,7 @@ python3 .specify/scripts/python/create_new_feature.py --short-name purchase-flow
 python3 .specify/scripts/python/check_prerequisites.py --json --require-spec --require-tasks --include-tasks
 ```
 
-These display feature-creation options, scaffold a numbered feature, and validate an active feature's planning prerequisites, respectively. The last command requires populated feature artifacts. Phase 1 commands are `make bootstrap`, `make check`, `make dev-init`, `make deps-up`, `make deps-check` and `make run COMPONENT=gateway`; see `docs/development.md`. Later-phase application/demo/cloud targets fail clearly until implemented.
+These display feature-creation options, scaffold a numbered feature, and validate an active feature's planning prerequisites, respectively. The last command requires populated feature artifacts. Foundation commands are `make bootstrap`, `make check`, `make dev-init`, `make deps-up`, `make deps-check`, `make dev-up`, `make test-integration`, `make smoke-foundation` and `make dev-down`; see `docs/development.md`. Business scenario and cloud targets fail clearly until implemented.
 
 ## Coding Style & Naming Conventions
 

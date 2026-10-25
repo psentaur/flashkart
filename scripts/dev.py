@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run only local dependency containers and Mukthish's Phase 1 binaries."""
 from __future__ import annotations
-import argparse,json,os,re,secrets,shlex,shutil,subprocess,sys
+import argparse,json,os,re,secrets,shlex,shutil,subprocess,sys,signal,time
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -63,8 +63,57 @@ def run_component(component):
     # Run the binary directly so SIGINT/SIGTERM reaches its shutdown handler.
     os.chdir(ROOT);os.execve(target,[str(target)],env)
 
+def launch():
+    state=ROOT/'.cache/processes.json'
+    if state.exists():raise SystemExit('Local processes already recorded; use make wait-ready or make dev-down')
+    paths={'admission':'services/admission','flash-sale':'services/flash-sale','order':'services/order','analytics':'services/analytics','gateway':'gateway','doubles':'tests/doubles'}
+    processes=[]
+    try:
+        for component,path in paths.items():
+            target=ROOT/'.cache/bin'/component;target.parent.mkdir(parents=True,exist_ok=True)
+            values=load_env() if component=='doubles' else application_environment(component)
+            values.pop('JWT_PRIVATE_KEY_FILE',None);values.pop('SEEDED_TOKENS_FILE',None)
+            values['GOCACHE']=str(ROOT/'.cache/go-build')
+            if component=='doubles':
+                for key in list(values):
+                    if key.endswith('_DATABASE_URL') or 'PASSWORD' in key:values.pop(key,None)
+            subprocess.run(['go','build','-buildvcs=false','-o',str(target),'./cmd/server'],cwd=ROOT/path,env=values,check=True)
+            logpath=ROOT/'.cache/logs'/f'{component}.log';logpath.parent.mkdir(parents=True,exist_ok=True)
+            with logpath.open('ab') as log:
+                p=subprocess.Popen([str(target)],cwd=ROOT,env=values,stdout=log,stderr=log,start_new_session=True)
+            processes.append({'component':component,'pid':p.pid,'binary':str(target)})
+        state.write_text(json.dumps(processes))
+    except BaseException:
+        for p in processes:
+            try:os.kill(p['pid'],signal.SIGTERM)
+            except ProcessLookupError:pass
+        raise
+    print('Started five foundation processes and contract fixtures; see .cache/logs')
+
+def stop():
+    state=ROOT/'.cache/processes.json'
+    if not state.exists():return
+    for p in json.loads(state.read_text()):
+        command=Path('/proc')/str(p['pid'])/'cmdline'
+        try:
+            argv=command.read_bytes().split(b'\0')
+            if argv and argv[0].decode()==p['binary']:os.kill(p['pid'],signal.SIGTERM)
+        except (FileNotFoundError,ProcessLookupError):pass
+    deadline=time.monotonic()+10
+    while True:
+        running=False
+        for p in json.loads(state.read_text()):
+            try:running |= (Path('/proc')/str(p['pid'])/'cmdline').read_bytes().split(b'\0')[0].decode()==p['binary']
+            except FileNotFoundError:pass
+        if not running:break
+        if time.monotonic()>=deadline:raise SystemExit('Local shutdown deadline exceeded; process record retained')
+        time.sleep(0.05)
+    state.unlink()
+    print('Signalled only the recorded local processes; volumes and credentials retained')
+
+
 def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('command',choices=['init','config','up','down','status','check','run']);parser.add_argument('--component');args=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('command',choices=['init','config','up','down','status','check','run','launch','stop']);parser.add_argument('--component');args=parser.parse_args()
     if args.command=='init':initialize()
     elif args.command=='config':compose(['config','--quiet'])
     elif args.command=='up':compose(['up','--detach','--wait','--wait-timeout','180'])
@@ -82,6 +131,8 @@ def main():
         compose(['exec','-T','postgres','psql','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1','-c',isolation])
         compose(['exec','-T','kafka','sh','-ec','/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null'])
         print('Local PostgreSQL service logins, btree_gist and Kafka API are reachable')
+    elif args.command=='launch':launch()
+    elif args.command=='stop':stop()
     else:run_component(args.component)
     return 0
 

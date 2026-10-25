@@ -5,6 +5,7 @@ use (
 	./frontend
 	./gateway
 	./internal/platform
+	./scripts
 	./services/admission
 	./services/analytics
 	./services/flash-sale

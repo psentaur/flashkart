@@ -5,13 +5,14 @@ import argparse,hashlib,json,os,platform,shutil,subprocess,sys,tempfile,urllib.r
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
-MODULES=["services/admission","services/flash-sale","services/order","services/analytics","gateway","frontend","internal/platform","contracts","tests"]
+MODULES=["services/admission","services/flash-sale","services/order","services/analytics","gateway","frontend","internal/platform","contracts","tests","scripts"]
 TOOLS=ROOT/".tools"
 VERSIONS=json.loads((ROOT/"dev/tool-versions.json").read_text())
 
 def environment():
     result=os.environ.copy();result["GOTOOLCHAIN"]="go"+VERSIONS["go"]
     result["PATH"]=str(TOOLS/"bin")+os.pathsep+result.get("PATH","")
+    result.setdefault("GOCACHE",str(ROOT/".cache/go-build"))
     result.setdefault("STATICCHECK_CACHE",str(ROOT/".cache/staticcheck"))
     return result
 
@@ -30,6 +31,9 @@ def bootstrap():
     version=run(["go","env","GOVERSION"],capture_output=True,text=True).stdout.strip()
     if version!="go"+VERSIONS["go"]:raise SystemExit("Wrong Go toolchain: "+version)
     run(["go","work","sync"])
+    for module,pins in VERSIONS["workspace_pins"].items():
+        if not pins:continue
+        run(["go","mod","edit",*["-require="+package+"@"+version for package,version in pins.items()]], ROOT/module)
     for module in MODULES:
         env=environment();env["GOWORK"]="off"
         subprocess.run(["go","mod","download","all"],cwd=ROOT/module,env=env,check=True)
@@ -49,7 +53,7 @@ def bootstrap():
         if "sha256:"+hashlib.sha256(data).hexdigest()!=asset["digest"]:raise SystemExit("Compose checksum mismatch")
         temporary=target.with_suffix(".download");temporary.write_bytes(data);temporary.chmod(0o755);temporary.replace(target)
     run([sys.executable,ROOT/"scripts/generate_contracts.py"])
-    print("Pinned tools and all nine modules are ready. Peer contract adoption remains pending.")
+    print("Pinned tools and all workspace modules are ready. Peer contract adoption remains pending.")
 
 def quality(command):
     if command in ("fmt","fmt-check"):

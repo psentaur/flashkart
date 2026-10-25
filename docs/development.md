@@ -1,111 +1,129 @@
-# Phase 1 local development
+# Local foundation development
 
-Mukthish's Phase 1 contains nine Go modules: four domain services, gateway, embedded frontend,
-small platform helpers, draft contracts/bindings, and the integration-test module. Purchase,
-readiness coordination, persistence adapters, JWT middleware and analytics processing arrive in
-later task phases. Peer services and shared cloud resources are external handoffs.
+Mukthish's Phase 2 implements T009–T020 on top of the Phase 1 workspace. Four domain entry points,
+gateway/frontend, shared transport/persistence helpers, contract fixtures and development commands
+are available. Purchase flows, sale configuration, quotas and analytics processing begin in story
+phases. E4 contract review and E1/E2 real peer acceptance remain pending.
 
-## Prerequisites
+## Prerequisites and setup
 
-Use Linux amd64/arm64, Go with automatic toolchain download enabled, Python 3.11+ with venv,
-Make and a C compiler for race-enabled tests. The pinned Go toolchain is 1.27.3. The exact module,
-image and tool versions/checksums are in [tool-versions.json](../dev/tool-versions.json).
-Bootstrap needs HTTPS access to the official Go module proxy/sum database, PyPI and release assets.
-
-For dependency containers use a Docker engine or an existing rootless Podman API socket. The
-pinned standalone Compose client is downloaded by bootstrap; Docker CLI is optional with Podman.
-If needed, start your own socket with `systemctl --user start podman.socket`. Supply DOCKER_HOST
-or COMPOSE_COMMAND to select an existing compatible runtime. This repository never configures
-system services or teammate runtimes for you.
-
-## Setup and quality checks
+Use Linux amd64/arm64, Go toolchain download support, Python 3.11+ with venv, Make and a C compiler.
+Go 1.27.3 and all dependency/tool/image checksums are recorded in `dev/tool-versions.json`.
+Bootstrap needs access to the Go proxy/sum database, PyPI and pinned release assets. Docker or a
+rootless Podman API is required for real PostgreSQL/Kafka. Start your existing socket yourself or
+supply `DOCKER_HOST`/`COMPOSE_COMMAND`; these commands do not configure system services.
 
 ```sh
 make bootstrap
 make check
 make dev-init
-make smoke-phase1
-make deps-config
-make deps-up
-make deps-check
-make deps-status
+make dev-up
+make test-integration smoke-foundation
+make dev-down
 ```
-
-Bootstrap downloads/checks pinned tools, resolves the nine workspace modules and generates only
-the Inventory Go bindings. Python contract-tool dependencies are version/hash locked. `make check`
-runs formatting, vet/staticcheck, per-module compilation, source/example/generated contract checks,
-race-enabled Go tests, Python environment-tool checks and module checksum verification.
-`make smoke-phase1` starts each shell on a temporary loopback port, checks HTTP status/assets
-and SIGTERM shutdown, then stops it. It does not imply live cross-service tests.
-The feature workflow in `.github/workflows/mukthish-checks.yml` runs these checks for your branch
-and pull requests; action revisions are pinned by commit. It adds no teammate build jobs.
-`make fmt` intentionally applies formatting; `make fmt-check` reports drift without editing files.
 
 `dev-init` creates an ignored mode-0600 `.env` with independent random database passwords and a
-run-specific Compose project name. It never prints secrets or overwrites an existing environment.
-Keep RUN_ID and passwords stable while reusing volumes. Edit ports before creating the containers;
-when changing them, update the corresponding URLs/KAFKA_BROKERS in `.env` too. The checked-in
-[environment example](../dev/lead.env.example) contains empty credential fields and peer addresses.
-Do not commit `.env`, signing keys, seeded tokens, caches or the original design conversation.
+run-specific Compose project. It refuses to overwrite an existing environment. Keep credentials
+and RUN_ID with their named volumes. No reset/delete-volume action runs implicitly. Existing
+Phase 1 environments work; new optional defaults are documented in `dev/lead.env.example`.
 
-PostgreSQL and Kafka bind host ports to loopback only, defaulting to 15432 and 19092. Three
-PostgreSQL databases have distinct login owners; PUBLIC cannot connect to them. `btree_gist` is
-installed only in Flash Sale's database. Kafka is one KRaft broker/controller for local development,
-with six default partitions and seven-day raw retention. Application topic creation belongs to
-later tasks; no peer data store, cloud resource or serverless implementation is created here.
-Image tags are paired with immutable registry digests. Runtime checks do not prove broker HA.
-
-## Run a startup shell
+`dev-up` defaults to explicit local fixture mode. It starts this run's PostgreSQL/Kafka, applies
+only each owner's foundation migration, seeds disposable identities/certificates, builds five
+application binaries and the contract fixture process, and waits on readiness under a deadline.
+`DEV_PEER_MODE=real` fails with an explicit handoff result until reviewed peer integration exists.
+The fixture process exposes no production stock, payment, replica or serverless implementation.
 
 ```sh
-make run COMPONENT=admission
-# Other choices: flash-sale, order, analytics, gateway.
+make deps-up       # Containers only; useful for integration tests
+make deps-check    # Real logins, ownership isolation, btree_gist and Kafka API
+make migrate       # Checksummed transactional foundation migrations in three owned databases
+make seed PROFILE=foundation
+make wait-ready
+make run COMPONENT=order
+make demo          # Lists registered scenarios; currently []
 ```
 
-Each binary validates only its required local configuration, exposes `GET /health/live` as 200,
-and keeps `GET /health/ready` at 503 with `phase_1_scaffold`. The gateway serves its embedded
-placeholder at `http://127.0.0.1:8080/`. Domain routes are not implemented. APP_ENV accepts only
-`development` or `test` at this stage; no production readiness is claimed. Each domain process receives only its own database URL; the gateway receives no database
-credentials, fixture signing key or token-file input. Missing/invalid values
-fail with key-specific messages that omit secret values. SIGINT/SIGTERM drains HTTP connections
-with SHUTDOWN_TIMEOUT (default 5s, permitted up to 30s).
+Business seed profiles and unregistered demos fail explicitly. Story phases register scenarios
+through `tests/scenarios/registry.go` and add their own fixtures. `make test-races`, `test-e2e`,
+`load` and cloud/release targets remain unimplemented. `test-unit` already uses the race detector;
+the future `test-races` target is reserved for distributed purchase/expiry scenarios.
+
+## Identity and service boundaries
+
+`seed` writes one operator and 100 shoppers with 15-minute RS256 tokens to the ignored configured
+`SEEDED_TOKENS_FILE`. Services receive only `JWT_PUBLIC_KEY_FILE`, issuer and audience. The
+signing key is never passed to application/fixture processes. Tokens are local inputs, not a
+public minting route. Rerun seed when tokens expire. Seed does not create a product or sale.
+
+Local service certificates live beside the JWT key. They use `spiffe://flashkart/service/<name>`
+subjects, a disposable CA and TLS 1.3. The Inventory fixture accepts only the Order certificate.
+Forwarded shopper headers are trusted only after an allowed mTLS service identity is verified.
+The gateway has no database credentials. Each SQL service receives only its own database URL;
+credentials cannot connect to other service databases. Cloud identity setup stays with E3.
+
+Each application exposes `/health/live`, `/health/ready` and `/metrics`. Ready means the foundation
+dependencies are reachable and SQL migrations are present. Its JSON explicitly includes
+`mode: foundation` and `business_ready: false`. No business routes or complete-service claim is
+implied. The gateway's embedded placeholder remains at `http://127.0.0.1:8080/`.
+Structured request logs carry correlation UUIDs; metrics use bounded route/status/reason labels.
+No raw token, request body, database URL or shopper ID is a metric label.
+
+Logs and process records are under ignored `.cache/`. `dev-down` signals only recorded binaries,
+waits for shutdown, then stops the current Compose project while retaining named volumes and keys.
+It does not kill arbitrary listeners. Use `deps-down` to stop only dependency containers.
+`make smoke-phase1` now points to the current smoke command and exits nonzero; its original
+startup evidence remains in `docs/evidence/phase1.md`.
+
+## Contracts and checks
 
 ```sh
-curl --fail http://127.0.0.1:8081/health/live
-curl -i http://127.0.0.1:8081/health/ready
+make fmt-check lint typecheck contracts-check
+make test-unit
+make test-integration
+make smoke-foundation   # Requires make dev-up
 ```
 
-Later-phase targets (`dev-up`, migrations, business seed/wait-ready, integration/race/e2e demos,
-load and cloud release) deliberately exit nonzero until implemented. `test-unit` already runs
-Go's race detector; `test-races` is reserved for the distributed reservation/expiry scenarios.
-Use `deps-up`/`deps-down` for Phase 1 dependency containers.
+Checks enumerate ten modules, including the Phase 2 Go tooling module under `scripts/`; workspace
+root `go test ./...` does not cover them. Compiler checks also run with `GOWORK=off`. Bootstrap
+retains the intentionally pinned Phase 1 libraries even when Go reconciles unused future imports.
+`make check` includes Python configuration tests, module checksums and generated-binding drift.
 
-## Contracts and review
+`test-integration` uses real local PostgreSQL/Kafka and fails when either is unavailable. It checks
+transactional DDL rollback, checksum drift, inbox repeat handling, business/outbox rollback,
+post-publication crash recovery, independent destination receipts, delayed retries, quarantine,
+audited replay and Kafka group offset ordering/redelivery. `smoke-foundation` checks five live
+processes, honest foundation readiness, metrics, route isolation and allowed/denied gRPC mTLS
+subjects. Both targets retain Go JSON test events under run-specific `.cache/evidence/` directories.
+These targets use build tags `integration` and `runtime`, respectively.
+
+Root contracts remain promoted from `specs/001-flash-sale-platform/contracts/`. `make generate`
+regenerates protobuf bindings and typed event payloads. `contracts-check` validates schemas,
+fixtures, cap/digest controls and both generated outputs. Runtime event consumers accept optional
+additions on known majors and quarantine unknown/invalid records. Two existing AttemptRecorded
+shape examples have inconsistent aggregate identities; runtime tests require their rejection.
+No shared wire schema or approval record was changed to hide that inconsistency.
+
+`make contracts-integration-check` intentionally fails pending E4 review in
+`contracts/adoption.json`. See `docs/peer-adapter-contract.md` for real owner inputs and verifier
+requirements. Fixture mode never satisfies those acceptance gates.
+
+## Recovery and audited replay
+
+Inbox/business/outbox effects share one owner transaction. Kafka offsets follow commit. Each
+outbox record retains separate domain and analytics receipts; incomplete receipts remain pending
+and completed records remain for at least eight days. A crash after publish replays the original
+event ID. Retry work retains original bytes, headers, topic, partition and offset; failed work is
+inspectable through `messaging.RetryStore.Inspect`. Five retries use 1/2/4/8/16-second delays;
+dependency-wide outages pause intake/obligations instead of spending that budget.
+
+After inspecting and repairing a quarantined dependency, supply a valid operator token through
+`REPLAY_OPERATOR_TOKEN` and a reason:
 
 ```sh
-make contracts-sync
-make generate
-make contracts-check
-make contracts-integration-check
+python3 scripts/command.py replay --owner order --id 42 --reason 'dependency repaired'
 ```
 
-`contracts-sync` explicitly replaces the root draft copies from their feature source; it keeps
-the six wire/fixture files byte-for-byte intact and rebases the contract-index data-model link.
-`generate` regenerates Go protobuf bindings with pinned plugins. `contracts-check` compares all
-seven root artifacts with that defined promotion, checks OpenAPI/events/examples, cap bounds,
-canonical cap presence, the current readiness-digest fixture and generated-client drift.
-`contracts-integration-check` additionally requires the recorded E4 review state in
-[adoption.json](../contracts/adoption.json); pending review is an expected blocking result.
-Do not edit that record to assert approval that has not occurred. Agree on contracts before
-coupled service implementation. The outstanding analysis findings are listed in
-[lead-boundaries.md](lead-boundaries.md); this setup does not resolve business protocol gaps.
-
-## Stop local dependencies
-
-```sh
-make deps-down
-```
-
-This stops/removes only this run's containers/network and preserves its named volumes. No volume
-reset runs implicitly. To use a fresh disposable dataset, initialize a separate environment/project;
-review any data removal explicitly. Keep the environment and retained-volume identities together.
+Replay schedules the same record and commits an operator audit row. It never edits the original
+payload or removes a business obligation. Consumer workers in story phases use these primitives;
+there is no generic public replay endpoint. Reconciliation of purchase/refund obligations arrives
+with those stories.

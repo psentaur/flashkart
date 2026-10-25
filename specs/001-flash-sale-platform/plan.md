@@ -17,7 +17,8 @@ preserve stock correctness, asynchronous payment, notifications, analytics and l
 from the 2026-10-25 clarification session: same-product schedules cannot overlap; a cumulative
 per-shopper unit cap defaults to one; sale analytics exclude malformed, unauthorized and unknown-target
 traffic. The subsequent Phase 1 implementation adds only workspace/setup tooling, generated bindings,
-local dependencies and startup shells. Business behavior and deployments remain future work.
+local dependencies and startup shells. Phase 2 now adds foundation primitives, real SQL/Kafka recovery checks and local lifecycle tooling.
+Business behavior and deployments remain future work.
 
 ## Technical Context
 
@@ -88,7 +89,22 @@ are recorded in `dev/tool-versions.json`; module sums/workspace files retain res
 [Development instructions](../../docs/development.md) document the now-available setup commands.
 [Phase 1 evidence](../../docs/evidence/phase1.md) distinguishes compiler/unit/scaffold checks,
 real local dependency health and pending E4 adoption from later integration/runtime claims.
-No peer implementation or cloud runtime is provisioned. Foundation/story tasks remain unchecked.
+No peer implementation or cloud runtime is provisioned. Phase 2 T009–T020 is now complete; story tasks remain unchecked.
+
+### Phase 2 foundation implementation
+
+T009–T020 adds shared validation/authentication, controlled clock/fault seams, HTTP errors/deadlines,
+owned SQL pools/migrations, event codecs, checked Sarama clients, inbox/outbox receipts and durable
+retry/quarantine/replay. Runtime validation uses pinned jsonschema/v6 v6.0.2 against the embedded
+reviewed schema, avoiding an incomplete parallel validator. Event structs are generated from that
+same schema. Its module checksums are recorded with the other pins.
+
+A tenth tooling module under `scripts/` owns the three planned Go CLIs; quality commands enumerate
+it alongside the original nine modules. Fixture-only peers, owner adapter contracts, bounded
+metrics/log correlation, health/readiness and local key/token/service-certificate seed are runnable.
+Foundation readiness explicitly reports `business_ready=false`. [Phase 2 evidence](../../docs/evidence/phase2.md)
+records real PostgreSQL/Kafka failure/recovery and local mTLS/runtime checks. E4 approval, real
+E1/E2 acceptance, story behavior and cloud infrastructure remain pending.
 
 ### Architecture and boundaries
 

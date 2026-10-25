@@ -1,12 +1,12 @@
 # Quickstart and Validation Guide: Flash Sale Platform
 
-**Status**: Phase 1 setup is implemented for Mukthish; the business/integration/deployment scenarios below remain planned.
+**Status**: Phases 1–2 foundation is implemented for Mukthish; business and deployment scenarios below remain planned.
 **Date**: 2026-10-25
 
-The available Phase 1 commands and their dependency/runtime requirements are in
-[development instructions](../../docs/development.md): bootstrap, check, dev-init, deps-up/check/down
-and startup shells. Broader business/cloud/scenario commands below remain future command contracts
-and deliberately fail until implemented. The existing Spec Kit command in the next section is usable now. Expected outcomes come from [spec.md](spec.md),
+The available foundation commands and their dependency/runtime requirements are in
+[development instructions](../../docs/development.md): bootstrap/check, dev-init/dev-up/dev-down,
+owned migrations, identity seed, readiness, real foundation integration tests and runtime smoke.
+Broader business/cloud/scenario commands remain future command contracts and fail until implemented. The existing Spec Kit command in the next section is usable now. Expected outcomes come from [spec.md](spec.md),
 [data-model.md](data-model.md), and [service contracts](contracts/README.md).
 
 ## Validate planning prerequisites now
@@ -21,7 +21,7 @@ python3 .specify/scripts/python/check_prerequisites.py --json --require-spec
 Expected: active feature resolves to `specs/001-flash-sale-platform`, plan/spec exist, and
 `research.md`, `data-model.md`, `contracts/`, and this guide are discoverable. Do not require
 `tasks.md` for this design-only check. The 2026-10-25 Mukthish task refresh preserves all 100
-unchecked task IDs and includes the clarified scenarios below; implementation checks still
+task IDs; T001–T020 are now complete and includes the clarified scenarios below; implementation checks still
 require runnable code and the declared peer adapters.
 No application build/test result is implied.
 
@@ -41,21 +41,23 @@ No application build/test result is implied.
 - Distinct named volumes for the three metadata nodes and separate logical service databases.
   Topic prefixes, fixture identifiers and verifier permissions are isolated by run ID.
 
-## Start the implemented local environment
+## Start the foundation environment now
 
 ```sh
 make bootstrap
+make dev-init
 make dev-up
 make migrate
-make seed PROFILE=baseline
+make seed PROFILE=foundation
 make wait-ready
 ```
 
 `bootstrap` checks your tools and installs locked dependencies; `dev-up` starts your PostgreSQL,
-Kafka, four Go services, gateway/frontend and the teammates' supplied service/function adapters.
-`migrate` runs your migrations and delegates teammate migrations to their declared commands. `seed` generates live sale schedules, operator
-and shopper tokens, product metadata and declared simulator modes; it must not use the fixed
-timestamps in contract examples as a live sale. `wait-ready` waits on explicit health/readiness
+Kafka, four foundation runtimes, gateway/frontend and explicitly marked contract fixtures.
+Real peer adapters require their owners and E4 review.
+`migrate` currently runs only your foundation migrations. `seed PROFILE=foundation` generates
+operator/shopper tokens and local service certificates. It does not seed products, sale schedules
+or payment modes; those fixtures and `PROFILE=baseline` arrive with the story implementations. `wait-ready` waits on explicit health/readiness
 conditions with a deadline, rather than sleeping for an arbitrary duration.
 
 The gateway defaults to `http://localhost:8080`; the frontend uses that same origin. Local HTTP

@@ -1,0 +1,9 @@
+{
+  "contract_version": "1.0.0-draft.2",
+  "adapters": [
+    {"name":"inventory","mode":"real","url":"http://127.0.0.1:8192","credential_env":"INVENTORY_ADAPTER_TOKEN","start":[],"health_path":"/health/ready","fault_path":"/test/faults","verify_path":"/test/verify","capabilities":["stock-ledger","shopper-sale-ledgers","stable-reserve-results","advance-clock","pause-cleanup","restart"]},
+    {"name":"payment","mode":"real","url":"http://127.0.0.1:8193","credential_env":"PAYMENT_ADAPTER_TOKEN","start":[],"health_path":"/health/ready","fault_path":"/test/faults","verify_path":"/test/verify","capabilities":["stable-charge-refund-results","delay-results","restart"]},
+    {"name":"catalog","mode":"real","url":"http://127.0.0.1:8190","credential_env":"CATALOG_ADAPTER_TOKEN","start":[],"health_path":"/health/ready","fault_path":"/test/faults","verify_path":"/test/verify","capabilities":["quorum","replica-faults","restart"]},
+    {"name":"notification","mode":"real","url":"http://127.0.0.1:8191","credential_env":"NOTIFICATION_ADAPTER_TOKEN","start":[],"health_path":"/health/ready","fault_path":"/test/faults","verify_path":"/test/verify","capabilities":["subject-filtered-query","event-invocation","deduplication"]}
+  ]
+}

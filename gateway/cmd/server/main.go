@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flash-sale/frontend"
-	"flash-sale/internal/platform/bootstrap"
+	"flash-sale/internal/platform/runtime"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -19,7 +19,7 @@ func main() {
 		slog.Error("load frontend", "error", err)
 		os.Exit(1)
 	}
-	if err := bootstrap.Run(ctx, "gateway", handler); err != nil {
+	if err := runtime.Run(ctx, "gateway", handler); err != nil {
 		slog.Error("startup failed", "component", "gateway", "error", err)
 		os.Exit(1)
 	}

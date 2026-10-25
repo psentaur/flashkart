@@ -53,6 +53,7 @@ def main():
     changed=copy.deepcopy(sale);changed["per_shopper_unit_cap"]+=1
     assert hashlib.sha256(json.dumps({k:changed[k] for k in keys},sort_keys=True,separators=(',',':')).encode()).hexdigest()!=digest
     subprocess.run([sys.executable,ROOT/"scripts/generate_contracts.py","--check"],check=True)
+    subprocess.run([sys.executable,ROOT/"scripts/generate_events.py","--check"],check=True)
     adoption=json.loads((CONTRACTS/"adoption.json").read_text())
     adopted=adoption["status"]=="approved" and set(adoption["required_reviewers"])<=set(adoption["approved_reviewers"])
     if args.require_adopted and not adopted:raise SystemExit("Contract adoption blocked: producer/consumer reviews are pending (E4)")
