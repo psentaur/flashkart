@@ -1,0 +1,16 @@
+# Local design conversation is deliberately not published.
+Microservices architecture design*.md
+
+# Local credentials, runtime state, caches and agent-machine settings.
+.env
+.env.*
+!.env.example
+*.env
+!*.env.example
+.aws/
+.codex/
+.secrets/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.specify/memory/.*-template.json
