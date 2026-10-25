@@ -11,10 +11,10 @@ normative alongside the wire schemas. Changes require the owner and affected con
 
 | Artifact | Boundary / owner | Required reviewers |
 | --- | --- | --- |
-| [public.openapi.json](public.openapi.json) | Gateway to shopper/operator; project lead coordinates | Members 2/3 for their returned data |
-| [internal.openapi.json](internal.openapi.json) | Admission -> Order; Order -> Flash Sale; local notice adapter | Project lead; Member 3 for notices |
-| [inventory.proto](inventory.proto) | Order -> Inventory; Member 2 owns Inventory | Project lead + Member 2 |
-| [catalog-store.openapi.json](catalog-store.openapi.json) | Catalog -> coordinator -> replicas; Member 3 | Project lead for offer separation |
+| [public.openapi.json](public.openapi.json) | Gateway to shopper/operator; Mukthish coordinates | Members 2/3 for their returned data |
+| [internal.openapi.json](internal.openapi.json) | Admission -> Order; Order -> Flash Sale; local notice adapter | Mukthish; Member 3 for notices |
+| [inventory.proto](inventory.proto) | Order -> Inventory; Member 2 owns Inventory | Mukthish + Member 2 |
+| [catalog-store.openapi.json](catalog-store.openapi.json) | Catalog -> coordinator -> replicas; Member 3 | Mukthish for offer separation |
 | [events.schema.json](events.schema.json) | Producers and independent subscribers | All affected producers/consumers |
 | [examples.json](examples.json) | Independent valid request/response and event-shape fixtures | All members |
 

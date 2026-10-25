@@ -4,11 +4,11 @@
 **Inputs**: [spec.md](spec.md), the source discussion, Constitution v1.0.0, and the user's
 subsequent Goka/Sarama and ownership-scope instructions.
 
-Independent documentation searches covered the lead-owned stack, messaging, recovery, shared
+Independent documentation searches covered Mukthish's stack, messaging, recovery, shared
 interfaces and validation. No agent-delegation tool is available; research was performed directly.
 The decisions below are proposals for implementation, not evidence of running software.
 
-## R1. Scope concrete stack choices to the project lead
+## R1. Scope concrete stack choices to Mukthish
 
 **Decision**: Select Go 1.27.3 only for your Admission, Flash Sale, Order, Analytics, gateway and
 frontend server. Use Goka v1.1.17 for Analytics and IBM Sarama v1.46.3 for your Kafka communication;
@@ -57,12 +57,12 @@ technologies. Your Kafka broker and client configuration are coordinated with th
 
 **Rationale**: Shared interface/reliability constraints enable independent implementation without
 choosing other people's languages, database engines, function platform, cloud provider or IaC tools.
-These delegated choices are not blockers to the lead-owned design and do not waive acceptance gates.
+These delegated choices are not blockers to Mukthish's design and do not waive acceptance gates.
 
 **Alternatives considered**: A fixed AWS/EKS/RDS/Lambda/Terraform prescription would select much of
 the other members' stack. Concrete provider deployment recipes belong to their owned planning work.
 
-## R4. Lead-owned transactional state and cross-service recovery
+## R4. Mukthish's transactional state and cross-service recovery
 
 **Decision**: Use separate PostgreSQL databases for your Flash Sale, Admission and Order state,
 with conditional updates/row locks, unique keys, durable inbox/outbox records, and short transactions.

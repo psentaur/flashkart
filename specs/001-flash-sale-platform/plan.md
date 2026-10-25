@@ -7,7 +7,7 @@
 
 ## Summary
 
-Plan the eight-service project with concrete technology choices only for the project lead's
+Plan the eight-service project with concrete technology choices only for Mukthish's
 Admission, Flash Sale Manager, Order, Sales Analytics, frontend, gateway and Message Queue work.
 Your stack is Go, Goka and Sarama with PostgreSQL for your transactional state. Other owners retain
 control of their languages, frameworks, database engines and deployment tools. Shared contracts
@@ -131,9 +131,9 @@ fresh zero sales. Avoid blind partition-count changes; rebuild/repartition with 
 
 ### Team ownership and delegated choices
 
-| Lead | Domain services | Supporting scope | Concrete stack choices in this plan |
+| Owner | Domain services | Supporting scope | Concrete stack choices in this plan |
 | --- | --- | --- | --- |
-| You | Admission, Flash Sale, Order, Analytics | Frontend, gateway, Message Queue; (c) HPA/load and (e) streaming | Go, Goka, Sarama, your PostgreSQL and validation tools |
+| Mukthish | Admission, Flash Sale, Order, Analytics | Frontend, gateway, Message Queue; (c) HPA/load and (e) streaming | Go, Goka, Sarama, your PostgreSQL and validation tools |
 | Member 2 | Inventory, Payment | Platform/IaC (a), GitOps (d), observability (h) | Chosen by Member 2; shared contracts/guarantees only |
 | Member 3 | Catalog, Notification | Communications/serverless (b), leaderless concept (f), storage products (g) | Chosen by Member 3; shared contracts/guarantees only |
 
@@ -195,11 +195,11 @@ workspace-root `./...` covers every module. No teammate test framework is mandat
 
 | Requirements / outcomes | Verification | Owner |
 | --- | --- | --- |
-| FR-001-FR-004; SC-001/014 | Sale readiness/version, boundaries, offer/role and own-record checks | You + Member 3 |
-| FR-005-FR-010; SC-002/003/004 | Shared quotas, durable request identity, stock ledger, offer mismatch | You + Member 2 |
-| FR-011-FR-017; SC-005/006/007 | Payment/refund stability, races, interrupted transitions, retry/quarantine | You + Member 2 |
+| FR-001-FR-004; SC-001/014 | Sale readiness/version, boundaries, offer/role and own-record checks | Mukthish + Member 3 |
+| FR-005-FR-010; SC-002/003/004 | Shared quotas, durable request identity, stock ledger, offer mismatch | Mukthish + Member 2 |
+| FR-011-FR-017; SC-005/006/007 | Payment/refund stability, races, interrupted transitions, retry/quarantine | Mukthish + Member 2 |
 | FR-018-FR-019; SC-008 | Canonical notices, failure/replay and independent progress | Member 3 |
-| FR-020-FR-022; SC-009 | Event-time/broker cutoffs, golden totals, stable output, rebalance/cache rebuild | You |
+| FR-020-FR-022; SC-009 | Event-time/broker cutoffs, golden totals, stable output, rebalance/cache rebuild | Mukthish |
 | FR-023-FR-026; SC-010 | Quorums, conflicts, uncertain writes, durable recovery and repair | Member 3 |
 | FR-027-FR-033; SC-011/012/013/015 | Platform access, IaC/GitOps/rollback, HPA, storage and all-service evidence | Member 2 + all |
 | FR-034-FR-035 | Ownership, command documentation, quality gates and contracts review | All |
@@ -219,7 +219,7 @@ cloud command was executed. These checks validate design artifacts, not the plan
 
 | Gate | Before research | After Phase 1 | Evidence / required follow-through |
 | --- | --- | --- | --- |
-| I. Readable, Consistent Code | PASS | PASS | Lead-only Go stack, small shared helpers, explicit quality commands |
+| I. Readable, Consistent Code | PASS | PASS | Mukthish's Go stack, small shared helpers, explicit quality commands |
 | II. Explicit Boundaries and Contracts | PASS | PASS | Owned state; REST/protobuf/replica/events; teammate stacks delegated |
 | III. Behavior-Based Verification | PASS | PASS | FR/SC mapping, controlled clocks, real-adapter scenario guide |
 | IV. Distributed Correctness Under Failure | PASS | PASS | Inventory races/saga recovery; Goka durable state/relay; concept repair |
@@ -229,7 +229,7 @@ cloud command was executed. These checks validate design artifacts, not the plan
 These are design-compliance results, not completed runtime checks or teammate approvals. No
 constitution exceptions are required. The latest user instructions authorize the recorded engine
 and ownership-scope amendment. Owner-delegated technology choices and environment credentials are
-handoff inputs; they are not unresolved decisions within the requested lead-owned stack.
+handoff inputs; they are not unresolved decisions within the requested stack for Mukthish.
 
 ## Project Structure
 
@@ -289,7 +289,7 @@ amendment; `$speckit-tasks` creates implementation tasks next, with owner planni
 ## Complexity Tracking
 
 No constitutional exceptions. The eight responsibilities and concept replicas come from the source;
-Goka/Sarama and lead-only stack selection come from the user's later instructions. Kafka group
+Goka/Sarama and stack selection for Mukthish come from the user's later instructions. Kafka group
 state and the result relay add recovery work that is explicitly tested; no transactional exactly-once
 claim hides that work. SQL admission avoids an additional cache at the current scale. Other members'
 stack choices remain theirs, while interfaces and observable guarantees stay shared.

@@ -34,7 +34,7 @@ validation, uniqueness, and transitions; it contains no migrations or service im
 | Analytics | Window state, dedup sets, offsets, output identities/revisions | Goka group table, recoverable View and Kafka results |
 | Each metadata node | MetadataVersion, operation receipts, local counter | Member 3's independently durable store/volume |
 
-The three lead-owned transactional databases use PostgreSQL; physical storage choices for the
+Mukthish's three transactional databases use PostgreSQL; physical storage choices for the
 other owners are delegated. No service credential can write another owner's records. Flash Sale
 consumes summary events into its own projection; it never queries Analytics state directly. The
 gateway uses service interfaces, including an authenticated Notification query adapter, and has

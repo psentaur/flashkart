@@ -1,8 +1,8 @@
 ---
-description: "Dependency-ordered implementation tasks for the project lead's scope only"
+description: "Dependency-ordered implementation tasks for Mukthish's scope only"
 ---
 
-# Tasks: Flash Sale Platform — Project Lead Only
+# Tasks: Flash Sale Platform — Mukthish
 
 **Input**: [plan.md](plan.md), [spec.md](spec.md), [research.md](research.md),
 [data-model.md](data-model.md), [contracts](contracts/README.md) and [quickstart.md](quickstart.md)
@@ -35,7 +35,7 @@ US6 and US7. Every checkbox belongs to you; the external-deliverable table is no
 
 All code paths are repository-relative future artifacts. Your roots are `services/admission/`,
 `services/flash-sale/`, `services/order/`, `services/analytics/`, `frontend/`, `gateway/`, and the
-lead/shared contract, helper, local-dependency, messaging and test paths explicitly named below.
+shared contract, helper, local-dependency, messaging and test paths explicitly named below.
 No task implements `services/inventory/`, `services/payment/`, `services/catalog/`,
 `services/notification/`, `storage/catalog-kv/` or the shared `infra/` platform.
 
@@ -57,16 +57,16 @@ implementation work or technology choice is assigned by this document.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Goal**: Initialize only the lead-owned workspace, local dependencies, reviewed contracts and repeatable commands.
+**Goal**: Initialize only Mukthish's workspace, local dependencies, reviewed contracts and repeatable commands.
 
-**Independent Test**: Each lead module builds its empty entry point; local PostgreSQL/Kafka are healthy; contract checks run without any teammate source.
+**Independent Test**: Each of Mukthish's modules builds its empty entry point; local PostgreSQL/Kafka are healthy; contract checks run without any teammate source.
 
 - [ ] T001 Create your Go module layout and Go 1.27.3 workspace in `go.work`, `services/admission/go.mod`, `services/flash-sale/go.mod`, `services/order/go.mod`, `services/analytics/go.mod`, `gateway/go.mod`, `frontend/go.mod`, `internal/platform/go.mod`, `contracts/go.mod` and `tests/go.mod`; use the existing `flash-sale` contract import prefix and exclude teammate source modules.
-- [ ] T002 Pin Goka v1.1.17, IBM Sarama v1.46.3, pgx v5, grpc-go/protobuf and the selected JWT/test/metric tooling in your `go.work.sum` and lead-owned `go.mod`/`go.sum` files; use one Sarama version through Goka and direct clients and retain tool checksums in `dev/tool-versions.json`. (after T001)
+- [ ] T002 Pin Goka v1.1.17, IBM Sarama v1.46.3, pgx v5, grpc-go/protobuf and the selected JWT/test/metric tooling in your `go.work.sum` and Mukthish's `go.mod`/`go.sum` files; use one Sarama version through Goka and direct clients and retain tool checksums in `dev/tool-versions.json`. (after T001)
 - [ ] T003 Promote the seven reviewed files from the feature `contracts/` directory to root `contracts/`, preserving the language-neutral source and generating only your Go bindings under `contracts/gen/`; implement schema/example/protobuf and source-drift checks in `scripts/validate_contracts.py` and `contracts/generate.go`. (after T002)
 - [ ] T004 [P] Define your PostgreSQL 17 databases and Kafka KRaft dependency with pinned images, health checks, separate named volumes and run-isolated settings in `dev/compose.yaml` and `dev/postgres/init.sql`; include adapter hooks without selecting or implementing teammate runtimes. (after T003)
 - [ ] T005 [P] Create documented non-secret configuration and disposable local-key/token locations in `dev/lead.env.example` and `.gitignore`; define separate Flash Sale, Admission and Order credentials, peer endpoint inputs and fail-closed configuration validation without committed credentials. (after T003)
-- [ ] T006 [P] Create lead-only format/lint/compiler/race-test and contract-check commands in `Makefile`, `ci/lead-checks.sh` and `staticcheck.conf`; enumerate your modules rather than assuming workspace-root `go test ./...` covers them, and make unimplemented application targets fail clearly. (after T003)
+- [ ] T006 [P] Create Mukthish's format/lint/compiler/race-test and contract-check commands in `Makefile`, `ci/lead-checks.sh` and `staticcheck.conf`; enumerate your modules rather than assuming workspace-root `go test ./...` covers them, and make unimplemented application targets fail clearly. (after T003)
 - [ ] T007 [P] Record only your four service assignments and frontend/gateway/Message Queue plus categories (c)/(e) responsibilities in `task_divison.txt`; document peer deliverables as external interfaces in `docs/lead-boundaries.md` without assigning their implementation stack or tasks. (after T003)
 - [ ] T008 Add configuration-driven startup and graceful shutdown skeletons in `services/admission/cmd/server/main.go`, `services/flash-sale/cmd/server/main.go`, `services/order/cmd/server/main.go`, `services/analytics/cmd/server/main.go` and `gateway/cmd/server/main.go`, and an embedded asset package in `frontend/embed.go`. (after T004, T005, T006, T007)
 
@@ -76,7 +76,7 @@ implementation work or technology choice is assigned by this document.
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Goal**: Provide the lead-owned primitives and test seams required by every story. Complete this phase before story implementation.
+**Goal**: Provide Mukthish's primitives and test seams required by every story. Complete this phase before story implementation.
 
 **Independent Test**: Run foundation tests against real local SQL/Kafka and contract doubles; prove rollback, repeat handling, identity filtering and offset ordering.
 
@@ -91,7 +91,7 @@ implementation work or technology choice is assigned by this document.
 - [ ] T017 Implement retry scheduling, inspectable quarantine and authorized audited replay for your consumers in `internal/platform/messaging/retry.go` and `scripts/cmd/replay/main.go`; retain original identity/payload/topic/partition/offset and use "five delayed retries at 1/2/4/8/16 seconds", pausing dependency-wide outages while preserving business obligations. (after T016)
 - [ ] T018 Create contract-limited Inventory gRPC, Payment event, Catalog REST and Notification query doubles under `tests/doubles/` with entry point `tests/doubles/cmd/server/main.go`; expose controlled outcomes/timeouts/faults for your tests only and make fixture-mode evidence visibly different from real-service acceptance. (after T003, T010, T011, T015)
 - [ ] T019 Define URL/credential inputs, start/health/fault/read-only-verification adapter commands and explicit unavailable-dependency results in `tests/adapters/contract.go`, `dev/adapters.example.json` and `docs/peer-adapter-contract.md`; do not inspect or migrate teammate databases directly. (after T018)
-- [ ] T020 Implement lead-owned lifecycle/health/readiness hooks, structured log correlation and metric registration in `internal/platform/runtime/runtime.go` and `internal/platform/telemetry/telemetry.go`; wire your entry points, identity/adapter fixture seeding and condition-based `make bootstrap dev-up migrate seed wait-ready` commands through `scripts/cmd/dev/main.go` and `Makefile`; add business-fixture seeding in its owning story phase. (after T017, T019)
+- [ ] T020 Implement Mukthish's lifecycle/health/readiness hooks, structured log correlation and metric registration in `internal/platform/runtime/runtime.go` and `internal/platform/telemetry/telemetry.go`; wire your entry points, identity/adapter fixture seeding and condition-based `make bootstrap dev-up migrate seed wait-ready` commands through `scripts/cmd/dev/main.go` and `Makefile`; add business-fixture seeding in its owning story phase. (after T017, T019)
 
 **Checkpoint**: Foundation ready. Story work may begin; peer service doubles are test boundaries, not accepted implementations.
 
@@ -127,7 +127,7 @@ implementation work or technology choice is assigned by this document.
 
 **Goal**: Implement your shared Admission limits and Order happy path, request identity, Inventory client and purchase/status UI.
 
-**Independent Test**: Use seeded live-sale fixtures without US1 UI, real lead SQL/Kafka and contract doubles; compete for 100 units, replay one key concurrently, then confirm through Payment results and retrieve only the shopper's Order.
+**Independent Test**: Use seeded live-sale fixtures without US1 UI, real SQL/Kafka for Mukthish's services and contract doubles; compete for 100 units, replay one key concurrently, then confirm through Payment results and retrieve only the shopper's Order.
 
 ### Tests for User Story 2
 
@@ -288,15 +288,15 @@ implementation work or technology choice is assigned by this document.
 
 **Goal**: Finish your maintenance handoff and verify the scoped work without broadening ownership.
 
-**Independent Test**: The lead-owned command suite and real available adapter scenarios produce traceable evidence; unavailable shared pieces remain explicit.
+**Independent Test**: Mukthish's command suite and real available adapter scenarios produce traceable evidence; unavailable shared pieces remain explicit.
 
-- [ ] T096 [P] Document purpose, owner, configuration, start/test, recovery and rollback for your components in `services/admission/README.md`, `services/flash-sale/README.md`, `services/order/README.md`, `services/analytics/README.md`, `gateway/README.md` and `frontend/README.md`; update the feature `quickstart.md` only to reflect implemented lead commands/adapters. (after T095)
+- [ ] T096 [P] Document purpose, owner, configuration, start/test, recovery and rollback for your components in `services/admission/README.md`, `services/flash-sale/README.md`, `services/order/README.md`, `services/analytics/README.md`, `gateway/README.md` and `frontend/README.md`; update the feature `quickstart.md` only to reflect implemented commands/adapters for Mukthish. (after T095)
 - [ ] T097 [P] Prepare the exact producer/consumer contract change packet and record obtained reviews in `docs/contract-review.md`; preserve member-owned implementation choices, distinguish pending review from approval and require E4 before merging a breaking/shared-boundary change. (after T095)
 - [ ] T098 Run your required format/lint/compiler/contracts/unit/integration/race/end-to-end checks after implementation and record commands, results and limitations in `docs/evidence/lead-validation.md`; regressions require a reproducing check and no missing live run may be reported passed. (after T096, T097)
-- [ ] T099 Update lead-owned acceptance/ownership traceability in `docs/lead-traceability.md` and `task_divison.txt`; map implemented tasks to FR/SC evidence and leave Inventory/Payment/Notification/replica/platform obligations explicitly outside this checklist. (after T098)
-- [ ] T100 Run the implemented lead quickstart and prepare the final reviewable handoff in `docs/lead-handoff.md`; include revisions, contract versions, run IDs, pending external dependencies/reviews and retained data/evidence, without deploying paid resources or marking the whole eight-service project complete. (after T099)
+- [ ] T099 Update Mukthish's acceptance/ownership traceability in `docs/lead-traceability.md` and `task_divison.txt`; map implemented tasks to FR/SC evidence and leave Inventory/Payment/Notification/replica/platform obligations explicitly outside this checklist. (after T098)
+- [ ] T100 Run the implemented quickstart for Mukthish and prepare the final reviewable handoff in `docs/lead-handoff.md`; include revisions, contract versions, run IDs, pending external dependencies/reviews and retained data/evidence, without deploying paid resources or marking the whole eight-service project complete. (after T099)
 
-**Checkpoint**: All lead-owned tasks have evidence or an explicit external blocker; this checklist never certifies teammate implementation.
+**Checkpoint**: All of Mukthish's tasks have evidence or an explicit external blocker; this checklist never certifies teammate implementation.
 
 ---
 
@@ -318,12 +318,12 @@ flowchart TD
     F --> U4[US4 / notice adapter and UI]
     F --> U5[US5 / Goka Analytics]
     F --> U6[US6 / catalog adapter and UI]
-    U1 --> U7[US7 / lead deployment and evidence]
+    U1 --> U7[US7 / Mukthish's deployment and evidence]
     U3 --> U7
     U4 --> U7
     U5 --> U7
     U6 --> U7
-    U7 --> P[Polish / lead handoff]
+    U7 --> P[Polish / Mukthish's handoff]
 ```
 
 ### User Story Dependencies
@@ -336,7 +336,7 @@ flowchart TD
 | US4 | Foundation; seeded Order outcomes suffice | Authenticated notice proxy/UI and producer-shape fixtures without blocking purchases | E2; actual US2/US3 outputs for end-to-end notices |
 | US5 | Foundation; seeded Flash Sale schedule/data suffice | Golden totals, recorded cutoffs, stable final output and empty-cache/rebalance recovery | E1/E2 producer compatibility for full integration |
 | US6 | Foundation; use an accepted-order fixture for isolation | Catalog conflict/unavailable/absence and explicit context-resolution UI | E2 actual replicas/faults/recovery |
-| US7 | Required lead story slices for live runs; packaging may be prepared earlier | Actual HPA increases, access, revision rollback and measured evidence | E1/E2/E3, with E4 for applicable merge |
+| US7 | Mukthish's required story slices for live runs; packaging may be prepared earlier | Actual HPA increases, access, revision rollback and measured evidence | E1/E2/E3, with E4 for applicable merge |
 
 ### Within Each User Story
 
@@ -388,7 +388,7 @@ After the shared application manifest baseline, the Admission and Order files wi
 
 Complete Setup and Foundation, then US1. Demonstrate sale publication/readiness, scheduled
 availability and browsing with a clearly identified Catalog double or available real adapter.
-This is the smallest lead-owned useful increment. Run its independent checks before moving on;
+This is Mukthish's smallest useful increment. Run its independent checks before moving on;
 this checkpoint does not instruct the implementation workflow to abandon remaining authorized tasks.
 
 ### Incremental Delivery
@@ -414,7 +414,7 @@ missing external dependency blocks its acceptance task while independent tasks c
 - Do not change teammate source, storage formats, stack, infrastructure or tests to make your checks pass.
 - Review compatible interfaces before integration/merge and record actual approval, not assumed consent.
 - Run the documented checks at useful checkpoints; repeat only for relevant changes or failures.
-- Completing every lead-owned task does not mean every service or assignment category is implemented.
+- Completing every task assigned to Mukthish does not mean every service or assignment category is implemented.
 
 ### Generation Summary
 

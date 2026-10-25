@@ -10,7 +10,7 @@ Start with the [architecture and ownership](docs/architecture.md),
 [service contracts](specs/001-flash-sale-platform/contracts/README.md), and
 [engineering constitution](.specify/memory/constitution.md).
 
-`main` is the shared planning baseline. The project lead's Go/Goka/Sarama implementation plan and
+`main` is the shared planning baseline. Mukthish's Go/Goka/Sarama implementation plan and
 100-task backlog live on [`001-lead-implementation`](https://github.com/psentaur/flashkart/tree/001-lead-implementation).
 The other two members choose their own implementation stacks within the shared contracts.
 
@@ -27,8 +27,8 @@ shared artifacts and create your own feature/implementation plan before using im
 Spec Kit workflow utilities require Python 3; Python scripts are the configured variant. The
 included agent skills are workflow instructions, not a language/framework mandate for teammates.
 
-No application build, server or test command exists yet. Commands described in the lead branch's
-quickstart are implementation deliverables and are not claims of passing runtime tests.
+No application build, server or test command exists yet. Commands in the quickstart on Mukthish's
+branch are implementation deliverables and are not claims of passing runtime tests.
 
 The original conversation stays local and is ignored. Credentials, generated caches and the local
 active-feature pointer are also excluded from version control. Review shared API/event changes

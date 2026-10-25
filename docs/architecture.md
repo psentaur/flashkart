@@ -10,11 +10,11 @@ the [data model](../specs/001-flash-sale-platform/data-model.md) defines logical
 
 | Owner | Services | Supporting responsibilities |
 | --- | --- | --- |
-| Project lead: psentaur | Admission, Flash Sale Manager, Order, Sales Analytics | Frontend, gateway, Message Queue; scaling/load evidence (c), stream processing (e) |
+| Mukthish | Admission, Flash Sale Manager, Order, Sales Analytics | Frontend, gateway, Message Queue; scaling/load evidence (c), stream processing (e) |
 | Member 2 | Inventory Reservation, Payment | Shared platform and infrastructure-as-code (a), GitOps (d), observability (h) |
 | Member 3 | Product Catalog, Notification | Serverless/communication integration (b), leaderless concept (f), storage products (g) |
 
-The project lead selects Go, Goka and Sarama for lead-owned components. Goka replaces the earlier
+Mukthish's components use Go, Goka and Sarama. Goka replaces the earlier
 analytics-engine choice; Sarama is a Kafka client, while Kafka remains the Message Queue broker.
 The other members choose their own languages, frameworks, database engines and deployment tools.
 These are coordination leads; producers and consumers review their shared contracts together.
@@ -68,7 +68,7 @@ three-person ownership split take precedence over earlier technology or four-per
 ## Branch and review workflow
 
 `main` contains shared governance, behavior, logical data/interface contracts and Spec Kit tools.
-`001-lead-implementation` adds the project lead's technical plan, research, validation guide and
+`001-lead-implementation` adds Mukthish's technical plan, research, validation guide and
 100-task backlog. Members create their own implementation branches and select their stacks there.
 Shared/breaking contract changes require affected producer/consumer review before merge. Task
 completion on a personal branch does not certify another member's implementation or live evidence.

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package flashsale.inventory.v1;
 
-// Go binding location for the project lead's Order client; other owners choose their bindings.
+// Go binding location for Mukthish's Order client; other owners choose their bindings.
 option go_package = "flash-sale/contracts/gen/inventory/v1;inventoryv1";
 
 import "google/protobuf/timestamp.proto";
