@@ -1,6 +1,6 @@
 # Feature Specification: Flash Sale Platform
 
-**Feature Branch**: Contributor implementation branches; project lead: `001-lead-implementation`.
+**Feature Branch**: Contributor implementation branches; Mukthish: `001-lead-implementation`.
 
 **Feature Directory**: `specs/001-flash-sale-platform`
 
@@ -468,11 +468,11 @@ run the declared workload, inspect operational evidence, and perform recovery de
   truth; it does not claim independent verification of those external documents.
 - **Planning amendment (2026-10-25)**: The user's later planning instructions replace the
   source's prescribed analytics engine and limit concrete implementation-stack choices to the
-  project lead's services and supporting components. The other members retain ownership of their
+  Mukthish's services and supporting components. The other members retain ownership of their
   language/framework/database/deployment-tool choices. The shared broker remains Kafka; a client
-  library is not a replacement broker. Detailed lead-owned choices are recorded in the plan.
+  library is not a replacement broker. Mukthish's detailed choices are recorded in the plan.
 - **Planning constraint handoff**: Carry forward the original six independently deployed
-  application services on managed container orchestration, with the project lead's stateful
+  application services on managed container orchestration, with Mukthish's stateful
   Analytics added to that platform; event-triggered serverless Notifications; the three required
   communication mechanisms; separate raw/results destinations on the required event transport;
   resource-driven scaling for Admission and Order; infrastructure-as-code; repository-driven
@@ -513,7 +513,7 @@ The agreed ownership baseline is:
 
 | Member | Services | Supporting responsibilities and assignment leads |
 | --- | --- | --- |
-| Project lead (you) | Admission, Flash Sale Manager, Order, Sales Analytics | Frontend, gateway, Message Queue; (c) scaling/load testing and (e) stream processing |
+| Mukthish | Admission, Flash Sale Manager, Order, Sales Analytics | Frontend, gateway, Message Queue; (c) scaling/load testing and (e) stream processing |
 | Member 2 | Inventory, Payment | Shared infrastructure definitions, managed platform, reconciled deployments, observability; (a), (d), (h) |
 | Member 3 | Catalog, Notification | Leaderless storage, serverless integration, storage-product design; (b), (f), (g) |
 
