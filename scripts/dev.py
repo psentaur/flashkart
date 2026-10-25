@@ -104,10 +104,12 @@ def launch():
         assert_children_alive(children)
         state.write_text(json.dumps(processes))
     except BaseException:
-        state.write_text(json.dumps(processes))
         for p in processes:
             try:os.kill(p['pid'],signal.SIGTERM)
             except ProcessLookupError:pass
+        processes=[record for record,(_,child) in zip(processes,children) if child.poll() is None]
+        if processes:state.write_text(json.dumps(processes))
+        else:state.unlink(missing_ok=True)
         raise
     print('Started five foundation processes and contract fixtures; see .cache/logs')
 

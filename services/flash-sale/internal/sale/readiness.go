@@ -45,7 +45,7 @@ func (s Store) Consume(ctx context.Context, topic, key string, raw []byte) error
 func (s Store) Advance(ctx context.Context) error {
 	return s.transaction(ctx, func(tx pgx.Tx) error {
 		now := s.now()
-		rows, e := tx.Query(ctx, `SELECT sale_id::text FROM sales WHERE cancelled_at IS NULL AND (frozen_at IS NULL OR activated_at IS NULL) AND (original_starts_at<=$1 OR starts_at<=$1) ORDER BY sale_id`, now)
+		rows, e := tx.Query(ctx, `SELECT sale_id::text FROM sales WHERE cancelled_at IS NULL AND (frozen_at IS NULL OR (activated_at IS NULL AND ends_at>$1)) AND (original_starts_at<=$1 OR starts_at<=$1) ORDER BY sale_id`, now)
 		if e != nil {
 			return e
 		}

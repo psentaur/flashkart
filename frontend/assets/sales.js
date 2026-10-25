@@ -62,7 +62,7 @@ if (document.body.dataset.page === 'products') {
   products();
 }
 if (document.body.dataset.page === 'sales') {
-  let token = ''; let current = null; let freezeAt = null;
+  let token = ''; let current = null; let freezeAt = null; let wasFrozen = false;
   const form = $('sale-form');
   const field = (name) => form.elements.namedItem(name);
   const auth = () => ({ Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' });
@@ -72,7 +72,8 @@ if (document.body.dataset.page === 'sales') {
     for (const input of form.querySelectorAll('input')) input.disabled = !!frozen;
     if (current) { field('sale_id').disabled = true; field('product_id').disabled = true; }
     $('save-sale').disabled = !!frozen; $('cancel-sale').disabled = !current || !!frozen;
-    if (frozen) message('sale-message', 'This sale is frozen. Price, allocation, cap and schedule cannot be changed.');
+    if (frozen && !wasFrozen && current.status !== 'CANCELLED') message('sale-message', 'This sale is frozen. Price, allocation, cap and schedule cannot be changed.');
+    wasFrozen = !!frozen;
   }
   function display(sale, boundary) {
     current = sale; freezeAt = boundary || freezeAt || sale.starts_at;
@@ -86,7 +87,7 @@ if (document.body.dataset.page === 'sales') {
     freeze();
   }
   async function load(id) {
-    try { const result = await request(`/v1/admin/sales/${encodeURIComponent(id)}`, { headers: auth() }); freezeAt = null; display(result.data, result.freezeAt); message('sale-message', 'Current configuration loaded.'); freeze(); }
+    try { const result = await request(`/v1/admin/sales/${encodeURIComponent(id)}`, { headers: auth() }); freezeAt = null; wasFrozen = false; display(result.data, result.freezeAt); message('sale-message', 'Current configuration loaded.'); freeze(); }
     catch (error) { message('sale-message', error.message); }
   }
   $('identity-form').addEventListener('submit', (event) => {
@@ -96,10 +97,10 @@ if (document.body.dataset.page === 'sales') {
     catch { token = ''; $('operator-workspace').hidden = true; message('identity-message', 'An operator token is required.'); return; }
     token = candidate; $('operator-workspace').hidden = false; message('identity-message', 'Operator token loaded for this page.');
   });
-  $('clear-token').addEventListener('click', () => { token = ''; current = null; $('operator-workspace').hidden = true; $('readiness-panel').hidden = true; message('identity-message', 'Signed out.'); });
+  $('clear-token').addEventListener('click', () => { token = ''; current = null; wasFrozen = false; $('operator-workspace').hidden = true; $('readiness-panel').hidden = true; message('identity-message', 'Signed out.'); });
   $('load-sale').addEventListener('submit', (event) => { event.preventDefault(); load(new FormData(event.target).get('sale_id')); });
   $('refresh-sale').addEventListener('click', () => { if (current) load(current.sale_id); });
-  $('new-sale').addEventListener('click', () => { current = null; freezeAt = null; form.reset(); for (const input of form.querySelectorAll('input')) input.disabled = false; field('sale_id').value = crypto.randomUUID(); $('readiness-panel').hidden = true; $('save-sale').textContent = 'Publish sale'; $('save-sale').disabled = false; $('cancel-sale').disabled = true; message('sale-message', ''); });
+  $('new-sale').addEventListener('click', () => { current = null; freezeAt = null; wasFrozen = false; form.reset(); for (const input of form.querySelectorAll('input')) input.disabled = false; field('sale_id').value = crypto.randomUUID(); $('readiness-panel').hidden = true; $('save-sale').textContent = 'Publish sale'; $('save-sale').disabled = false; $('cancel-sale').disabled = true; message('sale-message', ''); });
   form.addEventListener('submit', async (event) => {
     event.preventDefault(); const body = { expected_version: current?.version || 0, admission_limits: {} };
     for (const key of ['sale_id', 'product_id', 'currency']) body[key] = field(key).value;

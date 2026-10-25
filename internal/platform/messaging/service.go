@@ -8,6 +8,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/jackc/pgx/v5"
 	"log/slog"
+	"net"
 	"time"
 )
 
@@ -27,7 +28,7 @@ func RunService(ctx context.Context, brokers []string, consumer string, store ev
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	retries := RetryStore{Pool: store.Pool}
-	outage := func(e error) bool { var invalid *events.QuarantineError; return !errors.As(e, &invalid) }
+	outage := dependencyOutage
 	handler := DurableHandler(store, retries, consumer, handle, outage)
 	done := make(chan struct{})
 	go func() {
@@ -96,4 +97,16 @@ func RunService(ctx context.Context, brokers []string, consumer string, store ev
 			}
 		}
 	}
+}
+
+func dependencyOutage(err error) bool {
+	var invalid *events.QuarantineError
+	if err == nil || errors.As(err, &invalid) {
+		return false
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+	var network net.Error
+	return errors.As(err, &network)
 }

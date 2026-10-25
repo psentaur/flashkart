@@ -67,3 +67,47 @@ class StartupIdentityTest(unittest.TestCase):
         with patch.object(DEV.socket,'create_server',side_effect=OSError('occupied')):
             with self.assertRaisesRegex(RuntimeError,'no application processes started'):
                 DEV.check_listeners(values)
+
+class FailedLaunchCleanupTest(unittest.TestCase):
+    def run_failed_launch(self, root, build, child=None):
+        from unittest.mock import Mock
+        process = child or Mock()
+        with patch.object(DEV, 'ROOT', root), \
+                patch.object(DEV, 'load_env', return_value={}), \
+                patch.object(DEV, 'check_listeners'), \
+                patch.object(DEV.subprocess, 'run', side_effect=build), \
+                patch.object(DEV.subprocess, 'Popen', return_value=process), \
+                patch.object(DEV.os, 'kill') as kill:
+            with self.assertRaises(DEV.subprocess.CalledProcessError):
+                DEV.launch()
+        return kill
+
+    def test_initial_build_failure_does_not_block_next_launch(self):
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            failure = DEV.subprocess.CalledProcessError(1, ['go', 'build'])
+            for _ in range(2):
+                self.run_failed_launch(root, failure)
+                self.assertFalse((root / '.cache/processes.json').exists())
+
+    def test_exited_children_do_not_leave_a_process_record(self):
+        from unittest.mock import Mock
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            child = Mock(pid=123)
+            child.poll.side_effect = [None, 0]
+            kill = self.run_failed_launch(root, [None, DEV.subprocess.CalledProcessError(1, ['go', 'build'])], child)
+            kill.assert_called_once_with(123, DEV.signal.SIGTERM)
+            self.assertFalse((root / '.cache/processes.json').exists())
+
+    def test_children_still_exiting_keep_their_process_record(self):
+        from unittest.mock import Mock
+        import json
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            child = Mock(pid=123)
+            child.poll.return_value = None
+            kill = self.run_failed_launch(root, [None, DEV.subprocess.CalledProcessError(1, ['go', 'build'])], child)
+            kill.assert_called_once_with(123, DEV.signal.SIGTERM)
+            records = json.loads((root / '.cache/processes.json').read_text())
+            self.assertEqual([item['pid'] for item in records], [123])
