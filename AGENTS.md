@@ -8,7 +8,7 @@ This repository is currently a planning scaffold for an eight-service flash-sale
 - `.specify/templates/` contains specification, plan, and task templates.
 - `.specify/scripts/python/` and `.specify/scripts/bash/` contain workflow utilities; Python is the configured script variant.
 - `.specify/memory/constitution.md` is the adopted v1.0.0 engineering constitution.
-- Shared behavior/data/contracts are in `specs/001-flash-sale-platform/`. Personal plans and tasks belong on contributor implementation branches; Mukthish's branch is `001-lead-implementation`. Future application directories are not implemented yet.
+- Shared behavior/data/contracts are in `specs/001-flash-sale-platform/`. Personal plans and tasks belong on contributor implementation branches; Mukthish's branch is `001-mukthish-implementation`. Future application directories are not implemented yet.
 
 ## Build, Test, and Development Commands
 

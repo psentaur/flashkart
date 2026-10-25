@@ -68,7 +68,7 @@ three-person ownership split take precedence over earlier technology or four-per
 ## Branch and review workflow
 
 `main` contains shared governance, behavior, logical data/interface contracts and Spec Kit tools.
-`001-lead-implementation` adds Mukthish's technical plan, research, validation guide and
+`001-mukthish-implementation` adds Mukthish's technical plan, research, validation guide and
 100-task backlog. Members create their own implementation branches and select their stacks there.
 Shared/breaking contract changes require affected producer/consumer review before merge. Task
 completion on a personal branch does not certify another member's implementation or live evidence.

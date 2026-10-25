@@ -11,13 +11,13 @@ Start with the [architecture and ownership](docs/architecture.md),
 [engineering constitution](.specify/memory/constitution.md).
 
 `main` is the shared planning baseline. Mukthish's Go/Goka/Sarama implementation plan and
-100-task backlog live on [`001-lead-implementation`](https://github.com/psentaur/flashkart/tree/001-lead-implementation).
+100-task backlog live on [`001-mukthish-implementation`](https://github.com/psentaur/flashkart/tree/001-mukthish-implementation).
 The other two members choose their own implementation stacks within the shared contracts.
 
 ```sh
 git clone https://github.com/psentaur/flashkart.git
 cd flashkart
-git switch --track origin/001-lead-implementation
+git switch --track origin/001-mukthish-implementation
 export SPECIFY_FEATURE_DIRECTORY=specs/001-flash-sale-platform
 python3 .specify/scripts/python/check_prerequisites.py --json --require-spec --require-tasks --include-tasks
 ```

@@ -1,6 +1,6 @@
 # Feature Specification: Flash Sale Platform
 
-**Feature Branch**: Contributor implementation branches; Mukthish: `001-lead-implementation`.
+**Feature Branch**: Contributor implementation branches; Mukthish: `001-mukthish-implementation`.
 
 **Feature Directory**: `specs/001-flash-sale-platform`
 
