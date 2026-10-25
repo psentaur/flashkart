@@ -408,7 +408,7 @@ missing external dependency blocks its acceptance task while independent tasks c
 ## Notes
 
 - All task boxes start unchecked; generation and format validation do not complete implementation.
-- Implementation branch: `001-lead-implementation`. No application source has been created; future source paths are intentional.
+- Implementation branch: `001-mukthish-implementation`. No application source has been created; future source paths are intentional.
 - The source's former Flink execution prescription is superseded by the recorded Goka amendment.
 - Refer to the reviewed data model/schemas for fields; quoted constraints above are non-negotiable.
 - Do not change teammate source, storage formats, stack, infrastructure or tests to make your checks pass.
