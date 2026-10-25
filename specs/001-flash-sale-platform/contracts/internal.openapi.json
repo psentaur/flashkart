@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Flash Sale Internal REST Contract",
-    "version": "1.0.0"
+    "version": "1.0.0-draft.2"
   },
   "servers": [
     {
@@ -18,7 +18,7 @@
     "/internal/orders": {
       "post": {
         "operationId": "acceptAdmittedPurchase",
-        "description": "Admission identity only. Shopper identity is trusted only over authorized service transport. Same request-key and offer semantics as public purchase.",
+        "description": "Admission only; verified shopper and attempt identity. Fetch normalized offer/cap, reserve through Inventory, and persist pending order/payment intent only after a durable hold. Propagate PURCHASE_LIMIT_EXCEEDED as a stable 409 with no payment.",
         "parameters": [
           {
             "name": "Idempotency-Key",
@@ -121,7 +121,7 @@
             }
           },
           "409": {
-            "description": "Business conflict",
+            "description": "Durable business conflict including PURCHASE_LIMIT_EXCEEDED, or retryable REQUEST_IN_PROGRESS.",
             "content": {
               "application/json": {
                 "schema": {
@@ -504,6 +504,12 @@
               "UNAVAILABLE",
               "CANCELLED"
             ]
+          },
+          "per_shopper_unit_cap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
           }
         },
         "required": [
@@ -514,7 +520,8 @@
           "currency",
           "starts_at",
           "ends_at",
-          "status"
+          "status",
+          "per_shopper_unit_cap"
         ],
         "additionalProperties": false
       },
@@ -578,6 +585,13 @@
               "max_in_flight"
             ],
             "additionalProperties": false
+          },
+          "per_shopper_unit_cap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start. Omission normalizes to one on creation and replacement.",
+            "default": 1
           }
         },
         "required": [
@@ -675,6 +689,12 @@
               ]
             },
             "uniqueItems": true
+          },
+          "per_shopper_unit_cap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
           }
         },
         "required": [
@@ -688,7 +708,8 @@
           "status",
           "allocated_units",
           "admission_limits",
-          "ready_participants"
+          "ready_participants",
+          "per_shopper_unit_cap"
         ],
         "additionalProperties": false
       },
@@ -1036,7 +1057,9 @@
               "METADATA_CONFLICT",
               "QUORUM_UNAVAILABLE",
               "DEPENDENCY_UNAVAILABLE",
-              "VERSION_CONFLICT"
+              "VERSION_CONFLICT",
+              "SALE_WINDOW_CONFLICT",
+              "PURCHASE_LIMIT_EXCEEDED"
             ]
           },
           "message": {

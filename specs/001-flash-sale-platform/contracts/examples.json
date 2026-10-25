@@ -1,5 +1,5 @@
 {
-  "note": "Independent shape examples; opposing payment/order states are separate fixtures, not one valid sequential history. Times are fixed examples; seed tools generate live schedules.",
+  "note": "Independent shape examples; opposing payment/order states are separate fixtures, not one valid sequential history. Times are fixed examples; seed tools generate live schedules. Draft 1.0.0-draft.2; error fixtures are independent business outcomes and require runtime invariant checks in addition to shape validation.",
   "http": [
     {
       "operation_id": "submitPurchase",
@@ -68,7 +68,8 @@
           "sale_per_second": 100,
           "max_in_flight": 50
         },
-        "expected_version": 0
+        "expected_version": 0,
+        "per_shopper_unit_cap": 1
       },
       "response": {
         "sale_id": "11111111-1111-4111-8111-111111111111",
@@ -85,8 +86,56 @@
           "sale_per_second": 100,
           "max_in_flight": 50
         },
-        "ready_participants": []
+        "ready_participants": [],
+        "per_shopper_unit_cap": 1
       }
+    },
+    {
+      "operation_id": "createSale",
+      "request": {
+        "sale_id": "77777777-7777-4777-8777-777777777777",
+        "product_id": "22222222-2222-4222-8222-222222222222",
+        "unit_price_minor": 2500,
+        "currency": "INR",
+        "starts_at": "2026-10-25T10:00:00Z",
+        "ends_at": "2026-10-25T10:10:00Z",
+        "allocated_units": 100,
+        "admission_limits": {
+          "shopper_per_second": 5,
+          "sale_per_second": 100,
+          "max_in_flight": 50
+        },
+        "expected_version": 0,
+        "per_shopper_unit_cap": 1
+      },
+      "response": {
+        "code": "SALE_WINDOW_CONFLICT",
+        "message": "Another non-cancelled sale for this product overlaps the requested window.",
+        "correlation_id": "66666666-6666-4666-8666-666666666666",
+        "retryable": false
+      },
+      "response_status": 409
+    },
+    {
+      "operation_id": "submitPurchase",
+      "request_headers": {
+        "Idempotency-Key": "demo-purchase-new-key-at-cap"
+      },
+      "request": {
+        "sale_id": "11111111-1111-4111-8111-111111111111",
+        "product_id": "22222222-2222-4222-8222-222222222222",
+        "quantity": 1,
+        "expected_offer_version": 1,
+        "expected_unit_price_minor": 2500,
+        "currency": "INR"
+      },
+      "response": {
+        "code": "PURCHASE_LIMIT_EXCEEDED",
+        "message": "The shopper has consumed this sale purchase allowance.",
+        "correlation_id": "66666666-6666-4666-8666-666666666666",
+        "retryable": false
+      },
+      "response_status": 409
     }
   ],
   "events": [
@@ -114,7 +163,8 @@
           "sale_per_second": 100,
           "max_in_flight": 50
         },
-        "ready_participants": []
+        "ready_participants": [],
+        "per_shopper_unit_cap": 1
       }
     },
     {
@@ -131,7 +181,7 @@
         "product_id": "22222222-2222-4222-8222-222222222222",
         "version": 1,
         "participant": "catalog",
-        "allocation_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "allocation_digest": "b7f9fb81a21767fd4f6af27716ef8070ce63f533b35438eacfc8a3b5f49540ea",
         "status": "READY"
       }
     },
@@ -163,7 +213,8 @@
           "catalog",
           "admission",
           "inventory"
-        ]
+        ],
+        "per_shopper_unit_cap": 1
       }
     },
     {
@@ -605,6 +656,48 @@
         "currency": "INR",
         "state": "PENDING",
         "version": 1
+      }
+    },
+    {
+      "event_id": "00000000-0000-4000-8000-000000000023",
+      "schema_version": 1,
+      "type": "AttemptRecorded",
+      "occurred_at": "2026-10-25T10:00:00Z",
+      "producer": "admission",
+      "aggregate_id": "66666666-6666-4666-8666-666666666666",
+      "aggregate_version": 1,
+      "correlation_id": "66666666-6666-4666-8666-666666666666",
+      "data": {
+        "attempt_id": "88888888-8888-4888-8888-888888888888",
+        "shopper_id": "44444444-4444-4444-8444-444444444444",
+        "sale_id": "11111111-1111-4111-8111-111111111111",
+        "product_id": "22222222-2222-4222-8222-222222222222",
+        "decision": "ADMITTED",
+        "reason": "NONE",
+        "response_status": 409,
+        "response_latency_ms": 75,
+        "response_error_code": "PURCHASE_LIMIT_EXCEEDED"
+      }
+    },
+    {
+      "event_id": "00000000-0000-4000-8000-000000000024",
+      "schema_version": 1,
+      "type": "AttemptRecorded",
+      "occurred_at": "2026-10-25T10:00:00Z",
+      "producer": "admission",
+      "aggregate_id": "66666666-6666-4666-8666-666666666666",
+      "aggregate_version": 1,
+      "correlation_id": "66666666-6666-4666-8666-666666666666",
+      "data": {
+        "attempt_id": "99999999-9999-4999-8999-999999999999",
+        "shopper_id": "44444444-4444-4444-8444-444444444444",
+        "sale_id": "11111111-1111-4111-8111-111111111111",
+        "product_id": "22222222-2222-4222-8222-222222222222",
+        "decision": "REJECTED",
+        "reason": "RATE_LIMITED",
+        "response_status": 429,
+        "response_latency_ms": 75,
+        "response_error_code": "RATE_LIMITED"
       }
     }
   ]

@@ -38,6 +38,16 @@ outbox records and stable operation IDs tolerate retries, duplicates and interru
 Inventory alone resolves reservation confirmation, release and expiry. The stock invariant is
 available + held + confirmed sold = allocated, with all quantities nonnegative.
 
+Non-cancelled sales for the same product cannot have overlapping `[start,end)` windows, including
+concurrent configuration requests. Adjacent windows and overlapping sales for different products
+are allowed; cancelling a sale before start frees its window.
+
+Each sale has a configurable per-shopper unit cap, initially one and frozen at sale start.
+Inventory enforces unexpired held plus confirmed units across all of that shopper's orders in
+the same protected decision as stock reservation. Confirmation retains consumed allowance;
+release/expiry frees it once, even if cleanup is delayed. A new request key or instance cannot
+bypass the cap; a rejected purchase creates no payment.
+
 ## Analytics and leaderless metadata
 
 Analytics uses Goka on the managed Kubernetes platform, with raw input, compacted group state and
@@ -45,6 +55,13 @@ separate result topics. Logical event deduplication and revisioned projections p
 replay. Event occurrence time selects a one-minute window; recorded broker arrival and ordered
 clock markers enforce the 60-second lateness allowance. A durable-state View/relay makes results
 recoverable without assuming transactional exactly-once delivery.
+
+Sale demand analytics count authenticated, well-formed submissions for a known sale and matching
+product, including business rejections and explicit retries. Malformed, unauthorized and unknown
+or mismatched-target submissions contribute only to operational traffic metrics. A downstream
+stock/cap rejection remains an admitted request for the admission decision; its HTTP outcome is
+recorded separately. The shared contracts are draft revision 2 and retain their producer/consumer
+review and coordinated-adoption requirements before implementation.
 
 Catalog metadata uses three independently persisted fixed-member replicas, no permanent leader,
 read/write quorums of two, causal version contexts, preserved concurrent siblings and explicit

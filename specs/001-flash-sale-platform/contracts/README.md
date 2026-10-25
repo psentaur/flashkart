@@ -1,6 +1,6 @@
 # Service Contracts: Flash Sale Platform
 
-**Version**: 1.0.0 | **Date**: 2026-10-25 | **Status**: Draft for producer/consumer review
+**Version**: 1.0.0-draft.2 | **Date**: 2026-10-25 | **Status**: Draft for producer/consumer review
 
 These are Phase 1 design contracts. They describe intended behavior; no endpoint is implemented
 by generating these files. They remain feature-local until implementation introduces the root
@@ -52,8 +52,19 @@ normative alongside the wire schemas. Changes require the owner and affected con
   current version. Body/path sale IDs must match. Repeating an identical creation returns the
   existing configuration; the same ID with different creation content conflicts. Mutation is
   prohibited once the initial start time is reached; pre-start replacement increments version.
+- Same-product non-cancelled `[start,end)` schedules cannot overlap. Concurrent create/replace
+  conflicts return 409 SALE_WINDOW_CONFLICT; adjacent windows and different products are allowed.
+  Cancellation before start frees the interval. An endpoint-level precheck is insufficient.
+- `per_shopper_unit_cap` is a positive integer, initially one. Omitted SaleWrite input normalizes
+  to one (creation and replacement); canonical Sale/Offer and configuration events always include
+  it. The operator form starts at one. The cap is frozen at sale start and is part of the sale
+  version/readiness agreement; the shopper cannot override it in Purchase.
 - Flash Sale emits SaleConfigured. Catalog, Admission and Inventory apply it and emit SaleReady
-  with the same version/allocation digest. Flash Sale emits SaleActivated only when all three are
+  with the same version/allocation digest. Despite its retained name, `allocation_digest` covers
+  normalized sale/product IDs, version, price/currency, allocation, cap, schedule and admission
+  limits using sorted-key compact UTF-8 JSON (no whitespace), lowercase UUIDs, normalized UTC timestamps
+  and SHA-256; exclude dynamic
+  status/readiness. A digest mismatch cannot activate a sale. Flash Sale emits SaleActivated only when all three are
   ready and the sale is within its window. It persists activation intent durably and resumes it
   after restart. Applied activation plus local schedule/version checks authorize new reservations.
   An early activation event is buffered/reconciled until its configuration exists; obsolete
@@ -68,7 +79,9 @@ normative alongside the wire schemas. Changes require the owner and affected con
 - A pre-acceptance intent under recovery returns 409 REQUEST_IN_PROGRESS, retryable=true and
   retry_after_seconds=1. It never fabricates an accepted order without a hold. Admission 429 or
   temporary 503 can be retried with the same key; durable stock/offer/window rejections are
-  replayed as recorded. An explicit corrected purchase uses a new key.
+  replayed as recorded, including PURCHASE_LIMIT_EXCEEDED (409, retryable=false, no Retry-After).
+  After a failed/expired hold frees allowance, an explicit new purchase uses a new key; a rejected
+  original key does not turn into an accepted purchase. Confirmed units continue consuming the cap.
 - Internal Order POST is callable only by Admission. It receives the verified shopper and unique
   attempt ID, uses the same request key, fetches the authoritative offer, reserves stock, commits
   pending Order + PaymentRequested, and only then returns acceptance. Gateway has no saga logic.
@@ -77,6 +90,15 @@ normative alongside the wire schemas. Changes require the owner and affected con
 
 - `Reserve` uses `order_id` as a stable operation key. A duplicate with matching payload returns
   the same reservation, including its terminal state; a mismatched payload returns PAYLOAD_MISMATCH.
+- A fresh `Reserve` must atomically enforce stock and the applied `(sale_id, shopper_id)` cap.
+  Sum unexpired HELD and CONFIRMED units across all order IDs; an orphan hold still counts.
+  Exceeding allowance returns PURCHASE_LIMIT_EXCEEDED with no reservation. Matching existing
+  outcomes replay before new eligibility checks, including a durably rejected proposed order ID.
+  A successful replay returns the current reservation state, not the original HELD snapshot.
+  Member 2 chooses the transactional engine and protects equivalent logical accounting.
+- Expired holds stop consuming allowance at authoritative expiry even if cleanup is delayed.
+  Confirm retains consumed allowance; Release/Expire frees it once. Concurrent distinct keys,
+  other instances or restart cannot reset/bypass it. Late payment cannot restore an expired hold.
 - `Confirm` succeeds only for a live hold; Inventory samples its clock after acquiring the lock.
   At/after expiry it atomically expires the hold, returns RESERVATION_EXPIRED, and emits expiry.
   Repeated confirmation of CONFIRMED is REPLAYED. Release cannot undo CONFIRMED.
@@ -159,6 +181,15 @@ key/partition combinations in contract tests.
 - UTC minute windows are `[start,end)`. Every analytics input key includes sale ID, product ID and
   occurrence-time window start. The input and Goka group table have six matching partitions and
   the same hash. Your Sarama partitioner must match Goka's hasher; test golden keys against both.
+- AttemptRecorded is produced only for authenticated SHOPPER submissions with valid Purchase
+  and required-header structure and a known matching sale/product. Known inactive/cancelled/not-ready
+  targets and otherwise valid business rejections count; explicit retries get new attempt IDs.
+  Unauthorized/malformed/unknown/mismatched requests produce only bounded operational exclusion
+  counters at the first rejecting boundary; no synthetic identity or AttemptRecorded is allowed.
+- `decision`/`reason` are Admission's decision. After successful admission, an Order stock/cap
+  rejection remains ADMITTED/NONE; `response_status` and `response_error_code` retain the final
+  Error outcome. Admission rejection rate uses eligible rejected decisions / eligible decisions,
+  not all non-2xx responses. Duplicate transport preserves attempt/event identities.
 - AttemptRecorded alone contributes attempts/admission/response latency; PaymentSucceeded/Failed
   contributes payment outcomes; OrderConfirmed contributes sold units/revenue. Exact seen-ID sets
   prevent duplicate contribution. Histogram bounds are 50/100/250/500/1000/2000/5000ms plus overflow;
@@ -167,8 +198,9 @@ key/partition combinations in contract tests.
   public results. Local caches rebuild from the compacted table. Readiness waits for processor/View
   recovery. Eight-day seen/finalization retention exceeds the seven-day raw replay interval.
 - The clock emitter queries `/internal/analytics/windows` in Flash Sale and appends heartbeat
-  records per unfinished scheduled window once per second. Heartbeats initialize empty windows
-  and share data partitioning. Arrival is the input record's broker LogAppendTime, not replay wall
+  records per unfinished scheduled window once per second. It also ticks nonfinal keys from its
+  recovered View outside scheduled sale intervals, including eligible inactive-sale attempts.
+  Heartbeats initialize empty windows and share data partitioning. Arrival is the input record's broker LogAppendTime, not replay wall
   clock. At/after end+60s, new domain activity is late; an ordered heartbeat at/after that instant
   persists an explicit FINAL revision. This prevents finalization from overtaking earlier backlog.
 - Persist aggregate, seen IDs, summary revision/final flag and late-output identities together.
@@ -206,6 +238,31 @@ key/partition combinations in contract tests.
   a different payload hash. Each node's counter, assigned versions and receipts are durable.
 
 ## Compatibility and review gate
+
+### Draft revision 2 adoption
+
+This repository has planning files and no released runtime. `1.0.0-draft.2` amends the prior draft
+before its initial release; `/v1`, protobuf v1 and `.v1` topics remain the intended first release.
+Required canonical cap fields, the cap-aware readiness digest and new conflict results change
+semantics and are **breaking relative to the previous draft**. They are not a compatible rollout.
+
+1. Mukthish and affected owners review the same revised schemas, examples, cap/expiry rules and
+   digest input. No teammate approval is implied. Refresh only Mukthish's task backlog next.
+2. Regenerate all producer/consumer bindings and fixture projections together before integration.
+   Creation/replacement input omitted cap normalizes to one; canonical offers/events missing it
+   are invalid and must not activate a sale. Never interpret a missing cap as unlimited.
+3. Seed clean disposable fixtures or migrate a prior draft dataset by assigning cap=1 and
+   incrementing the configuration version/readiness round before activation. If historic held+
+   confirmed totals already exceed the proposed cap, stop for explicit reconciliation; do not
+   delete accepted work or silently raise/default the cap to make it pass.
+4. Require overlap/cap/expiry/mixed-traffic real-adapter checks and regenerated-client drift checks
+   before declaring the draft adopted. A rollback cannot restore cap-unaware reservation behavior
+   once new purchases use this contract.
+5. If an owner has already released/deployed the prior draft, stop in-place adoption and publish a
+   reviewed major `/v2` / protobuf-package v2 / `.v2` event/topic contract with explicit consumer
+   migration and rollback. The planning-only status here is not evidence about an external deployment.
+
+### Released contract evolution
 
 Additive optional fields are compatible; semantic changes, required-field changes, removals and
 enum reinterpretation need a new contract major/topic version and consumer migration. Protobuf

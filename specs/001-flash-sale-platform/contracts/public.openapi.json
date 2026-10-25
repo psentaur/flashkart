@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Flash Sale Public Contract",
-    "version": "1.0.0",
+    "version": "1.0.0-draft.2",
     "description": "Gateway-facing shopper/operator contract. Backend ownership and recovery semantics are normative in README.md."
   },
   "servers": [
@@ -610,7 +610,7 @@
             }
           },
           "409": {
-            "description": "Business conflict",
+            "description": "SALE_WINDOW_CONFLICT for same-product overlap, or version/key/freeze conflict; no configuration mutation on rejection.",
             "content": {
               "application/json": {
                 "schema": {
@@ -649,7 +649,8 @@
             }
           }
         },
-        "x-required-role": "OPERATOR"
+        "x-required-role": "OPERATOR",
+        "description": "Normalize omitted per_shopper_unit_cap to one. Reject overlapping non-cancelled [starts_at,ends_at) windows for the same product atomically, including concurrent requests; adjacency and different products are allowed. Cap is frozen at the original start boundary."
       }
     },
     "/v1/admin/sales/{sale_id}": {
@@ -719,7 +720,7 @@
             }
           },
           "409": {
-            "description": "Business conflict",
+            "description": "SALE_WINDOW_CONFLICT for same-product overlap, or version/key/freeze conflict; no configuration mutation on rejection.",
             "content": {
               "application/json": {
                 "schema": {
@@ -758,7 +759,8 @@
             }
           }
         },
-        "x-required-role": "OPERATOR"
+        "x-required-role": "OPERATOR",
+        "description": "Normalize omitted per_shopper_unit_cap to one. Reject overlapping non-cancelled [starts_at,ends_at) windows for the same product atomically, including concurrent requests; adjacency and different products are allowed. Cap is frozen at the original start boundary."
       }
     },
     "/v1/admin/sales/{sale_id}/cancel": {
@@ -1027,7 +1029,7 @@
             }
           },
           "409": {
-            "description": "Business conflict",
+            "description": "Business conflict, including PURCHASE_LIMIT_EXCEEDED (retryable=false; no Retry-After), OFFER_CHANGED or idempotency conflict.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1095,7 +1097,8 @@
             }
           }
         },
-        "x-required-role": "SHOPPER"
+        "x-required-role": "SHOPPER",
+        "description": "Eligible sale analytics require an authenticated SHOPPER, schema/header-valid request and known matching sale/product. Inventory enforces cumulative unexpired held + confirmed units per shopper/sale. PURCHASE_LIMIT_EXCEEDED is a stable 409 business rejection with no reservation or payment; replay the same key, use a new key for a later logical purchase after allowance is freed."
       }
     },
     "/v1/orders/{order_id}": {
@@ -1464,6 +1467,12 @@
               "UNAVAILABLE",
               "CANCELLED"
             ]
+          },
+          "per_shopper_unit_cap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
           }
         },
         "required": [
@@ -1474,7 +1483,8 @@
           "currency",
           "starts_at",
           "ends_at",
-          "status"
+          "status",
+          "per_shopper_unit_cap"
         ],
         "additionalProperties": false
       },
@@ -1538,6 +1548,13 @@
               "max_in_flight"
             ],
             "additionalProperties": false
+          },
+          "per_shopper_unit_cap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start. Omission normalizes to one on creation and replacement.",
+            "default": 1
           }
         },
         "required": [
@@ -1635,6 +1652,12 @@
               ]
             },
             "uniqueItems": true
+          },
+          "per_shopper_unit_cap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Cumulative unexpired held plus confirmed units allowed per shopper in this sale; frozen at sale start."
           }
         },
         "required": [
@@ -1648,7 +1671,8 @@
           "status",
           "allocated_units",
           "admission_limits",
-          "ready_participants"
+          "ready_participants",
+          "per_shopper_unit_cap"
         ],
         "additionalProperties": false
       },
@@ -1996,7 +2020,9 @@
               "METADATA_CONFLICT",
               "QUORUM_UNAVAILABLE",
               "DEPENDENCY_UNAVAILABLE",
-              "VERSION_CONFLICT"
+              "VERSION_CONFLICT",
+              "SALE_WINDOW_CONFLICT",
+              "PURCHASE_LIMIT_EXCEEDED"
             ]
           },
           "message": {

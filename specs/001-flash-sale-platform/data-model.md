@@ -27,7 +27,7 @@ validation, uniqueness, and transitions; it contains no migrations or service im
 | Flash Sale Manager | SaleConfiguration, readiness, operator analytics projection | Its own PostgreSQL database |
 | Catalog | Applied offer projection, product index, readiness | Owner-chosen store; metadata through storage protocol |
 | Admission | Applied sale projection, quotas, leases, attempts, outbox | Own PostgreSQL database shared across its replicas |
-| Inventory | StockAllocation, Reservation, inbox/outbox | Member 2's transactional store |
+| Inventory | StockAllocation, shopper allowance, Reservation, reserve outcomes, inbox/outbox | Member 2's transactional store |
 | Order | PurchaseIntent, Order, saga steps, inbox/outbox | Own PostgreSQL database |
 | Payment | PaymentAttempt, Refund, inbox/outbox | Member 2's transactional store |
 | Notification | Notice, delivery state, inbox | Member 3's store and serverless handler |
@@ -56,34 +56,45 @@ subject in the owning service. There is no public token-minting endpoint.
 ## SaleConfiguration and readiness
 
 `SaleConfiguration { sale_id, product_id, version, unit_price_minor, currency, allocated_units,
-starts_at, ends_at, configured_by, configured_at, cancelled_at?, frozen_at? }`.
+per_shopper_unit_cap, starts_at, ends_at, configured_by, configured_at, cancelled_at?, frozen_at? }`.
 Readiness records are unique by `(sale_id, version, participant)` where participant is Catalog,
 Admission, or Inventory. Each records applied version, allocation digest, time, and status/error.
 
-- Validate positive allocation, quantity-compatible bounds, price/currency, and `starts_at < ends_at`.
+- Validate positive allocation, quantity-compatible bounds, price/currency, a positive integer
+  `per_shopper_unit_cap` (initial default one), and `starts_at < ends_at`. Omission on SaleWrite
+  normalizes to one for both creation and replacement; persisted/events/response fields are explicit.
+- Non-cancelled sales for one product cannot overlap, including concurrent creates/replacements.
+  Flash Sale uses `[starts_at, ends_at)` in a PostgreSQL `tstzrange` with a partial GiST exclusion
+  constraint on product equality/range overlap (`btree_gist`, `cancelled_at IS NULL`). Adjacent
+  ranges/different products are allowed; cancellation removes the interval from exclusion.
+  Map the constraint conflict to `SALE_WINDOW_CONFLICT`, not an unhandled database error.
 - Before start, a replacement configuration increments version and invalidates prior readiness.
-- Readiness includes Catalog's applied offer and metadata quorum availability, Admission's applied
-  limits/window, and Inventory's durable allocation. Duplicate/old acknowledgements are harmless.
+- Readiness includes Catalog's applied offer/cap and metadata quorum availability, Admission's
+  applied limits/window/cap, and Inventory's durable allocation/cap. `allocation_digest` is SHA-256
+  of the normalized configuration terms: sale/product IDs, version, price/currency, allocated
+  units, cap, schedule and admission limits, using sorted-key compact UTF-8 JSON (no whitespace), lowercase UUIDs and normalized UTC times.
+  Exclude dynamic status/readiness fields. Matching version without matching digest is not ready.
+  Duplicate/old acknowledgements are harmless.
 - Effective status is CANCELLED if cancelled; otherwise UPCOMING before start, UNAVAILABLE when
   readiness is incomplete, ACTIVE when ready and inside the window, and ENDED at/after end.
 - Flash Sale persists SaleActivated after all matching readiness acknowledgements and the start
   instant; Catalog, Admission and Inventory apply the activation for the same version. Every
   participant still checks the end time, so a delayed activation cannot reopen an ended sale.
-- Once the original start time is reached, price/allocation/window replacement is rejected for
+- Once the original start time is reached, price/allocation/cap/window replacement is rejected for
   that sale identity, preventing an operator from moving the start time to bypass the freeze.
 - Cancellation is permitted only before start. Existing holds settle against their frozen snapshot
   after end, up to their individual expiry; new holds must still pass the current window check.
 
 The trusted offer contains `(sale_id, product_id, version, unit_price_minor, currency, starts_at,
-ends_at)`. Order compares the submitted expected offer with Flash Sale's authoritative offer;
-a mismatch returns OFFER_CHANGED with the new offer, before reserving or accepting an order.
+ends_at, per_shopper_unit_cap)`. Order compares the submitted expected offer with Flash Sale's
+authoritative offer; a mismatch returns OFFER_CHANGED with the new offer, before reserving or accepting an order.
 
 ## AdmissionQuota, InFlightLease, and Attempt
 
 `AdmissionQuota { scope: SALE|SHOPPER_SALE, scope_id, bucket_start, count, limit, interval_ms }`;
 `InFlightLease { attempt_id, sale_id, shopper_id, expires_at, released_at? }`;
 `Attempt { attempt_id, shopper_id, sale_id, product_id, received_at, decision, reason?,
-retry_after_seconds?, response_status, response_latency_ms, request_key_digest }`.
+retry_after_seconds?, response_status, response_error_code?, response_latency_ms, request_key_digest }`.
 
 Initial normal profile: 5 attempts/shopper/second, 100 attempts/sale/second, and 50 concurrent
 purchase forwards per sale, with two-second lease lifetime and a shorter upstream timeout.
@@ -93,29 +104,63 @@ replicas against these records. Expired leases are excluded under the same lock,
 worker cannot leak capacity. Release on completion; repeat release is safe. DB unavailability
 fails closed with retryable 503, not an invented successful admission decision.
 
-Each HTTP submission has a server-assigned `attempt_id`; an explicit shopper retry is a new
-attempt while retaining the purchase request key. Internal transport retries preserve attempt ID.
+Only an authenticated SHOPPER submission with valid Purchase/header structure and a known,
+matching sale/product becomes a sale-analytics Attempt. Gateway rejects unauthorized/malformed
+traffic; Admission revalidates and resolves sale/product identity before recording eligible work.
+Unknown/mismatched targets are 404 `NOT_FOUND`, with no invented IDs. Known inactive, cancelled or
+unready sales still count as attempts. Excluded traffic increments
+`purchase_excluded_submissions_total{reason=unauthorized|malformed|unknown_target}` once at its
+rejecting boundary; internal redelivery and downstream instrumentation do not add an ingress count.
+Never put subjects, tokens, raw payloads or unknown ID strings into metric labels.
+
+Every eligible HTTP submission has a server-assigned `attempt_id`; an explicit shopper retry is a
+new attempt while retaining the purchase request key. Internal transport retries preserve attempt ID.
+An admitted request rejected later by Order remains `decision=ADMITTED, reason=NONE`; preserve its
+final HTTP `response_status` and `response_error_code` (such as PURCHASE_LIMIT_EXCEEDED) separately.
+For rejected admission, decision/reason reflect Admission's rule. Admission rejection rate uses
+only eligible admission decisions, not all HTTP failures.
 Record the measured response-decision latency and its outbox event before writing the response;
 network transfer is excluded from that metric and measured separately by the load generator.
 An interrupted response still has one durable attempted outcome, and never invents another sale.
 
 ## StockAllocation and Reservation
 
-`StockAllocation { sale_id, product_id, config_version, allocated, available, held, sold, version }`;
+`StockAllocation { sale_id, product_id, config_version, per_shopper_unit_cap, allocated,
+available, held, sold, version }`;
 `Reservation { reservation_id, order_id, shopper_id, sale_id, product_id, quantity,
 config_version, state, created_at, expires_at, finalized_at?, transition_version }`.
 
 One allocation per sale/product; one reservation per proposed `order_id`. Reserve, stock movement,
 reservation creation, and required events commit in one Inventory transaction. Conditional
-availability and sale-version/window validation occur inside the transaction. The invariant
+availability and sale-version/window/cap validation occur inside the transaction. The invariant
 `allocated = available + held + sold` holds at each commit; every quantity is nonnegative.
+
+`ShopperSaleAllowance { sale_id, shopper_id, unexpired_held_units, confirmed_units }` is logical
+accounting keyed by sale/shopper, derived from authoritative reservations or transactionally
+maintained with them. Member 2 chooses the representation and lock mechanism. At the protected
+Inventory time, `unexpired_held_units + confirmed_units <= per_shopper_unit_cap`. Orphan holds
+count while unexpired even if Order has not committed; duplicates never add units.
+
+Reserve replays an existing matching operation outcome first. A fresh Reserve protects allocation
+and shopper allowance with a consistent serialization/lock order, recognizes expired holds even
+if background cleanup is delayed, then checks cap and stock before creating the whole hold.
+Exceeding allowance yields PURCHASE_LIMIT_EXCEEDED without a reservation/payment. Confirm converts
+live held allowance to confirmed allowance without changing its consumed total. Release/expiry
+frees held allowance once. Late outcomes cannot reactivate the old hold or consume allowance
+already made available to a new purchase. State is durable across instances/restart.
+
+`ReserveOutcome { order_id, payload_hash, result_code, reservation_id?, decided_at }` records the
+stable decision for a proposed order, including business rejection. A matching rejection replays
+the same code; a successful replay returns the reservation's current state, including a later
+terminal state, before rechecking changed stock/allowance. Changed payload returns PAYLOAD_MISMATCH.
+This is a logical idempotency guarantee, not a prescribed physical table.
 
 | Current | Operation / condition | Next | Quantity effect |
 | --- | --- | --- | --- |
-| Absent | Reserve; eligible and enough stock | HELD | available -= q; held += q |
-| HELD | Confirm; locked DB time < expires_at | CONFIRMED | held -= q; sold += q |
-| HELD | Release before expiry | RELEASED | held -= q; available += q |
-| HELD | Expire or any transition at/after expiry | EXPIRED | held -= q; available += q |
+| Absent | Reserve; eligible, within shopper allowance and enough stock | HELD | available -= q; held += q; consume q allowance |
+| HELD | Confirm; protected time < expires_at | CONFIRMED | held -= q; sold += q; allowance remains consumed |
+| HELD | Release before expiry | RELEASED | held -= q; available += q; free q allowance |
+| HELD | Expire or any transition at/after expiry | EXPIRED | held -= q; available += q; free q allowance |
 | Terminal | Repeat matching operation | Same | None |
 | Terminal | Competing terminal operation | Same, conflict result | None |
 
@@ -139,7 +184,9 @@ payment_attempt_id, refund_id?, created_at, updated_at, aggregate_version }`.
 - An unaccepted intent returns retryable REQUEST_IN_PROGRESS rather than exposing an accepted
   pending order. Once hold and order are durable, persist PENDING_PAYMENT and PaymentRequested
   in one Order transaction, then return 202 with the stable order. Normal business rejections
-  are recorded; admission 429/temporary 503 are not permanent purchase rejections.
+  are recorded, including PURCHASE_LIMIT_EXCEEDED. After allowance is freed, another logical
+  purchase needs a new request key; the rejected key keeps its recorded outcome. Admission
+  429/temporary 503 are not permanent purchase rejections.
 - Public order states are PENDING_PAYMENT, CONFIRMED, FAILED, EXPIRED. Internal workflow steps
   distinguish awaiting payment, confirming, releasing, and reconciling without implying fulfillment.
 - Success first reads/attempts Inventory confirmation, then marks CONFIRMED and emits its outcome.
@@ -229,7 +276,10 @@ latency_count, computed_at }`. Histogram upper bounds are `[50,100,250,500,1000,
 plus overflow; bins are noncumulative counts. Percentiles identify their bin precision. A summary
 ID is stable per window; event identity is deterministic for `(summary_id, revision)`.
 
-Only AttemptRecorded contributes attempts/admission/latency; only PaymentSucceeded/Failed
+Only eligible AttemptRecorded contributes attempts/admission/latency. Excluded HTTP traffic has
+no analytics activity event and cannot change counts, distinct shoppers, rejection denominators
+or latency. An admitted downstream business rejection counts as an attempt, not an admission
+rejection; retain its response error separately. Only PaymentSucceeded/Failed
 contributes payment outcomes; only OrderConfirmed contributes sold units and revenue. Seen
 business IDs protect against semantic duplicates even when a transport event identity changes.
 Currency totals remain separate. Finalized financial totals cannot be changed by late activity.
@@ -237,7 +287,10 @@ Currency totals remain separate. Finalized financial totals cannot be changed by
 Your Analytics clock emitter queries Flash Sale's internal window-schedule endpoint, using its
 recovered View to skip already-final windows. It appends an AnalyticsHeartbeat for each open or
 not-yet-finalized known sale/product/window every second, including windows with no business
-activity. Heartbeats use the same key/partitioner as data. Processing a heartbeat whose broker
+activity. The emitter also scans nonfinal keys in its recovered View, including activity windows
+outside the scheduled sale interval (such as known inactive-sale attempts). Those keys receive
+the same heartbeats until final, so quiet out-of-schedule attempts do not remain provisional.
+Heartbeats use the same key/partitioner as data. Processing a heartbeat whose broker
 append timestamp reaches the cutoff persists FINAL, after all earlier records in that partition.
 Do not finalize based on an unrecorded process-local timer during replay. Under a dependency outage,
 clock emission/processing lag is visible as delayed reporting, never fresh zero activity.

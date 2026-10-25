@@ -59,12 +59,12 @@ measurable outcomes. Planning must turn these into executable checks and demonst
 
 | Functional requirements | Acceptance coverage | Measurable outcomes |
 | --- | --- | --- |
-| FR-001-FR-003 | US1 scenarios 1-5; US2 scenario 6 | SC-001, SC-002 |
+| FR-001-FR-003 | US1 scenarios 1-7; US2 scenario 6 | SC-001, SC-002 |
 | FR-004 | US1 scenario 5; US2 scenario 6; US4 scenario 3 | SC-014 |
-| FR-005-FR-010 | US2 scenarios 1-6 | SC-002-SC-005, SC-011, SC-014 |
+| FR-005-FR-010 | US2 scenarios 1-8 | SC-002-SC-005, SC-011, SC-014 |
 | FR-011-FR-017 | US2 scenario 5; US3 scenarios 1-6 | SC-004-SC-007 |
 | FR-018-FR-019 | US4 scenarios 1-3; US5 scenario 4 | SC-004, SC-008 |
-| FR-020-FR-022 | US5 scenarios 1-4 | SC-009 |
+| FR-020-FR-022 | US5 scenarios 1-5 | SC-009 |
 | FR-023-FR-026 | US6 scenarios 1-5 | SC-010, SC-002 |
 | FR-027-FR-028 | US7 scenario 1; ownership and access review | SC-012, SC-014, SC-015 |
 | FR-029-FR-030 | US7 scenarios 1, 2, 4 | SC-003, SC-011, SC-012, SC-015 |

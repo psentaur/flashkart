@@ -11,6 +11,9 @@ import "google/protobuf/timestamp.proto";
 // Metadata: x-correlation-id (UUID). A two-second caller budget applies.
 // Business conflicts use OperationResult; transport failures use gRPC status.
 service InventoryReservation {
+  // Enforce stock and applied per-shopper sale cap atomically across distinct order IDs.
+  // Count unexpired HELD + CONFIRMED units; replay an existing matching outcome first.
+  // Expired holds free allowance at authoritative time, even with cleanup delayed.
   rpc Reserve(ReserveRequest) returns (OperationResult);
   rpc GetReservation(GetReservationRequest) returns (Reservation);
   rpc Confirm(TransitionRequest) returns (OperationResult);
@@ -37,6 +40,7 @@ enum ResultCode {
   PAYLOAD_MISMATCH = 8;
   RESERVATION_EXPIRED = 9;
   ALREADY_FINAL = 10;
+  PURCHASE_LIMIT_EXCEEDED = 11; // No reservation/payment; stable proposed-order rejection.
 }
 
 message ReserveRequest {
