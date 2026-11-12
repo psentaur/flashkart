@@ -1,4 +1,4 @@
-name: Phase 1 foundation
+name: CI
 
 on: [push, pull_request]
 

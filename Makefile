@@ -6,7 +6,7 @@ BUILD := $(CURDIR)/build
 TOOLS := $(BUILD)/tools
 PROTO := contracts/proto/flashkart/v1/services.proto
 
-.PHONY: build build-go build-analytics build-web test-unit test-contracts test-smoke generate-contracts
+.PHONY: build build-go build-analytics build-web build-contract-tools test-unit test-contracts test-smoke generate-contracts
 build: build-go build-analytics build-web
 
 build-go:
@@ -23,17 +23,20 @@ build-web:
 test-unit:
 	$(GO) test -buildvcs=false ./...
 
-generate-contracts:
-	mkdir -p "$(TOOLS)" gen
+build-contract-tools:
+	mkdir -p "$(TOOLS)"
 	$(GO) build -buildvcs=false -o "$(TOOLS)/protoc-gen-go" google.golang.org/protobuf/cmd/protoc-gen-go
 	$(GO) build -buildvcs=false -o "$(TOOLS)/protoc-gen-go-grpc" google.golang.org/grpc/cmd/protoc-gen-go-grpc
+
+generate-contracts: build-contract-tools
+	mkdir -p gen
 	$(PROTOC) -I contracts/proto \
 	  --plugin=protoc-gen-go="$(TOOLS)/protoc-gen-go" \
 	  --plugin=protoc-gen-go-grpc="$(TOOLS)/protoc-gen-go-grpc" \
 	  --go_out=gen --go_opt=paths=source_relative \
 	  --go-grpc_out=gen --go-grpc_opt=paths=source_relative "$(PROTO)"
 
-test-contracts:
+test-contracts: build-contract-tools
 	$(PYTHON) tests/contracts.py
 	$(GO) test -buildvcs=false ./gen/...
 	$(PYTHON) tests/reproduce_contracts.py "$(PROTOC)" "$(TOOLS)" "$(PROTO)"
