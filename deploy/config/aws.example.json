@@ -1,0 +1,21 @@
+{
+  "environment": "aws",
+  "http_address": "0.0.0.0:8080",
+  "grpc_address": "0.0.0.0:7001",
+  "database_env": {
+    "transactional": "FLASHKART_TRANSACTIONAL_DSN",
+    "a": "FLASHKART_REPLICA_A_DSN",
+    "b": "FLASHKART_REPLICA_B_DSN",
+    "c": "FLASHKART_REPLICA_C_DSN",
+    "d": "FLASHKART_REPLICA_D_DSN"
+  },
+  "replica_id": "a",
+  "peers": {
+    "a": "catalog-replica-a:7001",
+    "b": "catalog-replica-b:7001",
+    "c": "catalog-replica-c:7001",
+    "d": "catalog-replica-d:7001"
+  },
+  "aws": {"region": "ap-south-1", "endpoints": {}},
+  "kafka": {"brokers": [], "auth": "iam"}
+}
