@@ -712,6 +712,7 @@ type ReadDocumentRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Call          *Call                  `protobuf:"bytes,1,opt,name=call,proto3" json:"call,omitempty"`
 	Key           *DocumentKey           `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
+	HintsOnly     bool                   `protobuf:"varint,3,opt,name=hints_only,json=hintsOnly,proto3" json:"hints_only,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -758,6 +759,13 @@ func (x *ReadDocumentRequest) GetKey() *DocumentKey {
 		return x.Key
 	}
 	return nil
+}
+
+func (x *ReadDocumentRequest) GetHintsOnly() bool {
+	if x != nil {
+		return x.HintsOnly
+	}
+	return false
 }
 
 type DocumentVersions struct {
@@ -997,6 +1005,7 @@ type SyncRequest struct {
 	Call          *Call                  `protobuf:"bytes,1,opt,name=call,proto3" json:"call,omitempty"`
 	Cursor        string                 `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
 	Limit         uint32                 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	HintsOnly     bool                   `protobuf:"varint,4,opt,name=hints_only,json=hintsOnly,proto3" json:"hints_only,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1050,6 +1059,13 @@ func (x *SyncRequest) GetLimit() uint32 {
 		return x.Limit
 	}
 	return 0
+}
+
+func (x *SyncRequest) GetHintsOnly() bool {
+	if x != nil {
+		return x.HintsOnly
+	}
+	return false
 }
 
 type ReplicaRecord struct {
@@ -1201,12 +1217,15 @@ func (x *ReplicaStatusRequest) GetCorrelationId() string {
 }
 
 type ReplicaStatus struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ReplicaId     string                 `protobuf:"bytes,1,opt,name=replica_id,json=replicaId,proto3" json:"replica_id,omitempty"`
-	BackendReady  bool                   `protobuf:"varint,2,opt,name=backend_ready,json=backendReady,proto3" json:"backend_ready,omitempty"`
-	PendingHints  uint64                 `protobuf:"varint,3,opt,name=pending_hints,json=pendingHints,proto3" json:"pending_hints,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	ReplicaId             string                 `protobuf:"bytes,1,opt,name=replica_id,json=replicaId,proto3" json:"replica_id,omitempty"`
+	BackendReady          bool                   `protobuf:"varint,2,opt,name=backend_ready,json=backendReady,proto3" json:"backend_ready,omitempty"`
+	PendingHints          uint64                 `protobuf:"varint,3,opt,name=pending_hints,json=pendingHints,proto3" json:"pending_hints,omitempty"`
+	OldestHintAgeSeconds  uint64                 `protobuf:"varint,4,opt,name=oldest_hint_age_seconds,json=oldestHintAgeSeconds,proto3" json:"oldest_hint_age_seconds,omitempty"`
+	SyncRecordsScanned    uint64                 `protobuf:"varint,5,opt,name=sync_records_scanned,json=syncRecordsScanned,proto3" json:"sync_records_scanned,omitempty"`
+	LastSyncCompletedUnix int64                  `protobuf:"varint,6,opt,name=last_sync_completed_unix,json=lastSyncCompletedUnix,proto3" json:"last_sync_completed_unix,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ReplicaStatus) Reset() {
@@ -1256,6 +1275,27 @@ func (x *ReplicaStatus) GetBackendReady() bool {
 func (x *ReplicaStatus) GetPendingHints() uint64 {
 	if x != nil {
 		return x.PendingHints
+	}
+	return 0
+}
+
+func (x *ReplicaStatus) GetOldestHintAgeSeconds() uint64 {
+	if x != nil {
+		return x.OldestHintAgeSeconds
+	}
+	return 0
+}
+
+func (x *ReplicaStatus) GetSyncRecordsScanned() uint64 {
+	if x != nil {
+		return x.SyncRecordsScanned
+	}
+	return 0
+}
+
+func (x *ReplicaStatus) GetLastSyncCompletedUnix() int64 {
+	if x != nil {
+		return x.LastSyncCompletedUnix
 	}
 	return 0
 }
@@ -1915,10 +1955,12 @@ const file_flashkart_v1_services_proto_rawDesc = "" +
 	"\rdocument_json\x18\x04 \x01(\fR\fdocumentJson\"r\n" +
 	"\x14ApplyMutationRequest\x12&\n" +
 	"\x04call\x18\x01 \x01(\v2\x12.flashkart.v1.CallR\x04call\x122\n" +
-	"\bmutation\x18\x02 \x01(\v2\x16.flashkart.v1.MutationR\bmutation\"j\n" +
+	"\bmutation\x18\x02 \x01(\v2\x16.flashkart.v1.MutationR\bmutation\"\x89\x01\n" +
 	"\x13ReadDocumentRequest\x12&\n" +
 	"\x04call\x18\x01 \x01(\v2\x12.flashkart.v1.CallR\x04call\x12+\n" +
-	"\x03key\x18\x02 \x01(\v2\x19.flashkart.v1.DocumentKeyR\x03key\"w\n" +
+	"\x03key\x18\x02 \x01(\v2\x19.flashkart.v1.DocumentKeyR\x03key\x12\x1d\n" +
+	"\n" +
+	"hints_only\x18\x03 \x01(\bR\thintsOnly\"w\n" +
 	"\x10DocumentVersions\x122\n" +
 	"\bsiblings\x18\x01 \x03(\v2\x16.flashkart.v1.MutationR\bsiblings\x12/\n" +
 	"\acontext\x18\x02 \x01(\v2\x15.flashkart.v1.ContextR\acontext\"\x9c\x01\n" +
@@ -1934,11 +1976,13 @@ const file_flashkart_v1_services_proto_rawDesc = "" +
 	"\fMergeRequest\x12&\n" +
 	"\x04call\x18\x01 \x01(\v2\x12.flashkart.v1.CallR\x04call\x122\n" +
 	"\bmutation\x18\x02 \x01(\v2\x16.flashkart.v1.MutationR\bmutation\x12!\n" +
-	"\fhint_targets\x18\x03 \x03(\tR\vhintTargets\"c\n" +
+	"\fhint_targets\x18\x03 \x03(\tR\vhintTargets\"\x82\x01\n" +
 	"\vSyncRequest\x12&\n" +
 	"\x04call\x18\x01 \x01(\v2\x12.flashkart.v1.CallR\x04call\x12\x16\n" +
 	"\x06cursor\x18\x02 \x01(\tR\x06cursor\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\rR\x05limit\"f\n" +
+	"\x05limit\x18\x03 \x01(\rR\x05limit\x12\x1d\n" +
+	"\n" +
+	"hints_only\x18\x04 \x01(\bR\thintsOnly\"f\n" +
 	"\rReplicaRecord\x122\n" +
 	"\bmutation\x18\x01 \x01(\v2\x16.flashkart.v1.MutationR\bmutation\x12!\n" +
 	"\fhint_targets\x18\x02 \x03(\tR\vhintTargets\"b\n" +
@@ -1947,12 +1991,15 @@ const file_flashkart_v1_services_proto_rawDesc = "" +
 	"\vnext_cursor\x18\x02 \x01(\tR\n" +
 	"nextCursor\"=\n" +
 	"\x14ReplicaStatusRequest\x12%\n" +
-	"\x0ecorrelation_id\x18\x01 \x01(\tR\rcorrelationId\"x\n" +
+	"\x0ecorrelation_id\x18\x01 \x01(\tR\rcorrelationId\"\x9a\x02\n" +
 	"\rReplicaStatus\x12\x1d\n" +
 	"\n" +
 	"replica_id\x18\x01 \x01(\tR\treplicaId\x12#\n" +
 	"\rbackend_ready\x18\x02 \x01(\bR\fbackendReady\x12#\n" +
-	"\rpending_hints\x18\x03 \x01(\x04R\fpendingHints\"\xcc\x01\n" +
+	"\rpending_hints\x18\x03 \x01(\x04R\fpendingHints\x125\n" +
+	"\x17oldest_hint_age_seconds\x18\x04 \x01(\x04R\x14oldestHintAgeSeconds\x120\n" +
+	"\x14sync_records_scanned\x18\x05 \x01(\x04R\x12syncRecordsScanned\x127\n" +
+	"\x18last_sync_completed_unix\x18\x06 \x01(\x03R\x15lastSyncCompletedUnix\"\xcc\x01\n" +
 	"\tSaleTerms\x12\x17\n" +
 	"\asale_id\x18\x01 \x01(\tR\x06saleId\x12\x1d\n" +
 	"\n" +

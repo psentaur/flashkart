@@ -2,7 +2,7 @@
 
 This roadmap turns the [technical architecture](implementation-plan.md) into executable implementation phases. That document remains the source of truth for system behavior; this document defines build order, dependencies, deliverables, and completion checks.
 
-**Current status:** Phase 1 passed hosted CI. Phases 2 and 3 are implemented and verified locally. The four-node tests covered independent writes, owner outages, partial commits, and conflict resolution. Lambda invocation and event source mappings remain open for later verification. Phases 4–12 are unstarted. [Phase 3 development](phase-3-development.md)
+**Current status:** Phase 1 passed hosted CI. Phases 2–4 are implemented and verified locally. The recovery tests covered partitioned writes, stale reads, hint replay, SQL connection loss, and convergence. A local PostgreSQL restart preserved pending hints and their envelopes. Lambda invocation and event source mappings remain open for later verification. Phases 5–12 are unstarted. [Phase 4 development](phase-4-development.md)
 
 Develop and verify locally through Phase 11. Phase 12 covers AWS integration and reproducible deployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
 
@@ -108,7 +108,7 @@ The default execution order is sequential. Keep intermediate states explicit: fo
 - A 2-2 partition permits divergent writes; healing exposes siblings and explicit resolution converges. Stale reads are demonstrated rather than hidden.
 - Untouched documents converge through background synchronization; three unavailable replicas prevent quorum operations.
 
-**Evidence:** repeatable failure/recovery suite. Proposed command: `make test-replication-recovery`.
+**Evidence:** `make test-replication-recovery` passed against four PostgreSQL backends. The local database fault target also verified persisted hints across a container restart.
 
 ## Phase 5: Product Catalog and durable sale publication
 

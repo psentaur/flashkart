@@ -63,6 +63,16 @@ func runService(ctx context.Context, name string, cfg config, log *slog.Logger) 
 	}
 	defer client.Close()
 	coordinator := replica.NewCoordinator(store, client, time.Duration(cfg.PeerTimeoutMS)*time.Millisecond, timeout)
+	recoveryCtx, stopRecovery := context.WithCancel(ctx)
+	recoveryDone := make(chan struct{})
+	go func() {
+		defer close(recoveryDone)
+		coordinator.RunRecovery(recoveryCtx)
+	}()
+	defer func() {
+		stopRecovery()
+		<-recoveryDone
+	}()
 	return serve(ctx, name, cfg, log, store, coordinator)
 }
 

@@ -76,7 +76,7 @@ func (m *coordinatorMetrics) write(w io.Writer, sqlFailures uint64) {
 	siblings, conflicts := m.siblings, m.conflicts
 	m.mu.Unlock()
 	fmt.Fprintln(w, "# TYPE flashkart_replica_peer_requests_total counter")
-	for _, operation := range []string{"read", "write", "list"} {
+	for _, operation := range []string{"read", "write", "list", "repair", "handoff", "sync"} {
 		for _, id := range replicaIDs {
 			fmt.Fprintf(w, "flashkart_replica_peer_requests_total{operation=%q,replica=%q,result=\"ok\"} %d\n",
 				operation, id, peers[peerMetric{operation, id, true}])

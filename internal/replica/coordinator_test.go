@@ -196,30 +196,31 @@ func TestReplicationCore(t *testing.T) {
 
 	servers[owners[1]].Stop()
 	partial := prepare(outside, newRequest("partial", combined([]*pb.Mutation{oneDown})))
-	ack, err := client.Apply(ctx, outside, &pb.ApplyMutationRequest{Mutation: partial})
+	servers[outside].Stop()
+	ack, err := client.Apply(ctx, owners[2], &pb.ApplyMutationRequest{Mutation: partial})
 	if ack != nil {
 		t.Fatal("partial write returned an acknowledgement")
 	}
 	requireReason(t, err, WriteOutcomeUnknown)
 	copies := physical(owners[2])
-	if len(copies) != 1 || !proto.Equal(copies[0], partial) || len(physical(outside)) != 0 {
-		t.Fatal("partial write was lost or placed on the fallback")
+	if len(copies) != 1 || !proto.Equal(copies[0], partial) || slices.ContainsFunc(physical(outside), func(m *pb.Mutation) bool { return proto.Equal(m, partial) }) {
+		t.Fatal("partial write was lost or placed on the unavailable fallback")
 	}
-	_, err = client.Read(ctx, outside, readRequest)
+	_, err = client.Read(ctx, owners[2], readRequest)
 	requireReason(t, err, QuorumUnavailable)
 
 	var metrics bytes.Buffer
-	coordinators[outside].WriteMetrics(&metrics)
+	coordinators[owners[2]].WriteMetrics(&metrics)
 	for _, want := range []string{
 		`flashkart_replica_quorum_failures_total{operation="write"} 1`,
 		`flashkart_replica_quorum_failures_total{operation="read"} 1`,
-		`flashkart_replica_peer_requests_total{operation="write",replica="` + owners[0] + `",result="error"} 2`,
+		`flashkart_replica_peer_requests_total{operation="write",replica="` + owners[0] + `",result="error"} 1`,
 	} {
 		if !strings.Contains(metrics.String(), want) {
 			t.Errorf("missing metric %s", want)
 		}
 	}
-	t.Logf("owners %v; non-owner %s coordinated writes; one outage passed, two produced an unknown write outcome with one durable copy", owners, outside)
+	t.Logf("owners %v; non-owner %s coordinated writes; one outage passed, three produced an unknown write outcome with one durable copy", owners, outside)
 }
 
 func requireReason(t *testing.T, err error, reason string) {
