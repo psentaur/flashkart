@@ -2,7 +2,7 @@
 
 This roadmap turns the [technical architecture](implementation-plan.md) into executable implementation phases. That document remains the source of truth for system behavior; this document defines build order, dependencies, deliverables, and completion checks.
 
-**Current status:** Phase 1 foundations are implemented. Local builds, contract checks, and service lifecycle checks passed. The GitHub Actions workflow is configured and awaits a hosted run. Phases 2–12 are unstarted. [Phase 1 development](phase-1-development.md)
+**Current status:** Phase 1 passed hosted CI. Phase 2 is implemented and verified locally, including the five PostgreSQL backends, replica SQL and gRPC, and Kafka/Flink startup. Lambda invocation and event source mappings remain open for later verification. Phases 3–12 are unstarted. [Phase 2 development](phase-2-development.md)
 
 Develop and verify locally through Phase 11. Phase 12 covers AWS integration and reproducible deployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
 

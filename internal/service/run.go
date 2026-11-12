@@ -16,6 +16,8 @@ import (
 	"syscall"
 	"time"
 
+	pb "flashkart/gen/flashkart/v1"
+	"flashkart/internal/replica"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -32,7 +34,7 @@ func Main(name string) {
 		if api := os.Getenv("AWS_LAMBDA_RUNTIME_API"); name == "notification" && api != "" {
 			err = runLambda(ctx, api, log)
 		} else {
-			err = serve(ctx, name, cfg, log)
+			err = runService(ctx, name, cfg, log)
 		}
 	}
 	if err != nil {
@@ -41,7 +43,23 @@ func Main(name string) {
 	}
 }
 
-func serve(ctx context.Context, name string, cfg config, log *slog.Logger) error {
+func runService(ctx context.Context, name string, cfg config, log *slog.Logger) error {
+	if name != "catalog-replica" {
+		return serve(ctx, name, cfg, log, nil)
+	}
+	dsn := os.Getenv(cfg.Databases[cfg.ReplicaID])
+	if dsn == "" {
+		return errors.New("missing replica DSN in " + cfg.Databases[cfg.ReplicaID])
+	}
+	store, err := replica.Open(ctx, dsn, cfg.ReplicaID)
+	if err != nil {
+		return err
+	}
+	defer store.Close()
+	return serve(ctx, name, cfg, log, store)
+}
+
+func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store *replica.Store) error {
 	listener, err := net.Listen("tcp", cfg.HTTP)
 	if err != nil {
 		return err
@@ -60,6 +78,14 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger) error
 		grpcServer = grpc.NewServer()
 		healthServer = health.NewServer()
 		healthpb.RegisterHealthServer(grpcServer, healthServer)
+		if store != nil {
+			pb.RegisterCatalogReplicationServer(grpcServer, store)
+			pb.RegisterReplicaPeerServer(grpcServer, store)
+			healthServer.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
+			probeContext, stopProbes := context.WithCancel(ctx)
+			defer stopProbes()
+			go monitorReplica(probeContext, healthServer, store)
+		}
 		go func() { failures <- grpcServer.Serve(peerListener) }()
 		log.Info("gRPC listening", "address", peerListener.Addr().String())
 	}
@@ -71,8 +97,10 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger) error
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, _ *http.Request) {
-		if !ready.Load() {
+	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
+		probe, cancel := context.WithTimeout(r.Context(), time.Second)
+		defer cancel()
+		if !ready.Load() || store != nil && !store.Ready(probe) {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
@@ -137,4 +165,23 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger) error
 		serveErr = nil
 	}
 	return errors.Join(serveErr, shutdownErr)
+}
+
+func monitorReplica(ctx context.Context, healthServer *health.Server, store *replica.Store) {
+	tick := time.NewTicker(time.Second)
+	defer tick.Stop()
+	for ctx.Err() == nil {
+		probe, cancel := context.WithTimeout(ctx, time.Second)
+		state := healthpb.HealthCheckResponse_NOT_SERVING
+		if store.Ready(probe) {
+			state = healthpb.HealthCheckResponse_SERVING
+		}
+		cancel()
+		healthServer.SetServingStatus("", state)
+		select {
+		case <-ctx.Done():
+			return
+		case <-tick.C:
+		}
+	}
 }

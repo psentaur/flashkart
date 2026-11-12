@@ -1,4 +1,4 @@
-name: Phase 1 foundation
+name: CI
 
 on: [push, pull_request]
 
@@ -33,3 +33,8 @@ jobs:
           echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
           python -m pip install -r tests/requirements.txt
       - run: make build test-unit test-contracts test-smoke
+      - name: Verify local PostgreSQL persistence
+        run: make dev-up migrate seed test-persistence
+      - name: Stop local dependencies
+        if: always()
+        run: make dev-down
