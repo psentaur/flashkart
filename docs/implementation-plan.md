@@ -80,7 +80,7 @@ Run four identical Go agents with fixed logical identities A, B, C, and D. Each 
 
 For each document, the ring identifies three permanent owners and the remaining node as fallback. Membership and ownership do not change merely because a node is unreachable. HPA does not change the replica count or ring.
 
-**Persistence boundary.** Use ordinary PostgreSQL tables for document versions, pending hints, per-document counters, and prepared mutation records. Documents and causal metadata use JSONB; identity, operation, and hint-target fields use indexed columns and uniqueness constraints. Each database uses the same migrations. The application data contract supports only product and published-sale documents.
+**Persistence boundary.** Use ordinary PostgreSQL tables for document versions, pending hints, per-document counters, and prepared mutation records. Store immutable protobuf envelopes in `bytea` to preserve the original document and version bytes for exact replay. Identity, operation, and hint-target fields use indexed columns and uniqueness constraints. Each database uses the same migrations. The application data contract supports only product and published-sale documents.
 
 Inside one replica, serialize version merges and counter allocation by locking that document's metadata row with `SELECT ... FOR UPDATE` in the local SQL transaction. Each acknowledgement follows a successful local SQL commit. Keep peer network calls outside SQL transactions. A database connection failure, rollback, or ambiguous commit cannot count as a successful acknowledgement; retry/query the same operation to establish its outcome.
 

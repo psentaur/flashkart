@@ -15,6 +15,9 @@ config = json.loads(Path("deploy/config/local.example.json").read_text())
 config.update(http_address="127.0.0.1:0", grpc_address="127.0.0.1:0")
 env = dict(os.environ)
 env.pop("AWS_LAMBDA_RUNTIME_API", None)
+env["FLASHKART_REPLICA_A_DSN"] = (
+    "postgres://replica_app@127.0.0.1:1/flashkart?sslmode=disable&connect_timeout=1"
+)
 services = (
     "admission-controller", "analytics-api", "catalog-replica",
     "flash-sale-manager", "inventory-reservation", "notification",
@@ -45,6 +48,15 @@ def check_service(name, path):
                     base = "http://" + record["address"]
                     break
             for endpoint in ("healthz", "readyz", "metrics"):
+                if name == "catalog-replica" and endpoint == "readyz":
+                    try:
+                        urlopen(f"{base}/{endpoint}", timeout=3).close()
+                    except HTTPError as error:
+                        with error:
+                            assert error.code == 503
+                    else:
+                        raise AssertionError("replica reported ready without a database")
+                    continue
                 with urlopen(f"{base}/{endpoint}", timeout=3) as response:
                     assert response.status == 200
                     if endpoint == "metrics":

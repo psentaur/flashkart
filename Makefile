@@ -33,10 +33,32 @@ generate-contracts:
 	  --go_out=gen --go_opt=paths=source_relative \
 	  --go-grpc_out=gen --go-grpc_opt=paths=source_relative "$(PROTO)"
 
-test-contracts: generate-contracts
+test-contracts:
 	$(PYTHON) tests/contracts.py
 	$(GO) test -buildvcs=false ./gen/...
 	$(PYTHON) tests/reproduce_contracts.py "$(PROTOC)" "$(TOOLS)" "$(PROTO)"
 
 test-smoke: build-go
 	$(PYTHON) tests/smoke.py "$(BUILD)/bin"
+
+COMPOSE ?= docker compose
+LOCAL_COMPOSE = $(COMPOSE) -p flashkart-dev -f deploy/local/compose.yml
+
+.PHONY: dev-up dev-down migrate seed test-persistence test-emulator
+dev-up:
+	$(LOCAL_COMPOSE) up -d postgres-a postgres-b postgres-c postgres-d postgres-transactional
+
+dev-down:
+	$(LOCAL_COMPOSE) --profile kafka --profile flink down
+
+migrate:
+	sh deploy/local/migrate.sh $(LOCAL_COMPOSE)
+
+seed:
+	. deploy/local/postgres.env && $(GO) run -buildvcs=false ./cmd/seed-replica
+
+test-persistence:
+	. deploy/local/postgres.env && FLASHKART_TEST_POSTGRES=1 $(GO) test -buildvcs=false -count=1 -v ./internal/replica ./internal/service
+
+test-emulator:
+	$(PYTHON) deploy/local/emulator-smoke.py
