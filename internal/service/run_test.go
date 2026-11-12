@@ -35,7 +35,7 @@ func startTestGRPC(t *testing.T, store *replica.Store) (context.Context, *grpc.C
 	go func() {
 		defer close(done)
 		serverError = serve(ctx, "catalog-replica", config{HTTP: "127.0.0.1:0", GRPC: "127.0.0.1:0"},
-			slog.New(slog.NewJSONHandler(logs, nil)), store)
+			slog.New(slog.NewJSONHandler(logs, nil)), store, nil)
 	}()
 	t.Cleanup(func() {
 		cancel()

@@ -12,13 +12,15 @@ import (
 )
 
 type config struct {
-	Environment string            `json:"environment"`
-	HTTP        string            `json:"http_address"`
-	GRPC        string            `json:"grpc_address"`
-	Databases   map[string]string `json:"database_env"`
-	ReplicaID   string            `json:"replica_id"`
-	Peers       map[string]string `json:"peers"`
-	AWS         struct {
+	Environment        string            `json:"environment"`
+	HTTP               string            `json:"http_address"`
+	GRPC               string            `json:"grpc_address"`
+	Databases          map[string]string `json:"database_env"`
+	ReplicaID          string            `json:"replica_id"`
+	Peers              map[string]string `json:"peers"`
+	PeerTimeoutMS      int64             `json:"peer_timeout_ms"`
+	OperationTimeoutMS int64             `json:"operation_timeout_ms"`
+	AWS                struct {
 		Region    string            `json:"region"`
 		Endpoints map[string]string `json:"endpoints"`
 	} `json:"aws"`
@@ -35,7 +37,7 @@ func address(value string, allowZero bool) bool {
 }
 
 func readConfig(path, name string) (config, error) {
-	cfg := config{Environment: "local", HTTP: "127.0.0.1:8080"}
+	cfg := config{Environment: "local", HTTP: "127.0.0.1:8080", PeerTimeoutMS: 250, OperationTimeoutMS: 1000}
 	if path != "" {
 		file, err := os.Open(path)
 		if err != nil {
@@ -76,6 +78,9 @@ func readConfig(path, name string) (config, error) {
 		}
 	}
 	if name == "catalog-replica" {
+		if cfg.PeerTimeoutMS <= 0 || cfg.OperationTimeoutMS < cfg.PeerTimeoutMS || cfg.OperationTimeoutMS > int64((1<<63-1)/1_000_000) {
+			return cfg, errors.New("replica deadlines require 0 < peer_timeout_ms <= operation_timeout_ms within the duration range")
+		}
 		if len(cfg.Peers) != 4 || len(cfg.Databases) != 5 || cfg.GRPC == "" || cfg.Peers[cfg.ReplicaID] == "" {
 			return cfg, errors.New("catalog replica requires an identity, four peers, five database references and a gRPC listener")
 		}

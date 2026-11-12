@@ -6,6 +6,7 @@ import (
 	"errors"
 	"math"
 	"strings"
+	"sync/atomic"
 
 	pb "flashkart/gen/flashkart/v1"
 	"github.com/jackc/pgx/v5"
@@ -19,8 +20,9 @@ import (
 type Store struct {
 	pb.UnimplementedCatalogReplicationServer
 	pb.UnimplementedReplicaPeerServer
-	pool *pgxpool.Pool
-	id   string
+	pool        *pgxpool.Pool
+	id          string
+	sqlFailures atomic.Uint64
 }
 
 func Open(ctx context.Context, dsn, id string) (*Store, error) {
@@ -38,7 +40,7 @@ func (s *Store) Close() { s.pool.Close() }
 
 func (s *Store) Ready(ctx context.Context) bool {
 	var version int
-	return s.pool.QueryRow(ctx, "SELECT max(version) FROM replica.schema_version").Scan(&version) == nil && version == 1
+	return s.pool.QueryRow(ctx, "SELECT max(version) FROM replica.schema_version").Scan(&version) == nil && version == 2
 }
 
 func (s *Store) Inspect(ctx context.Context, _ *pb.ReplicaStatusRequest) (*pb.ReplicaStatus, error) {
@@ -46,13 +48,13 @@ func (s *Store) Inspect(ctx context.Context, _ *pb.ReplicaStatusRequest) (*pb.Re
 	if result.BackendReady {
 		err := s.pool.QueryRow(ctx, "SELECT count(*) FROM replica.hints").Scan(&result.PendingHints)
 		if err != nil {
-			return nil, storageError(err)
+			return nil, s.storageError(err)
 		}
 	}
 	return result, nil
 }
 
-func storageError(err error) error {
+func (s *Store) storageError(err error) error {
 	if _, ok := status.FromError(err); ok {
 		return err
 	}
@@ -63,6 +65,7 @@ func storageError(err error) error {
 	if errors.As(err, &sqlErr) && sqlErr.Code == "23505" {
 		return status.Error(codes.AlreadyExists, "operation ID or version is already in use")
 	}
+	s.sqlFailures.Add(1)
 	return status.Error(codes.Unavailable, "replica database operation failed")
 }
 
@@ -159,7 +162,7 @@ func (s *Store) PrepareMutation(ctx context.Context, req *pb.PrepareMutationRequ
 		return err
 	})
 	if err != nil {
-		return nil, storageError(err)
+		return nil, s.storageError(err)
 	}
 	return &result, nil
 }
@@ -176,13 +179,18 @@ func (s *Store) DeliverHint(ctx context.Context, req *pb.ApplyMutationRequest) (
 	return s.merge(ctx, req.GetMutation(), nil)
 }
 
-func (s *Store) merge(ctx context.Context, mutation *pb.Mutation, targets []string) (*pb.Ack, error) {
+func validMutation(mutation *pb.Mutation) bool {
 	key, dot := mutation.GetKey(), mutation.GetVersion()
-	if !validKey(key) || !replicaID(dot.GetReplicaId()) || dot.GetCounter() == 0 || dot.GetCounter() > math.MaxInt64 ||
-		mutation.GetOperationId() == "" || strings.ContainsRune(mutation.GetOperationId(), 0) ||
-		!validContext(mutation.GetContext()) || observes(mutation.GetContext(), dot) || !validDocument(key, mutation.GetDocumentJson()) {
+	return validKey(key) && replicaID(dot.GetReplicaId()) && dot.GetCounter() > 0 && dot.GetCounter() <= math.MaxInt64 &&
+		mutation.GetOperationId() != "" && !strings.ContainsRune(mutation.GetOperationId(), 0) &&
+		validContext(mutation.GetContext()) && !observes(mutation.GetContext(), dot) && validDocument(key, mutation.GetDocumentJson())
+}
+
+func (s *Store) merge(ctx context.Context, mutation *pb.Mutation, targets []string) (*pb.Ack, error) {
+	if !validMutation(mutation) {
 		return nil, status.Error(codes.InvalidArgument, "invalid mutation envelope")
 	}
+	key, dot := mutation.Key, mutation.Version
 	for _, target := range targets {
 		if !replicaID(target) || target == s.id {
 			return nil, status.Error(codes.InvalidArgument, "invalid hint target")
@@ -270,7 +278,7 @@ func (s *Store) merge(ctx context.Context, mutation *pb.Mutation, targets []stri
 		return nil
 	})
 	if err != nil {
-		return nil, storageError(err)
+		return nil, s.storageError(err)
 	}
 	return &pb.Ack{}, nil
 }
@@ -280,7 +288,7 @@ type querier interface {
 }
 
 func readVersions(ctx context.Context, db querier, key *pb.DocumentKey) ([]*pb.Mutation, error) {
-	rows, err := db.Query(ctx, "SELECT envelope FROM replica.versions WHERE kind=$1 AND document_id=$2 AND visible ORDER BY origin,counter", int32(key.Kind), key.Id)
+	rows, err := db.Query(ctx, `SELECT envelope FROM replica.versions WHERE kind=$1 AND document_id COLLATE "C"=$2 AND visible ORDER BY origin,counter`, int32(key.Kind), key.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -302,7 +310,7 @@ func (s *Store) ReadVersions(ctx context.Context, req *pb.ReadDocumentRequest) (
 	}
 	versions, err := readVersions(ctx, s.pool, key)
 	if err != nil {
-		return nil, storageError(err)
+		return nil, s.storageError(err)
 	}
 	return &pb.DocumentVersions{Siblings: versions, Context: combined(versions)}, nil
 }
@@ -311,22 +319,34 @@ func (s *Store) ReadDocument(ctx context.Context, req *pb.ReadDocumentRequest) (
 	return s.ReadVersions(ctx, req)
 }
 
-func (s *Store) ListDocuments(ctx context.Context, req *pb.ListDocumentsRequest) (*pb.DocumentPage, error) {
+func documentPageLimit(req *pb.ListDocumentsRequest) (int, error) {
 	if !validKey(&pb.DocumentKey{Kind: req.GetKind(), Id: "list"}) || req.GetLimit() > 100 || strings.ContainsRune(req.GetCursor(), 0) {
-		return nil, status.Error(codes.InvalidArgument, "invalid document page request")
+		return 0, status.Error(codes.InvalidArgument, "invalid document page request")
 	}
 	limit := int(req.GetLimit())
 	if limit == 0 {
 		limit = 50
 	}
-	rows, err := s.pool.Query(ctx, "SELECT DISTINCT document_id FROM replica.versions WHERE kind=$1 AND visible AND document_id>$2 ORDER BY document_id LIMIT $3",
+	return limit, nil
+}
+
+func (s *Store) ListDocuments(ctx context.Context, req *pb.ListDocumentsRequest) (*pb.DocumentPage, error) {
+	return s.ListLocalDocuments(ctx, req)
+}
+
+func (s *Store) ListLocalDocuments(ctx context.Context, req *pb.ListDocumentsRequest) (*pb.DocumentPage, error) {
+	limit, err := documentPageLimit(req)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := s.pool.Query(ctx, `SELECT DISTINCT document_id COLLATE "C" AS id FROM replica.versions WHERE kind=$1 AND visible AND document_id COLLATE "C">$2 ORDER BY id LIMIT $3`,
 		int32(req.Kind), req.Cursor, limit+1)
 	if err != nil {
-		return nil, storageError(err)
+		return nil, s.storageError(err)
 	}
 	ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
 	if err != nil {
-		return nil, storageError(err)
+		return nil, s.storageError(err)
 	}
 	page := &pb.DocumentPage{}
 	if len(ids) > limit {

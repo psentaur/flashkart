@@ -51,6 +51,7 @@ service CatalogReplication {
 }
 service ReplicaPeer {
   rpc ReadVersions(ReadDocumentRequest) returns (DocumentVersions);
+  rpc ListLocalDocuments(ListDocumentsRequest) returns (DocumentPage);
   rpc MergeVersion(MergeRequest) returns (Ack);
   rpc DeliverHint(ApplyMutationRequest) returns (Ack);
   rpc ScanVersions(SyncRequest) returns (SyncPage);
