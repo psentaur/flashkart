@@ -32,16 +32,16 @@ message PrepareMutationRequest {
   bytes document_json = 4;
 }
 message ApplyMutationRequest { Call call = 1; Mutation mutation = 2; }
-message ReadDocumentRequest { Call call = 1; DocumentKey key = 2; }
+message ReadDocumentRequest { Call call = 1; DocumentKey key = 2; bool hints_only = 3; }
 message DocumentVersions { repeated Mutation siblings = 1; Context context = 2; }
 message ListDocumentsRequest { Call call = 1; DocumentKind kind = 2; string cursor = 3; uint32 limit = 4; }
 message DocumentPage { repeated DocumentKey keys = 1; string next_cursor = 2; }
 message MergeRequest { Call call = 1; Mutation mutation = 2; repeated string hint_targets = 3; }
-message SyncRequest { Call call = 1; string cursor = 2; uint32 limit = 3; }
+message SyncRequest { Call call = 1; string cursor = 2; uint32 limit = 3; bool hints_only = 4; }
 message ReplicaRecord { Mutation mutation = 1; repeated string hint_targets = 2; }
 message SyncPage { repeated ReplicaRecord records = 1; string next_cursor = 2; }
 message ReplicaStatusRequest { string correlation_id = 1; }
-message ReplicaStatus { string replica_id = 1; bool backend_ready = 2; uint64 pending_hints = 3; }
+message ReplicaStatus { string replica_id = 1; bool backend_ready = 2; uint64 pending_hints = 3; uint64 oldest_hint_age_seconds = 4; uint64 sync_records_scanned = 5; int64 last_sync_completed_unix = 6; }
 
 service CatalogReplication {
   rpc ReadDocument(ReadDocumentRequest) returns (DocumentVersions);

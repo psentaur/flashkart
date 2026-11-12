@@ -72,3 +72,13 @@ run-replicas: build-go
 
 test-replication-core:
 	. deploy/local/postgres.env && FLASHKART_TEST_CLUSTER=1 $(GO) test -buildvcs=false -count=1 -v -run 'Test(PreferredOwners|ReadReconciliation|ReplicationCore)$$' ./internal/replica
+
+.PHONY: test-replication-recovery
+test-replication-recovery:
+	. deploy/local/postgres.env && FLASHKART_TEST_CLUSTER=1 $(GO) test -buildvcs=false -count=1 -v -run 'TestReplication(Recovery|BackgroundSync)$$' ./internal/replica
+
+.PHONY: replica-db-fault
+replica-db-fault:
+	@case "$(REPLICA)" in a|b|c|d) ;; *) echo "REPLICA must be a, b, c, or d" >&2; exit 2;; esac
+	@case "$(FAULT)" in stop|start|restart) ;; *) echo "FAULT must be stop, start, or restart" >&2; exit 2;; esac
+	$(LOCAL_COMPOSE) $(FAULT) postgres-$(REPLICA)

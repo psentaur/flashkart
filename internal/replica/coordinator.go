@@ -49,12 +49,13 @@ func quorumError(reason, message string) error {
 }
 
 type result[T any] struct {
+	id    string
 	value T
 	err   error
 }
 
-func fanout[T any](ctx context.Context, c *Coordinator, operation string, ids []string,
-	call func(context.Context, string) (T, error)) []T {
+func collectReplies[T any](ctx context.Context, c *Coordinator, operation string, ids []string,
+	call func(context.Context, string) (T, error)) []result[T] {
 	responses := make(chan result[T], len(ids))
 	for _, id := range ids {
 		go func() {
@@ -62,18 +63,24 @@ func fanout[T any](ctx context.Context, c *Coordinator, operation string, ids []
 			defer cancel()
 			value, err := call(peerContext, id)
 			c.metrics.recordPeer(operation, id, err == nil)
-			responses <- result[T]{value, err}
+			responses <- result[T]{id, value, err}
 		}()
 	}
-	values := make([]T, 0, len(ids))
+	// Every call inherits a deadline or service cancellation. Collecting each
+	// result preserves completed acknowledgements even when the deadline fires.
+	replies := make([]result[T], 0, len(ids))
 	for range ids {
-		select {
-		case response := <-responses:
-			if response.err == nil {
-				values = append(values, response.value)
-			}
-		case <-ctx.Done():
-			return values
+		replies = append(replies, <-responses)
+	}
+	return replies
+}
+
+func fanout[T any](ctx context.Context, c *Coordinator, operation string, ids []string,
+	call func(context.Context, string) (T, error)) []T {
+	var values []T
+	for _, reply := range collectReplies(ctx, c, operation, ids, call) {
+		if reply.err == nil {
+			values = append(values, reply.value)
 		}
 	}
 	return values
@@ -88,14 +95,42 @@ func (c *Coordinator) ApplyMutation(ctx context.Context, req *pb.ApplyMutationRe
 	}
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
+	owners := PreferredOwners(mutation.Key)
 	request := &pb.MergeRequest{Call: req.GetCall(), Mutation: mutation}
-	acks := fanout(ctx, c, "write", PreferredOwners(mutation.Key), func(ctx context.Context, id string) (*pb.Ack, error) {
-		if id == c.store.id {
-			return c.store.MergeVersion(ctx, request)
-		}
-		return pb.NewReplicaPeerClient(c.client.connections[id]).MergeVersion(ctx, request, grpc.WaitForReady(true))
+	deadline, _ := ctx.Deadline()
+	preferredCtx, stopPreferred := context.WithTimeout(ctx, min(c.peerTimeout, time.Until(deadline)/2))
+	replies := collectReplies(preferredCtx, c, "write", owners, func(ctx context.Context, id string) (struct{}, error) {
+		return struct{}{}, c.mergeAt(ctx, id, request)
 	})
-	if len(acks) < writeQuorum {
+	stopPreferred()
+	acks := 0
+	var missing []string
+	var rejection error
+	for _, reply := range replies {
+		switch status.Code(reply.err) {
+		case codes.OK:
+			acks++
+		case codes.InvalidArgument, codes.AlreadyExists, codes.DataLoss:
+			rejection = reply.err
+		default:
+			missing = append(missing, reply.id)
+		}
+	}
+	if rejection != nil {
+		c.metrics.recordQuorumFailure("write")
+		return nil, rejection
+	}
+	if len(missing) > 0 && ctx.Err() == nil {
+		fallback := fallbackReplica(owners)
+		fallbackCtx, stopFallback := context.WithTimeout(ctx, c.peerTimeout)
+		defer stopFallback()
+		err := c.mergeAt(fallbackCtx, fallback, &pb.MergeRequest{Call: req.GetCall(), Mutation: mutation, HintTargets: missing})
+		c.metrics.recordPeer("write", fallback, err == nil)
+		if err == nil {
+			acks++
+		}
+	}
+	if acks < writeQuorum {
 		c.metrics.recordQuorumFailure("write")
 		return nil, quorumError(WriteOutcomeUnknown, "write quorum was not confirmed; retry the same prepared envelope")
 	}
@@ -110,19 +145,59 @@ func (c *Coordinator) ReadDocument(ctx context.Context, req *pb.ReadDocumentRequ
 	}
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
-	responses := fanout(ctx, c, "read", PreferredOwners(req.Key), func(ctx context.Context, id string) (*pb.DocumentVersions, error) {
+	owners := PreferredOwners(req.Key)
+	type replicaRead struct {
+		id       string
+		versions *pb.DocumentVersions
+	}
+	replies := fanout(ctx, c, "read", replicaIDs[:], func(ctx context.Context, id string) (replicaRead, error) {
+		request := &pb.ReadDocumentRequest{Call: req.GetCall(), Key: req.Key, HintsOnly: !slices.Contains(owners, id)}
+		var versions *pb.DocumentVersions
+		var err error
 		if id == c.store.id {
-			return c.store.ReadVersions(ctx, req)
+			versions, err = c.store.ReadVersions(ctx, request)
+		} else {
+			versions, err = pb.NewReplicaPeerClient(c.client.connections[id]).ReadVersions(ctx, request, grpc.WaitForReady(true))
 		}
-		return pb.NewReplicaPeerClient(c.client.connections[id]).ReadVersions(ctx, req, grpc.WaitForReady(true))
+		return replicaRead{id, versions}, err
 	})
-	if len(responses) < readQuorum {
+	if len(replies) < readQuorum {
 		c.metrics.recordQuorumFailure("read")
-		return nil, quorumError(QuorumUnavailable, "fewer than two preferred owners answered")
+		return nil, quorumError(QuorumUnavailable, "fewer than two replicas answered")
+	}
+	responses := make([]*pb.DocumentVersions, 0, len(replies))
+	for _, reply := range replies {
+		responses = append(responses, reply.versions)
 	}
 	siblings, err := maximalVersions(responses)
 	if err != nil {
 		return nil, err
+	}
+	// Use the same bounded operation budget for best-effort repairs.
+	repairTargets := map[string][]*pb.Mutation{}
+	for _, reply := range replies {
+		if !slices.Contains(owners, reply.id) {
+			continue
+		}
+		for _, sibling := range siblings {
+			if !slices.ContainsFunc(reply.versions.GetSiblings(), func(existing *pb.Mutation) bool { return proto.Equal(existing, sibling) }) {
+				repairTargets[reply.id] = append(repairTargets[reply.id], sibling)
+			}
+		}
+	}
+	if len(repairTargets) > 0 {
+		ids := make([]string, 0, len(repairTargets))
+		for id := range repairTargets {
+			ids = append(ids, id)
+		}
+		fanout(ctx, c, "repair", ids, func(ctx context.Context, id string) (struct{}, error) {
+			for _, sibling := range repairTargets[id] {
+				if err := c.mergeAt(ctx, id, &pb.MergeRequest{Call: req.GetCall(), Mutation: sibling}); err != nil {
+					return struct{}{}, err
+				}
+			}
+			return struct{}{}, nil
+		})
 	}
 	c.metrics.recordSiblings(len(siblings))
 	return &pb.DocumentVersions{Siblings: siblings, Context: combined(siblings)}, nil
@@ -220,4 +295,5 @@ func (c *Coordinator) ListDocuments(ctx context.Context, req *pb.ListDocumentsRe
 
 func (c *Coordinator) WriteMetrics(w io.Writer) {
 	c.metrics.write(w, c.store.sqlFailures.Load())
+	c.writeRecoveryMetrics(w)
 }

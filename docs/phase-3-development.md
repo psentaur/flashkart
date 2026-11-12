@@ -1,5 +1,7 @@
 # Phase 3 replica coordination
 
+Phase 4 extends this baseline with sloppy quorums and automatic recovery. [Phase 4 development](phase-4-development.md)
+
 ```sh
 make dev-up migrate
 make run-replicas

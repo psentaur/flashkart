@@ -23,6 +23,9 @@ type Store struct {
 	pool        *pgxpool.Pool
 	id          string
 	sqlFailures atomic.Uint64
+	syncRecords atomic.Uint64
+	lastSync    atomic.Int64
+	handoffs    atomic.Uint64
 }
 
 func Open(ctx context.Context, dsn, id string) (*Store, error) {
@@ -40,13 +43,13 @@ func (s *Store) Close() { s.pool.Close() }
 
 func (s *Store) Ready(ctx context.Context) bool {
 	var version int
-	return s.pool.QueryRow(ctx, "SELECT max(version) FROM replica.schema_version").Scan(&version) == nil && version == 2
+	return s.pool.QueryRow(ctx, "SELECT max(version) FROM replica.schema_version").Scan(&version) == nil && version == 3
 }
 
 func (s *Store) Inspect(ctx context.Context, _ *pb.ReplicaStatusRequest) (*pb.ReplicaStatus, error) {
-	result := &pb.ReplicaStatus{ReplicaId: s.id, BackendReady: s.Ready(ctx)}
+	result := &pb.ReplicaStatus{ReplicaId: s.id, BackendReady: s.Ready(ctx), SyncRecordsScanned: s.syncRecords.Load(), LastSyncCompletedUnix: s.lastSync.Load()}
 	if result.BackendReady {
-		err := s.pool.QueryRow(ctx, "SELECT count(*) FROM replica.hints").Scan(&result.PendingHints)
+		err := s.pool.QueryRow(ctx, `SELECT count(*), coalesce(greatest(0, floor(extract(epoch FROM clock_timestamp()-min(created_at)))), 0)::bigint FROM replica.hints`).Scan(&result.PendingHints, &result.OldestHintAgeSeconds)
 		if err != nil {
 			return nil, s.storageError(err)
 		}
@@ -270,7 +273,7 @@ func (s *Store) merge(ctx context.Context, mutation *pb.Mutation, targets []stri
 			return err
 		}
 		for _, target := range targets {
-			_, err := tx.Exec(ctx, "INSERT INTO replica.hints VALUES ($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING", args[0], args[1], args[2], args[3], target)
+			_, err := tx.Exec(ctx, "INSERT INTO replica.hints (kind,document_id,origin,counter,target) VALUES ($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING", args[0], args[1], args[2], args[3], target)
 			if err != nil {
 				return err
 			}
@@ -308,7 +311,13 @@ func (s *Store) ReadVersions(ctx context.Context, req *pb.ReadDocumentRequest) (
 	if !validKey(key) {
 		return nil, status.Error(codes.InvalidArgument, "invalid document key")
 	}
-	versions, err := readVersions(ctx, s.pool, key)
+	var versions []*pb.Mutation
+	var err error
+	if req.GetHintsOnly() {
+		versions, err = s.readHintedVersions(ctx, key)
+	} else {
+		versions, err = readVersions(ctx, s.pool, key)
+	}
 	if err != nil {
 		return nil, s.storageError(err)
 	}
