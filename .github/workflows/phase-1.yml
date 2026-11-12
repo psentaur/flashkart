@@ -1,0 +1,35 @@
+name: Phase 1 foundation
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install contract tools
+        run: |
+          curl --fail --silent --show-error --location https://repo.maven.apache.org/maven2/com/google/protobuf/protoc/4.33.2/protoc-4.33.2-linux-x86_64.exe --output "$RUNNER_TEMP/protoc"
+          chmod +x "$RUNNER_TEMP/protoc"
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+          python -m pip install -r tests/requirements.txt
+      - run: make build test-unit test-contracts test-smoke

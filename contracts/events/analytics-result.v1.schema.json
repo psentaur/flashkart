@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Flashkart analytics result v1",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_type": {
+      "const": "analytics.window_finalized"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "trace_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sale_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "starts_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ends_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "demand": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "admission_rejections": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stock_rejections": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reservations": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confirmed_purchases": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "average_latency_ms": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "starts_at",
+        "ends_at",
+        "demand",
+        "admission_rejections",
+        "stock_rejections",
+        "reservations",
+        "confirmed_purchases",
+        "average_latency_ms"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "trace_id",
+    "sale_id",
+    "payload"
+  ]
+}

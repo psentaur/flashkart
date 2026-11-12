@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package flashkart.v1;
+option go_package = "flashkart/gen/flashkart/v1;flashkartv1";
+
+message Call {
+  string operation_id = 1;
+  string correlation_id = 2;
+}
+message Ack {}
+message Interval { uint64 first = 1; uint64 last = 2; }
+message Counters { repeated Interval intervals = 1; }
+message Context { map<string, Counters> observed = 1; }
+message Dot { string replica_id = 1; uint64 counter = 2; }
+enum DocumentKind {
+  DOCUMENT_KIND_UNSPECIFIED = 0;
+  DOCUMENT_KIND_PRODUCT = 1;
+  DOCUMENT_KIND_PUBLISHED_SALE = 2;
+}
+message DocumentKey { DocumentKind kind = 1; string id = 2; }
+message Mutation {
+  string operation_id = 1;
+  DocumentKey key = 2;
+  Dot version = 3;
+  Context context = 4;
+  bytes document_json = 5;
+}
+message PrepareMutationRequest {
+  Call call = 1;
+  DocumentKey key = 2;
+  Context context = 3;
+  bytes document_json = 4;
+}
+message ApplyMutationRequest { Call call = 1; Mutation mutation = 2; }
+message ReadDocumentRequest { Call call = 1; DocumentKey key = 2; }
+message DocumentVersions { repeated Mutation siblings = 1; Context context = 2; }
+message ListDocumentsRequest { Call call = 1; DocumentKind kind = 2; string cursor = 3; uint32 limit = 4; }
+message DocumentPage { repeated DocumentKey keys = 1; string next_cursor = 2; }
+message MergeRequest { Call call = 1; Mutation mutation = 2; repeated string hint_targets = 3; }
+message SyncRequest { Call call = 1; string cursor = 2; uint32 limit = 3; }
+message ReplicaRecord { Mutation mutation = 1; repeated string hint_targets = 2; }
+message SyncPage { repeated ReplicaRecord records = 1; string next_cursor = 2; }
+message ReplicaStatusRequest { string correlation_id = 1; }
+message ReplicaStatus { string replica_id = 1; bool backend_ready = 2; uint64 pending_hints = 3; }
+
+service CatalogReplication {
+  rpc ReadDocument(ReadDocumentRequest) returns (DocumentVersions);
+  rpc PrepareMutation(PrepareMutationRequest) returns (Mutation);
+  rpc ApplyMutation(ApplyMutationRequest) returns (Ack);
+  rpc ListDocuments(ListDocumentsRequest) returns (DocumentPage);
+}
+service ReplicaPeer {
+  rpc ReadVersions(ReadDocumentRequest) returns (DocumentVersions);
+  rpc MergeVersion(MergeRequest) returns (Ack);
+  rpc DeliverHint(ApplyMutationRequest) returns (Ack);
+  rpc ScanVersions(SyncRequest) returns (SyncPage);
+  rpc Inspect(ReplicaStatusRequest) returns (ReplicaStatus);
+}
+
+message SaleTerms {
+  string sale_id = 1;
+  string product_id = 2;
+  int64 price_minor = 3;
+  string currency = 4;
+  uint32 stock = 5;
+  string starts_at = 6;
+  string ends_at = 7;
+}
+message PrepareSaleRequest { Call call = 1; SaleTerms terms = 2; }
+message ActivateSaleRequest { Call call = 1; string sale_id = 2; }
+enum ReservationState {
+  RESERVATION_STATE_UNSPECIFIED = 0;
+  RESERVATION_STATE_HELD = 1;
+  RESERVATION_STATE_COMMITTED = 2;
+  RESERVATION_STATE_RELEASED = 3;
+  RESERVATION_STATE_EXPIRED = 4;
+}
+message ReservationRequest { Call call = 1; string reservation_id = 2; }
+message Reservation {
+  string reservation_id = 1;
+  string attempt_id = 2;
+  string sale_id = 3;
+  string customer_id = 4;
+  string expires_at = 5;
+  ReservationState state = 6;
+}
+service Inventory {
+  rpc PrepareSale(PrepareSaleRequest) returns (Ack);
+  rpc ActivateSale(ActivateSaleRequest) returns (Ack);
+  rpc CommitReservation(ReservationRequest) returns (Reservation);
+  rpc ReleaseReservation(ReservationRequest) returns (Reservation);
+  rpc InspectReservation(ReservationRequest) returns (Reservation);
+}
+message CreateOrderRequest { Call call = 1; Reservation reservation = 2; SaleTerms terms = 3; }
+message OrderRef { string order_id = 1; }
+service Order { rpc CreateFromReservation(CreateOrderRequest) returns (OrderRef); }
+enum PaymentState {
+  PAYMENT_STATE_UNSPECIFIED = 0;
+  PAYMENT_STATE_PENDING = 1;
+  PAYMENT_STATE_SUCCEEDED = 2;
+  PAYMENT_STATE_DECLINED = 3;
+  PAYMENT_STATE_REFUNDED = 4;
+}
+message PaymentRequest { Call call = 1; string payment_id = 2; }
+message SimulatePaymentRequest {
+  Call call = 1;
+  string payment_id = 2;
+  string order_id = 3;
+  int64 amount_minor = 4;
+  string currency = 5;
+}
+message PaymentResult { string payment_id = 1; PaymentState state = 2; }
+service Payment {
+  rpc Simulate(SimulatePaymentRequest) returns (PaymentResult);
+  rpc Query(PaymentRequest) returns (PaymentResult);
+  rpc Refund(PaymentRequest) returns (PaymentResult);
+}

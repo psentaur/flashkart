@@ -1,0 +1,6 @@
+/build/
+/gen/
+/analytics/target/
+/web/node_modules/
+/web/dist/
+.env
