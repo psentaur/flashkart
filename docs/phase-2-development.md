@@ -19,7 +19,7 @@ make build-go
 ./build/bin/catalog-replica -config deploy/config/local.example.json
 ```
 
-The agent reads its assigned DSN and uses a fixed identity from the configuration. HTTP and standard gRPC health are available on ports 8080 and 7001. Liveness reflects the running process. Readiness requires the PostgreSQL connection and expected schema. The catalog and peer gRPC calls in this phase operate against that agent's database. Phase 3 introduces coordinator fanout and quorum behavior.
+The agent reads its assigned DSN and uses a fixed identity from the configuration. HTTP and standard gRPC health are available on ports 8080 and 7001. Liveness reflects the running process. Readiness requires the PostgreSQL connection and expected schema. Peer gRPC calls access the assigned database. The current catalog API coordinates reads and writes across preferred owners. [Phase 3 development](phase-3-development.md)
 
 Prepare allocates and journals a dot in a transaction. Only apply makes a version visible. A database row lock serializes changes per document. An operation lock prevents two transactions on different documents from claiming the same operation ID. Stored envelopes preserve exact payload bytes. Hidden versions remain available to enforce idempotency and retain hints even after a causally later write replaces them in reads.
 

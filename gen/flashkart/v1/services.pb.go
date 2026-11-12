@@ -2023,9 +2023,10 @@ const file_flashkart_v1_services_proto_rawDesc = "" +
 	"\fReadDocument\x12!.flashkart.v1.ReadDocumentRequest\x1a\x1e.flashkart.v1.DocumentVersions\x12O\n" +
 	"\x0fPrepareMutation\x12$.flashkart.v1.PrepareMutationRequest\x1a\x16.flashkart.v1.Mutation\x12F\n" +
 	"\rApplyMutation\x12\".flashkart.v1.ApplyMutationRequest\x1a\x11.flashkart.v1.Ack\x12O\n" +
-	"\rListDocuments\x12\".flashkart.v1.ListDocumentsRequest\x1a\x1a.flashkart.v1.DocumentPage2\xf4\x02\n" +
+	"\rListDocuments\x12\".flashkart.v1.ListDocumentsRequest\x1a\x1a.flashkart.v1.DocumentPage2\xca\x03\n" +
 	"\vReplicaPeer\x12Q\n" +
-	"\fReadVersions\x12!.flashkart.v1.ReadDocumentRequest\x1a\x1e.flashkart.v1.DocumentVersions\x12=\n" +
+	"\fReadVersions\x12!.flashkart.v1.ReadDocumentRequest\x1a\x1e.flashkart.v1.DocumentVersions\x12T\n" +
+	"\x12ListLocalDocuments\x12\".flashkart.v1.ListDocumentsRequest\x1a\x1a.flashkart.v1.DocumentPage\x12=\n" +
 	"\fMergeVersion\x12\x1a.flashkart.v1.MergeRequest\x1a\x11.flashkart.v1.Ack\x12D\n" +
 	"\vDeliverHint\x12\".flashkart.v1.ApplyMutationRequest\x1a\x11.flashkart.v1.Ack\x12A\n" +
 	"\fScanVersions\x12\x19.flashkart.v1.SyncRequest\x1a\x16.flashkart.v1.SyncPage\x12J\n" +
@@ -2134,39 +2135,41 @@ var file_flashkart_v1_services_proto_depIdxs = []int32{
 	12, // 37: flashkart.v1.CatalogReplication.ApplyMutation:input_type -> flashkart.v1.ApplyMutationRequest
 	15, // 38: flashkart.v1.CatalogReplication.ListDocuments:input_type -> flashkart.v1.ListDocumentsRequest
 	13, // 39: flashkart.v1.ReplicaPeer.ReadVersions:input_type -> flashkart.v1.ReadDocumentRequest
-	17, // 40: flashkart.v1.ReplicaPeer.MergeVersion:input_type -> flashkart.v1.MergeRequest
-	12, // 41: flashkart.v1.ReplicaPeer.DeliverHint:input_type -> flashkart.v1.ApplyMutationRequest
-	18, // 42: flashkart.v1.ReplicaPeer.ScanVersions:input_type -> flashkart.v1.SyncRequest
-	21, // 43: flashkart.v1.ReplicaPeer.Inspect:input_type -> flashkart.v1.ReplicaStatusRequest
-	24, // 44: flashkart.v1.Inventory.PrepareSale:input_type -> flashkart.v1.PrepareSaleRequest
-	25, // 45: flashkart.v1.Inventory.ActivateSale:input_type -> flashkart.v1.ActivateSaleRequest
-	26, // 46: flashkart.v1.Inventory.CommitReservation:input_type -> flashkart.v1.ReservationRequest
-	26, // 47: flashkart.v1.Inventory.ReleaseReservation:input_type -> flashkart.v1.ReservationRequest
-	26, // 48: flashkart.v1.Inventory.InspectReservation:input_type -> flashkart.v1.ReservationRequest
-	28, // 49: flashkart.v1.Order.CreateFromReservation:input_type -> flashkart.v1.CreateOrderRequest
-	31, // 50: flashkart.v1.Payment.Simulate:input_type -> flashkart.v1.SimulatePaymentRequest
-	30, // 51: flashkart.v1.Payment.Query:input_type -> flashkart.v1.PaymentRequest
-	30, // 52: flashkart.v1.Payment.Refund:input_type -> flashkart.v1.PaymentRequest
-	14, // 53: flashkart.v1.CatalogReplication.ReadDocument:output_type -> flashkart.v1.DocumentVersions
-	10, // 54: flashkart.v1.CatalogReplication.PrepareMutation:output_type -> flashkart.v1.Mutation
-	4,  // 55: flashkart.v1.CatalogReplication.ApplyMutation:output_type -> flashkart.v1.Ack
-	16, // 56: flashkart.v1.CatalogReplication.ListDocuments:output_type -> flashkart.v1.DocumentPage
-	14, // 57: flashkart.v1.ReplicaPeer.ReadVersions:output_type -> flashkart.v1.DocumentVersions
-	4,  // 58: flashkart.v1.ReplicaPeer.MergeVersion:output_type -> flashkart.v1.Ack
-	4,  // 59: flashkart.v1.ReplicaPeer.DeliverHint:output_type -> flashkart.v1.Ack
-	20, // 60: flashkart.v1.ReplicaPeer.ScanVersions:output_type -> flashkart.v1.SyncPage
-	22, // 61: flashkart.v1.ReplicaPeer.Inspect:output_type -> flashkart.v1.ReplicaStatus
-	4,  // 62: flashkart.v1.Inventory.PrepareSale:output_type -> flashkart.v1.Ack
-	4,  // 63: flashkart.v1.Inventory.ActivateSale:output_type -> flashkart.v1.Ack
-	27, // 64: flashkart.v1.Inventory.CommitReservation:output_type -> flashkart.v1.Reservation
-	27, // 65: flashkart.v1.Inventory.ReleaseReservation:output_type -> flashkart.v1.Reservation
-	27, // 66: flashkart.v1.Inventory.InspectReservation:output_type -> flashkart.v1.Reservation
-	29, // 67: flashkart.v1.Order.CreateFromReservation:output_type -> flashkart.v1.OrderRef
-	32, // 68: flashkart.v1.Payment.Simulate:output_type -> flashkart.v1.PaymentResult
-	32, // 69: flashkart.v1.Payment.Query:output_type -> flashkart.v1.PaymentResult
-	32, // 70: flashkart.v1.Payment.Refund:output_type -> flashkart.v1.PaymentResult
-	53, // [53:71] is the sub-list for method output_type
-	35, // [35:53] is the sub-list for method input_type
+	15, // 40: flashkart.v1.ReplicaPeer.ListLocalDocuments:input_type -> flashkart.v1.ListDocumentsRequest
+	17, // 41: flashkart.v1.ReplicaPeer.MergeVersion:input_type -> flashkart.v1.MergeRequest
+	12, // 42: flashkart.v1.ReplicaPeer.DeliverHint:input_type -> flashkart.v1.ApplyMutationRequest
+	18, // 43: flashkart.v1.ReplicaPeer.ScanVersions:input_type -> flashkart.v1.SyncRequest
+	21, // 44: flashkart.v1.ReplicaPeer.Inspect:input_type -> flashkart.v1.ReplicaStatusRequest
+	24, // 45: flashkart.v1.Inventory.PrepareSale:input_type -> flashkart.v1.PrepareSaleRequest
+	25, // 46: flashkart.v1.Inventory.ActivateSale:input_type -> flashkart.v1.ActivateSaleRequest
+	26, // 47: flashkart.v1.Inventory.CommitReservation:input_type -> flashkart.v1.ReservationRequest
+	26, // 48: flashkart.v1.Inventory.ReleaseReservation:input_type -> flashkart.v1.ReservationRequest
+	26, // 49: flashkart.v1.Inventory.InspectReservation:input_type -> flashkart.v1.ReservationRequest
+	28, // 50: flashkart.v1.Order.CreateFromReservation:input_type -> flashkart.v1.CreateOrderRequest
+	31, // 51: flashkart.v1.Payment.Simulate:input_type -> flashkart.v1.SimulatePaymentRequest
+	30, // 52: flashkart.v1.Payment.Query:input_type -> flashkart.v1.PaymentRequest
+	30, // 53: flashkart.v1.Payment.Refund:input_type -> flashkart.v1.PaymentRequest
+	14, // 54: flashkart.v1.CatalogReplication.ReadDocument:output_type -> flashkart.v1.DocumentVersions
+	10, // 55: flashkart.v1.CatalogReplication.PrepareMutation:output_type -> flashkart.v1.Mutation
+	4,  // 56: flashkart.v1.CatalogReplication.ApplyMutation:output_type -> flashkart.v1.Ack
+	16, // 57: flashkart.v1.CatalogReplication.ListDocuments:output_type -> flashkart.v1.DocumentPage
+	14, // 58: flashkart.v1.ReplicaPeer.ReadVersions:output_type -> flashkart.v1.DocumentVersions
+	16, // 59: flashkart.v1.ReplicaPeer.ListLocalDocuments:output_type -> flashkart.v1.DocumentPage
+	4,  // 60: flashkart.v1.ReplicaPeer.MergeVersion:output_type -> flashkart.v1.Ack
+	4,  // 61: flashkart.v1.ReplicaPeer.DeliverHint:output_type -> flashkart.v1.Ack
+	20, // 62: flashkart.v1.ReplicaPeer.ScanVersions:output_type -> flashkart.v1.SyncPage
+	22, // 63: flashkart.v1.ReplicaPeer.Inspect:output_type -> flashkart.v1.ReplicaStatus
+	4,  // 64: flashkart.v1.Inventory.PrepareSale:output_type -> flashkart.v1.Ack
+	4,  // 65: flashkart.v1.Inventory.ActivateSale:output_type -> flashkart.v1.Ack
+	27, // 66: flashkart.v1.Inventory.CommitReservation:output_type -> flashkart.v1.Reservation
+	27, // 67: flashkart.v1.Inventory.ReleaseReservation:output_type -> flashkart.v1.Reservation
+	27, // 68: flashkart.v1.Inventory.InspectReservation:output_type -> flashkart.v1.Reservation
+	29, // 69: flashkart.v1.Order.CreateFromReservation:output_type -> flashkart.v1.OrderRef
+	32, // 70: flashkart.v1.Payment.Simulate:output_type -> flashkart.v1.PaymentResult
+	32, // 71: flashkart.v1.Payment.Query:output_type -> flashkart.v1.PaymentResult
+	32, // 72: flashkart.v1.Payment.Refund:output_type -> flashkart.v1.PaymentResult
+	54, // [54:73] is the sub-list for method output_type
+	35, // [35:54] is the sub-list for method input_type
 	35, // [35:35] is the sub-list for extension type_name
 	35, // [35:35] is the sub-list for extension extendee
 	0,  // [0:35] is the sub-list for field type_name

@@ -65,3 +65,10 @@ test-persistence:
 
 test-emulator:
 	$(PYTHON) deploy/local/emulator-smoke.py
+
+.PHONY: run-replicas test-replication-core
+run-replicas: build-go
+	. deploy/local/postgres.env && $(PYTHON) deploy/local/run-replicas.py "$(BUILD)/bin/catalog-replica"
+
+test-replication-core:
+	. deploy/local/postgres.env && FLASHKART_TEST_CLUSTER=1 $(GO) test -buildvcs=false -count=1 -v -run 'Test(PreferredOwners|ReadReconciliation|ReplicationCore)$$' ./internal/replica

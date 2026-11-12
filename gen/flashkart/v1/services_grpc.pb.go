@@ -235,11 +235,12 @@ var CatalogReplication_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	ReplicaPeer_ReadVersions_FullMethodName = "/flashkart.v1.ReplicaPeer/ReadVersions"
-	ReplicaPeer_MergeVersion_FullMethodName = "/flashkart.v1.ReplicaPeer/MergeVersion"
-	ReplicaPeer_DeliverHint_FullMethodName  = "/flashkart.v1.ReplicaPeer/DeliverHint"
-	ReplicaPeer_ScanVersions_FullMethodName = "/flashkart.v1.ReplicaPeer/ScanVersions"
-	ReplicaPeer_Inspect_FullMethodName      = "/flashkart.v1.ReplicaPeer/Inspect"
+	ReplicaPeer_ReadVersions_FullMethodName       = "/flashkart.v1.ReplicaPeer/ReadVersions"
+	ReplicaPeer_ListLocalDocuments_FullMethodName = "/flashkart.v1.ReplicaPeer/ListLocalDocuments"
+	ReplicaPeer_MergeVersion_FullMethodName       = "/flashkart.v1.ReplicaPeer/MergeVersion"
+	ReplicaPeer_DeliverHint_FullMethodName        = "/flashkart.v1.ReplicaPeer/DeliverHint"
+	ReplicaPeer_ScanVersions_FullMethodName       = "/flashkart.v1.ReplicaPeer/ScanVersions"
+	ReplicaPeer_Inspect_FullMethodName            = "/flashkart.v1.ReplicaPeer/Inspect"
 )
 
 // ReplicaPeerClient is the client API for ReplicaPeer service.
@@ -247,6 +248,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ReplicaPeerClient interface {
 	ReadVersions(ctx context.Context, in *ReadDocumentRequest, opts ...grpc.CallOption) (*DocumentVersions, error)
+	ListLocalDocuments(ctx context.Context, in *ListDocumentsRequest, opts ...grpc.CallOption) (*DocumentPage, error)
 	MergeVersion(ctx context.Context, in *MergeRequest, opts ...grpc.CallOption) (*Ack, error)
 	DeliverHint(ctx context.Context, in *ApplyMutationRequest, opts ...grpc.CallOption) (*Ack, error)
 	ScanVersions(ctx context.Context, in *SyncRequest, opts ...grpc.CallOption) (*SyncPage, error)
@@ -265,6 +267,16 @@ func (c *replicaPeerClient) ReadVersions(ctx context.Context, in *ReadDocumentRe
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DocumentVersions)
 	err := c.cc.Invoke(ctx, ReplicaPeer_ReadVersions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *replicaPeerClient) ListLocalDocuments(ctx context.Context, in *ListDocumentsRequest, opts ...grpc.CallOption) (*DocumentPage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DocumentPage)
+	err := c.cc.Invoke(ctx, ReplicaPeer_ListLocalDocuments_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -316,6 +328,7 @@ func (c *replicaPeerClient) Inspect(ctx context.Context, in *ReplicaStatusReques
 // for forward compatibility.
 type ReplicaPeerServer interface {
 	ReadVersions(context.Context, *ReadDocumentRequest) (*DocumentVersions, error)
+	ListLocalDocuments(context.Context, *ListDocumentsRequest) (*DocumentPage, error)
 	MergeVersion(context.Context, *MergeRequest) (*Ack, error)
 	DeliverHint(context.Context, *ApplyMutationRequest) (*Ack, error)
 	ScanVersions(context.Context, *SyncRequest) (*SyncPage, error)
@@ -332,6 +345,9 @@ type UnimplementedReplicaPeerServer struct{}
 
 func (UnimplementedReplicaPeerServer) ReadVersions(context.Context, *ReadDocumentRequest) (*DocumentVersions, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReadVersions not implemented")
+}
+func (UnimplementedReplicaPeerServer) ListLocalDocuments(context.Context, *ListDocumentsRequest) (*DocumentPage, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListLocalDocuments not implemented")
 }
 func (UnimplementedReplicaPeerServer) MergeVersion(context.Context, *MergeRequest) (*Ack, error) {
 	return nil, status.Error(codes.Unimplemented, "method MergeVersion not implemented")
@@ -380,6 +396,24 @@ func _ReplicaPeer_ReadVersions_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ReplicaPeerServer).ReadVersions(ctx, req.(*ReadDocumentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReplicaPeer_ListLocalDocuments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDocumentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReplicaPeerServer).ListLocalDocuments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReplicaPeer_ListLocalDocuments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReplicaPeerServer).ListLocalDocuments(ctx, req.(*ListDocumentsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -466,6 +500,10 @@ var ReplicaPeer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReadVersions",
 			Handler:    _ReplicaPeer_ReadVersions_Handler,
+		},
+		{
+			MethodName: "ListLocalDocuments",
+			Handler:    _ReplicaPeer_ListLocalDocuments_Handler,
 		},
 		{
 			MethodName: "MergeVersion",

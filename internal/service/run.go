@@ -45,7 +45,7 @@ func Main(name string) {
 
 func runService(ctx context.Context, name string, cfg config, log *slog.Logger) error {
 	if name != "catalog-replica" {
-		return serve(ctx, name, cfg, log, nil)
+		return serve(ctx, name, cfg, log, nil, nil)
 	}
 	dsn := os.Getenv(cfg.Databases[cfg.ReplicaID])
 	if dsn == "" {
@@ -56,10 +56,17 @@ func runService(ctx context.Context, name string, cfg config, log *slog.Logger) 
 		return err
 	}
 	defer store.Close()
-	return serve(ctx, name, cfg, log, store)
+	timeout := time.Duration(cfg.OperationTimeoutMS) * time.Millisecond
+	client, err := replica.NewClient(cfg.Peers, timeout)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+	coordinator := replica.NewCoordinator(store, client, time.Duration(cfg.PeerTimeoutMS)*time.Millisecond, timeout)
+	return serve(ctx, name, cfg, log, store, coordinator)
 }
 
-func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store *replica.Store) error {
+func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store *replica.Store, coordinator *replica.Coordinator) error {
 	listener, err := net.Listen("tcp", cfg.HTTP)
 	if err != nil {
 		return err
@@ -79,7 +86,11 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 		healthServer = health.NewServer()
 		healthpb.RegisterHealthServer(grpcServer, healthServer)
 		if store != nil {
-			pb.RegisterCatalogReplicationServer(grpcServer, store)
+			if coordinator == nil {
+				pb.RegisterCatalogReplicationServer(grpcServer, store)
+			} else {
+				pb.RegisterCatalogReplicationServer(grpcServer, coordinator)
+			}
 			pb.RegisterReplicaPeerServer(grpcServer, store)
 			healthServer.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
 			probeContext, stopProbes := context.WithCancel(ctx)
@@ -109,6 +120,9 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
 		fmt.Fprintf(w, "# TYPE flashkart_http_requests_total counter\nflashkart_http_requests_total %d\n", requests.Load())
+		if coordinator != nil {
+			coordinator.WriteMetrics(w)
+		}
 	})
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		correlationID := r.Header.Get("X-Correlation-ID")

@@ -2,7 +2,7 @@
 
 This roadmap turns the [technical architecture](implementation-plan.md) into executable implementation phases. That document remains the source of truth for system behavior; this document defines build order, dependencies, deliverables, and completion checks.
 
-**Current status:** Phase 1 passed hosted CI. Phase 2 is implemented and verified locally, including the five PostgreSQL backends, replica SQL and gRPC, and Kafka/Flink startup. Lambda invocation and event source mappings remain open for later verification. Phases 3–12 are unstarted. [Phase 2 development](phase-2-development.md)
+**Current status:** Phase 1 passed hosted CI. Phases 2 and 3 are implemented and verified locally. The four-node tests covered independent writes, owner outages, partial commits, and conflict resolution. Lambda invocation and event source mappings remain open for later verification. Phases 4–12 are unstarted. [Phase 3 development](phase-3-development.md)
 
 Develop and verify locally through Phase 11. Phase 12 covers AWS integration and reproducible deployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
 
@@ -86,7 +86,7 @@ The default execution order is sequential. Keep intermediate states explicit: fo
 - One preferred owner can be unavailable while the two remaining owners satisfy a write. An insufficient write quorum returns an unknown outcome, including when a partial commit exists.
 - Concurrent stale-context writes through both different coordinators and the same coordinator survive as siblings. Resolving observed siblings converges without incorrectly claiming unseen versions were observed.
 
-**Evidence:** replica integration tests and a normal-operation demonstration. Proposed command: `make test-replication-core`.
+**Evidence:** `make test-replication-core` passed against four independent PostgreSQL databases over loopback gRPC. A separate startup check verified readiness and metrics on all four agent executables.
 
 ## Phase 4: Sloppy quorums, hinted handoff, and recovery
 
