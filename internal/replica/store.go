@@ -40,7 +40,7 @@ func (s *Store) Close() { s.pool.Close() }
 
 func (s *Store) Ready(ctx context.Context) bool {
 	var version int
-	return s.pool.QueryRow(ctx, "SELECT max(version) FROM replica.schema_version").Scan(&version) == nil && version == 1
+	return s.pool.QueryRow(ctx, "SELECT max(version) FROM replica.schema_version").Scan(&version) == nil && version == 2
 }
 
 func (s *Store) Inspect(ctx context.Context, _ *pb.ReplicaStatusRequest) (*pb.ReplicaStatus, error) {
@@ -288,7 +288,7 @@ type querier interface {
 }
 
 func readVersions(ctx context.Context, db querier, key *pb.DocumentKey) ([]*pb.Mutation, error) {
-	rows, err := db.Query(ctx, "SELECT envelope FROM replica.versions WHERE kind=$1 AND document_id=$2 AND visible ORDER BY origin,counter", int32(key.Kind), key.Id)
+	rows, err := db.Query(ctx, `SELECT envelope FROM replica.versions WHERE kind=$1 AND document_id COLLATE "C"=$2 AND visible ORDER BY origin,counter`, int32(key.Kind), key.Id)
 	if err != nil {
 		return nil, err
 	}

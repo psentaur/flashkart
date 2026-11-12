@@ -27,8 +27,6 @@ CREATE TABLE IF NOT EXISTS replica.versions (
     PRIMARY KEY (kind, document_id, origin, counter),
     FOREIGN KEY (kind, document_id) REFERENCES replica.documents
 );
-CREATE INDEX IF NOT EXISTS versions_visible
-    ON replica.versions (kind, document_id) WHERE visible;
 CREATE TABLE IF NOT EXISTS replica.hints (
     kind integer NOT NULL,
     document_id text NOT NULL,
