@@ -23,6 +23,7 @@ SELECT pg_advisory_xact_lock(1);
 SELECT format('CREATE ROLE %I LOGIN PASSWORD %L', :'role', :'password')
 WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'role') \gexec
 SELECT format('GRANT %I TO flashkart_admin', :'role') \gexec
+SELECT format('ALTER ROLE %I PASSWORD %L', :'role', :'password') \gexec
 COMMIT;
 SQL
     done

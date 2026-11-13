@@ -139,6 +139,10 @@ for obj in observability:
     name = obj["metadata"]["name"]
     if name == "loki":
         continue
+    if obj["kind"] == "DaemonSet" and name == "fluent-bit":
+        pod = obj["spec"]["template"]["spec"]
+        pod["serviceAccountName"] = name
+        pod["containers"][0]["env"] = env(aws_env | {"AWS_EC2_METADATA_DISABLED": "true"})
     if name == "telemetry":
         config = obj["data"]["fluent-bit.conf"].split("[OUTPUT]")[0]
         obj["data"]["fluent-bit.conf"] = config + f"""[OUTPUT]

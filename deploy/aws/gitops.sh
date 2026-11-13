@@ -5,6 +5,18 @@ set -eu
 : "${GITOPS_PATH:?Set the path to the rendered overlay}"
 : "${FLASHKART_ADMIN_TOKEN:?Set the administrator token}"
 : "${FLASHKART_CUSTOMER_TOKEN:?Set the customer token}"
+# Pin symbolic refs to the commit requested by this invocation.
+if printf '%s\n' "$GITOPS_REVISION" | grep -Eq '^[[:xdigit:]]{40}$'; then
+    revision=$(printf '%s' "$GITOPS_REVISION" | tr 'A-F' 'a-f')
+else
+    revision=$(git ls-remote --exit-code "$GITOPS_REPO" "$GITOPS_REVISION" "$GITOPS_REVISION^{}" |
+        awk '$2 ~ /\^\{\}$/ { peeled=$1; next } { sha=$1; refs++ }
+             END { if (refs == 1) print (peeled != "" ? peeled : sha); else exit 1 }' ) || {
+        echo 'GITOPS_REVISION must resolve to one Git ref or be a full commit SHA.' >&2
+        exit 2
+    }
+fi
+export FLASHKART_GITOPS_COMMIT="$revision"
 work=$(mktemp -d)
 chmod 700 "$work"
 trap 'rm -rf "$work"' EXIT
@@ -78,14 +90,49 @@ for crd in flinkdeployments.flink.apache.org targetgroupbindings.elbv2.k8s.aws; 
     kubectl wait --for=condition=Established "crd/$crd" --timeout=120s
 done
 kubectl -n kube-system rollout status deployment/aws-load-balancer-controller --timeout=300s
+consumers="admission-controller flash-sale-manager notification order-service product-catalog"
+export FLASHKART_TOKEN_CONSUMERS="$consumers"
 python3 - <<'PY' | kubectl apply -f -
 import json, os
 print(json.dumps({"apiVersion":"argoproj.io/v1alpha1","kind":"Application",
  "metadata":{"name":"flashkart-cloud","namespace":"argocd","finalizers":["resources-finalizer.argocd.argoproj.io"]},
- "spec":{"project":"default","source":{"repoURL":os.environ["GITOPS_REPO"],"targetRevision":os.environ["GITOPS_REVISION"],"path":os.environ["GITOPS_PATH"]},
+ "spec":{"project":"default","source":{"repoURL":os.environ["GITOPS_REPO"],"targetRevision":os.environ["FLASHKART_GITOPS_COMMIT"],"path":os.environ["GITOPS_PATH"]},
  "destination":{"server":"https://kubernetes.default.svc","namespace":"flashkart"},
- "syncPolicy":{"automated":{"prune":True,"selfHeal":True},"syncOptions":["ServerSideApply=true"]}}}))
+ "ignoreDifferences":[{"group":"apps","kind":"Deployment","name":name,
+    "jsonPointers":["/spec/template/metadata/annotations/flashkart.io~1demo-tokens-version"]}
+    for name in os.environ["FLASHKART_TOKEN_CONSUMERS"].split()],
+ "syncPolicy":{"automated":{"prune":True,"selfHeal":True},
+               "syncOptions":["ServerSideApply=true","RespectIgnoreDifferences=true"]}}}))
 PY
 
-kubectl -n argocd wait --for=jsonpath='{.status.sync.status}'=Synced application/flashkart-cloud --timeout=20m
-kubectl -n argocd wait --for=jsonpath='{.status.health.status}'=Healthy application/flashkart-cloud --timeout=20m
+app=application/flashkart-cloud
+# Check the revision and sync status together. Separate waits can observe different reconciliations.
+wait_for_application() {
+    for _ in $(seq 1 240); do
+        if kubectl -n argocd get "$app" -o json | jq -e \
+            --arg revision "$revision" --arg repo "$GITOPS_REPO" --arg path "$GITOPS_PATH" --arg health "$1" '
+            .status.sync as $sync |
+            $sync.revision == $revision and $sync.status == "Synced" and
+            $sync.comparedTo.source.targetRevision == $revision and
+            $sync.comparedTo.source.repoURL == $repo and $sync.comparedTo.source.path == $path and
+            ($health == "" or .status.health.status == $health)' >/dev/null; then
+            return 0
+        fi
+        sleep 5
+    done
+    echo "Timed out waiting for $app at $revision ${1:+($1)}" >&2
+    return 1
+}
+wait_for_application ""
+
+# Keep a non-secret resource version on the pod template so retries also finish interrupted rollouts.
+token_version=$(kubectl -n flashkart get secret demo-tokens -o jsonpath='{.metadata.resourceVersion}')
+for deployment in $consumers; do
+    kubectl -n flashkart patch deployment "$deployment" --type=merge \
+        -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"flashkart.io/demo-tokens-version\":\"$token_version\"}}}}}"
+done
+for deployment in $consumers; do
+    kubectl -n flashkart rollout status "deployment/$deployment" --timeout=10m
+done
+wait_for_application Healthy
+printf 'Flashkart revision %s is healthy and token consumers are ready.\n' "$revision"

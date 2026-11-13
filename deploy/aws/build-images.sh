@@ -11,7 +11,10 @@ app="$ARTIFACT_REPOSITORY:app-$IMAGE_TAG"
 "$engine" build --platform linux/amd64 -f deploy/kubernetes/app.Dockerfile -t "$app" .
 mkdir "$work/notification" "$work/flink"
 printf '%s\n' '{"environment":"aws","kafka":{"auth":"iam"}}' >"$work/notification/config.json"
-"$engine" build --platform linux/amd64 --build-arg "APP_IMAGE=$app" -f deploy/aws/notification.Dockerfile -t "$ARTIFACT_REPOSITORY:notification-$IMAGE_TAG" "$work/notification"
+# Podman does not emit BuildKit provenance attestations.
+set --
+if [ "${engine##*/}" != podman ]; then set -- --provenance=false; fi
+"$engine" build "$@" --platform linux/amd64 --build-arg "APP_IMAGE=$app" -f deploy/aws/notification.Dockerfile -t "$ARTIFACT_REPOSITORY:notification-$IMAGE_TAG" "$work/notification"
 cp analytics/target/sales-analytics-0.1.0.jar "$work/flink/"
 mv "$work/flink/sales-analytics-0.1.0.jar" "$work/flink/sales-analytics.jar"
 curl -fsSL https://repo.maven.apache.org/maven2/software/amazon/msk/aws-msk-iam-auth/2.3.5/aws-msk-iam-auth-2.3.5-all.jar -o "$work/flink/aws-msk-iam-auth.jar"

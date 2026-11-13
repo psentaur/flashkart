@@ -14,16 +14,41 @@ database=$(tf output -json replica_databases | jq -er --arg replica "$REPLICA" '
 reports=${REPORT_DIR:-build/cloud}
 mkdir -p "$reports"
 rds() { aws rds --region "$region" "$@" --db-instance-identifier "$database"; }
+db_status() {
+    rds describe-db-instances --query 'DBInstances[0].DBInstanceStatus' --output text
+}
+wait_stopped() {
+    for _ in $(seq 1 120); do
+        if [ "$(db_status)" = stopped ]; then return 0; fi
+        sleep 15
+    done
+    echo "Timed out waiting for $database to stop" >&2
+    return 1
+}
 recover() {
-    rds wait db-instance-stopped
-    rds start-db-instance >/dev/null
-    rds wait db-instance-available
+    for _ in $(seq 1 120); do
+        case "$(db_status)" in
+            available) return 0 ;;
+            stopped) rds start-db-instance >/dev/null || true ;;
+        esac
+        sleep 15
+    done
+    echo "Recovery could not confirm $database is available" >&2
+    return 1
+}
+cleanup() {
+    status=$?
+    trap - EXIT
+    if ! recover; then exit 1; fi
+    exit "$status"
 }
 fixture="outage-$(date +%s)"
 python3 tests/kubernetes-market.py read-ready "$REPLICA"
 rds stop-db-instance >/dev/null
-trap 'recover' EXIT
-rds wait db-instance-stopped
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+wait_stopped
 python3 tests/kubernetes-market.py read-unready "$REPLICA" >"$reports/replica-outage.json"
 python3 tests/kubernetes-market.py product "$fixture"
 python3 tests/kubernetes-market.py read "$fixture"

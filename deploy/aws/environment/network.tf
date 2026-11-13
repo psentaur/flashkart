@@ -43,9 +43,6 @@ module "eks" {
       min_size       = 3
       desired_size   = 3
       max_size       = 3
-      iam_role_additional_policies = {
-        logs = aws_iam_policy.node_logs.arn
-      }
     }
   }
 }

@@ -37,6 +37,10 @@ locals {
       { Action = ["s3:ListBucket", "s3:GetBucketLocation"], Resource = [aws_s3_bucket.data["checkpoints"].arn] },
       { Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:AbortMultipartUpload"], Resource = ["${aws_s3_bucket.data["checkpoints"].arn}/*"] }
     ]
+    fluent-bit = [{
+      Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+      Resource = ["${aws_cloudwatch_log_group.node.arn}:log-stream:pod-*"]
+    }]
     migrations   = [{ Action = ["secretsmanager:GetSecretValue"], Resource = [for db in aws_db_instance.postgres : db.master_user_secret[0].secret_arn] }]
     kafka-topics = [local.kafka_connect, { Action = ["kafka-cluster:CreateTopic", "kafka-cluster:DescribeTopic"], Resource = values(local.topic_arns) }]
   }
@@ -64,14 +68,6 @@ resource "aws_cloudwatch_log_group" "node" {
   name              = "/flashkart/${var.name}/application"
   retention_in_days = 14
 }
-resource "aws_iam_policy" "node_logs" {
-  name = "${var.name}-application-logs"
-  policy = jsonencode({ Version = "2012-10-17", Statement = [{
-    Effect   = "Allow", Action = ["logs:CreateLogStream", "logs:PutLogEvents", "logs:DescribeLogStreams"],
-    Resource = ["${aws_cloudwatch_log_group.node.arn}:*"]
-  }] })
-}
-
 resource "aws_iam_role" "lambda" {
   name = "${var.name}-notification-lambda"
   assume_role_policy = jsonencode({ Version = "2012-10-17", Statement = [{
