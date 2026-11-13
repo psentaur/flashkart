@@ -1,0 +1,2611 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "service-config"
+      },
+      "data": {
+        "market.json": "{\"environment\": \"local\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"a\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"us-east-1\", \"endpoints\": {\"sqs\": \"https://127.0.0.1:9297\", \"dynamodb\": \"https://127.0.0.1:9297\"}}, \"kafka\": {\"brokers\": [\"kafka:9092\"], \"auth\": \"plaintext\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "a.json": "{\"environment\": \"local\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"a\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"us-east-1\", \"endpoints\": {\"sqs\": \"https://127.0.0.1:9297\", \"dynamodb\": \"https://127.0.0.1:9297\"}}, \"kafka\": {\"brokers\": [\"kafka:9092\"], \"auth\": \"plaintext\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "b.json": "{\"environment\": \"local\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"b\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"us-east-1\", \"endpoints\": {\"sqs\": \"https://127.0.0.1:9297\", \"dynamodb\": \"https://127.0.0.1:9297\"}}, \"kafka\": {\"brokers\": [\"kafka:9092\"], \"auth\": \"plaintext\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "c.json": "{\"environment\": \"local\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"c\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"us-east-1\", \"endpoints\": {\"sqs\": \"https://127.0.0.1:9297\", \"dynamodb\": \"https://127.0.0.1:9297\"}}, \"kafka\": {\"brokers\": [\"kafka:9092\"], \"auth\": \"plaintext\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "d.json": "{\"environment\": \"local\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"d\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"us-east-1\", \"endpoints\": {\"sqs\": \"https://127.0.0.1:9297\", \"dynamodb\": \"https://127.0.0.1:9297\"}}, \"kafka\": {\"brokers\": [\"kafka:9092\"], \"auth\": \"plaintext\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "postgres-a"
+      },
+      "spec": {
+        "selector": {
+          "app": "postgres-a"
+        },
+        "ports": [
+          {
+            "name": "sql",
+            "port": 5432,
+            "targetPort": 5432
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "StatefulSet",
+      "metadata": {
+        "name": "postgres-a"
+      },
+      "spec": {
+        "serviceName": "postgres-a",
+        "selector": {
+          "matchLabels": {
+            "app": "postgres-a"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "postgres-a"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "postgres",
+                "image": "postgres:17",
+                "ports": [
+                  {
+                    "containerPort": 5432
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "POSTGRES_USER",
+                    "value": "flashkart_admin"
+                  },
+                  {
+                    "name": "POSTGRES_PASSWORD",
+                    "value": "flashkart-local-admin"
+                  },
+                  {
+                    "name": "POSTGRES_DB",
+                    "value": "flashkart"
+                  }
+                ],
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "pg_isready",
+                      "-U",
+                      "flashkart_admin",
+                      "-d",
+                      "flashkart"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "data",
+                    "mountPath": "/var/lib/postgresql/data"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "volumeClaimTemplates": [
+          {
+            "metadata": {
+              "name": "data"
+            },
+            "spec": {
+              "accessModes": [
+                "ReadWriteOnce"
+              ],
+              "resources": {
+                "requests": {
+                  "storage": "1Gi"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "postgres-b"
+      },
+      "spec": {
+        "selector": {
+          "app": "postgres-b"
+        },
+        "ports": [
+          {
+            "name": "sql",
+            "port": 5432,
+            "targetPort": 5432
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "StatefulSet",
+      "metadata": {
+        "name": "postgres-b"
+      },
+      "spec": {
+        "serviceName": "postgres-b",
+        "selector": {
+          "matchLabels": {
+            "app": "postgres-b"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "postgres-b"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "postgres",
+                "image": "postgres:17",
+                "ports": [
+                  {
+                    "containerPort": 5432
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "POSTGRES_USER",
+                    "value": "flashkart_admin"
+                  },
+                  {
+                    "name": "POSTGRES_PASSWORD",
+                    "value": "flashkart-local-admin"
+                  },
+                  {
+                    "name": "POSTGRES_DB",
+                    "value": "flashkart"
+                  }
+                ],
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "pg_isready",
+                      "-U",
+                      "flashkart_admin",
+                      "-d",
+                      "flashkart"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "data",
+                    "mountPath": "/var/lib/postgresql/data"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "volumeClaimTemplates": [
+          {
+            "metadata": {
+              "name": "data"
+            },
+            "spec": {
+              "accessModes": [
+                "ReadWriteOnce"
+              ],
+              "resources": {
+                "requests": {
+                  "storage": "1Gi"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "postgres-c"
+      },
+      "spec": {
+        "selector": {
+          "app": "postgres-c"
+        },
+        "ports": [
+          {
+            "name": "sql",
+            "port": 5432,
+            "targetPort": 5432
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "StatefulSet",
+      "metadata": {
+        "name": "postgres-c"
+      },
+      "spec": {
+        "serviceName": "postgres-c",
+        "selector": {
+          "matchLabels": {
+            "app": "postgres-c"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "postgres-c"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "postgres",
+                "image": "postgres:17",
+                "ports": [
+                  {
+                    "containerPort": 5432
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "POSTGRES_USER",
+                    "value": "flashkart_admin"
+                  },
+                  {
+                    "name": "POSTGRES_PASSWORD",
+                    "value": "flashkart-local-admin"
+                  },
+                  {
+                    "name": "POSTGRES_DB",
+                    "value": "flashkart"
+                  }
+                ],
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "pg_isready",
+                      "-U",
+                      "flashkart_admin",
+                      "-d",
+                      "flashkart"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "data",
+                    "mountPath": "/var/lib/postgresql/data"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "volumeClaimTemplates": [
+          {
+            "metadata": {
+              "name": "data"
+            },
+            "spec": {
+              "accessModes": [
+                "ReadWriteOnce"
+              ],
+              "resources": {
+                "requests": {
+                  "storage": "1Gi"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "postgres-d"
+      },
+      "spec": {
+        "selector": {
+          "app": "postgres-d"
+        },
+        "ports": [
+          {
+            "name": "sql",
+            "port": 5432,
+            "targetPort": 5432
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "StatefulSet",
+      "metadata": {
+        "name": "postgres-d"
+      },
+      "spec": {
+        "serviceName": "postgres-d",
+        "selector": {
+          "matchLabels": {
+            "app": "postgres-d"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "postgres-d"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "postgres",
+                "image": "postgres:17",
+                "ports": [
+                  {
+                    "containerPort": 5432
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "POSTGRES_USER",
+                    "value": "flashkart_admin"
+                  },
+                  {
+                    "name": "POSTGRES_PASSWORD",
+                    "value": "flashkart-local-admin"
+                  },
+                  {
+                    "name": "POSTGRES_DB",
+                    "value": "flashkart"
+                  }
+                ],
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "pg_isready",
+                      "-U",
+                      "flashkart_admin",
+                      "-d",
+                      "flashkart"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "data",
+                    "mountPath": "/var/lib/postgresql/data"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "volumeClaimTemplates": [
+          {
+            "metadata": {
+              "name": "data"
+            },
+            "spec": {
+              "accessModes": [
+                "ReadWriteOnce"
+              ],
+              "resources": {
+                "requests": {
+                  "storage": "1Gi"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "postgres-transactional"
+      },
+      "spec": {
+        "selector": {
+          "app": "postgres-transactional"
+        },
+        "ports": [
+          {
+            "name": "sql",
+            "port": 5432,
+            "targetPort": 5432
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "StatefulSet",
+      "metadata": {
+        "name": "postgres-transactional"
+      },
+      "spec": {
+        "serviceName": "postgres-transactional",
+        "selector": {
+          "matchLabels": {
+            "app": "postgres-transactional"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "postgres-transactional"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "postgres",
+                "image": "postgres:17",
+                "ports": [
+                  {
+                    "containerPort": 5432
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "POSTGRES_USER",
+                    "value": "flashkart_admin"
+                  },
+                  {
+                    "name": "POSTGRES_PASSWORD",
+                    "value": "flashkart-local-admin"
+                  },
+                  {
+                    "name": "POSTGRES_DB",
+                    "value": "flashkart"
+                  }
+                ],
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "pg_isready",
+                      "-U",
+                      "flashkart_admin",
+                      "-d",
+                      "flashkart"
+                    ]
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "data",
+                    "mountPath": "/var/lib/postgresql/data"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "volumeClaimTemplates": [
+          {
+            "metadata": {
+              "name": "data"
+            },
+            "spec": {
+              "accessModes": [
+                "ReadWriteOnce"
+              ],
+              "resources": {
+                "requests": {
+                  "storage": "1Gi"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "migrations"
+      },
+      "data": {
+        "replica-001_documents.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nCREATE SCHEMA IF NOT EXISTS replica AUTHORIZATION replica_app;\nSET LOCAL ROLE replica_app;\nCREATE TABLE IF NOT EXISTS replica.schema_version (\n    version integer PRIMARY KEY\n);\nCREATE TABLE IF NOT EXISTS replica.documents (\n    kind integer NOT NULL CHECK (kind IN (1, 2)),\n    document_id text NOT NULL,\n    counter bigint NOT NULL DEFAULT 0 CHECK (counter >= 0),\n    PRIMARY KEY (kind, document_id)\n);\nCREATE TABLE IF NOT EXISTS replica.prepared (\n    operation_id text PRIMARY KEY,\n    request bytea NOT NULL,\n    envelope bytea NOT NULL\n);\nCREATE TABLE IF NOT EXISTS replica.versions (\n    kind integer NOT NULL,\n    document_id text NOT NULL,\n    origin text NOT NULL CHECK (origin IN ('a', 'b', 'c', 'd')),\n    counter bigint NOT NULL CHECK (counter > 0),\n    operation_id text NOT NULL UNIQUE,\n    envelope bytea NOT NULL,\n    visible boolean NOT NULL DEFAULT true,\n    PRIMARY KEY (kind, document_id, origin, counter),\n    FOREIGN KEY (kind, document_id) REFERENCES replica.documents\n);\nCREATE TABLE IF NOT EXISTS replica.hints (\n    kind integer NOT NULL,\n    document_id text NOT NULL,\n    origin text NOT NULL,\n    counter bigint NOT NULL,\n    target text NOT NULL CHECK (target IN ('a', 'b', 'c', 'd')),\n    PRIMARY KEY (kind, document_id, origin, counter, target),\n    FOREIGN KEY (kind, document_id, origin, counter) REFERENCES replica.versions\n);\nINSERT INTO replica.schema_version (version) VALUES (1) ON CONFLICT DO NOTHING;\nCOMMIT;\n",
+        "replica-002_visible_documents_index.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nSET LOCAL ROLE replica_app;\nCREATE INDEX IF NOT EXISTS versions_visible_document_c\n    ON replica.versions (kind, document_id COLLATE \"C\") WHERE visible;\nDROP INDEX IF EXISTS replica.versions_visible;\nINSERT INTO replica.schema_version (version) VALUES (2) ON CONFLICT DO NOTHING;\nCOMMIT;\n",
+        "replica-003_hint_age.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nSET LOCAL ROLE replica_app;\nALTER TABLE replica.hints ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT clock_timestamp();\nINSERT INTO replica.schema_version (version) VALUES (3) ON CONFLICT DO NOTHING;\nCOMMIT;\n",
+        "transactional-001_ownership.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nCREATE SCHEMA IF NOT EXISTS flash_sale AUTHORIZATION flash_sale_app;\nCREATE SCHEMA IF NOT EXISTS admission AUTHORIZATION admission_app;\nCREATE SCHEMA IF NOT EXISTS inventory AUTHORIZATION inventory_app;\nCREATE SCHEMA IF NOT EXISTS orders AUTHORIZATION orders_app;\nCREATE SCHEMA IF NOT EXISTS payment AUTHORIZATION payment_app;\nCOMMIT;\n",
+        "transactional-002_sale_publication.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nSET LOCAL ROLE flash_sale_app;\nCREATE TABLE IF NOT EXISTS flash_sale.drafts (\n    sale_id text PRIMARY KEY,\n    terms jsonb NOT NULL,\n    state text NOT NULL DEFAULT 'DRAFT' CHECK (state IN ('DRAFT','PENDING','PUBLISHED')),\n    operation_id text UNIQUE,\n    origin text CHECK (origin IN ('a','b','c','d')),\n    step smallint NOT NULL DEFAULT 0 CHECK (step BETWEEN 0 AND 4),\n    envelope bytea,\n    next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp(),\n    correlation_id text,\n    CHECK ((state = 'DRAFT') = (operation_id IS NULL)),\n    CHECK ((operation_id IS NULL) = (origin IS NULL)),\n    CHECK ((step >= 2) = (envelope IS NOT NULL)),\n    CHECK ((step = 4) = (state = 'PUBLISHED'))\n);\nCREATE INDEX IF NOT EXISTS drafts_pending ON flash_sale.drafts (next_attempt_at, sale_id) WHERE state='PENDING';\nRESET ROLE;\nSET LOCAL ROLE inventory_app;\nCREATE TABLE IF NOT EXISTS inventory.sales (\n    sale_id text PRIMARY KEY,\n    operation_id text NOT NULL UNIQUE,\n    terms jsonb NOT NULL,\n    available_stock bigint NOT NULL CHECK (available_stock >= 0),\n    active boolean NOT NULL DEFAULT false\n);\nCOMMIT;\n",
+        "transactional-003_purchase_reservations.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nSET LOCAL ROLE admission_app;\nCREATE TABLE IF NOT EXISTS admission.attempts (\n    attempt_id text PRIMARY KEY,\n    sale_id text NOT NULL,\n    customer_id text NOT NULL\n);\nCREATE TABLE IF NOT EXISTS admission.purchase_outbox (\n    attempt_id text PRIMARY KEY REFERENCES admission.attempts,\n    body jsonb NOT NULL,\n    next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp(),\n    sent_at timestamptz\n);\nCREATE INDEX IF NOT EXISTS purchase_outbox_pending\n    ON admission.purchase_outbox(next_attempt_at, attempt_id) WHERE sent_at IS NULL;\nCREATE TABLE IF NOT EXISTS admission.events (\n    event_id text PRIMARY KEY,\n    body jsonb NOT NULL\n);\nRESET ROLE;\nSET LOCAL ROLE inventory_app;\nCREATE TABLE IF NOT EXISTS inventory.attempts (\n    attempt_id text PRIMARY KEY,\n    sale_id text NOT NULL,\n    customer_id text NOT NULL,\n    rejection text CHECK (rejection IN ('INACTIVE','ENDED','SOLD_OUT'))\n);\nCREATE TABLE IF NOT EXISTS inventory.reservations (\n    reservation_id text PRIMARY KEY REFERENCES inventory.attempts(attempt_id),\n    sale_id text NOT NULL REFERENCES inventory.sales,\n    customer_id text NOT NULL,\n    trace_id text NOT NULL,\n    expires_at timestamptz NOT NULL,\n    state text NOT NULL CHECK (state IN ('HELD','COMMITTED','RELEASED','EXPIRED'))\n);\nCREATE TABLE IF NOT EXISTS inventory.order_work (\n    reservation_id text PRIMARY KEY REFERENCES inventory.reservations,\n    body jsonb NOT NULL\n);\nCREATE TABLE IF NOT EXISTS inventory.events (\n    event_id text PRIMARY KEY,\n    body jsonb NOT NULL\n);\nCOMMIT;\n",
+        "transactional-004_order_workflows.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nSET LOCAL ROLE inventory_app;\nALTER TABLE inventory.order_work ADD COLUMN IF NOT EXISTS delivered_at timestamptz;\nALTER TABLE inventory.order_work ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp();\nCREATE INDEX IF NOT EXISTS order_work_pending ON inventory.order_work(next_attempt_at,reservation_id) WHERE delivered_at IS NULL;\nCREATE INDEX IF NOT EXISTS reservations_expiring ON inventory.reservations(expires_at,reservation_id) WHERE state='HELD';\nCREATE TABLE IF NOT EXISTS inventory.outcomes (event_id text PRIMARY KEY, body jsonb NOT NULL);\nRESET ROLE;\nSET LOCAL ROLE orders_app;\nCREATE TABLE IF NOT EXISTS orders.purchases (\n    order_id text PRIMARY KEY,\n    customer_id text NOT NULL,\n    request bytea NOT NULL,\n    state text NOT NULL DEFAULT 'PENDING' CHECK (state IN ('PENDING','CONFIRMED','CANCELLED')),\n    created_at timestamptz NOT NULL DEFAULT clock_timestamp(),\n    next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp()\n);\nCREATE INDEX IF NOT EXISTS purchases_pending ON orders.purchases(next_attempt_at,order_id) WHERE state='PENDING';\nCREATE TABLE IF NOT EXISTS orders.events (event_id text PRIMARY KEY, body jsonb NOT NULL);\nCREATE TABLE IF NOT EXISTS orders.outcomes (event_id text PRIMARY KEY, body jsonb NOT NULL);\nRESET ROLE;\nSET LOCAL ROLE payment_app;\nCREATE TABLE IF NOT EXISTS payment.transactions (\n    payment_id text PRIMARY KEY,\n    request bytea NOT NULL,\n    state text NOT NULL CHECK (state IN ('PENDING','SUCCEEDED','DECLINED','REFUNDED')),\n    decision text NOT NULL CHECK (decision IN ('SUCCEEDED','DECLINED')),\n    due_at timestamptz NOT NULL,\n    lose_reply boolean NOT NULL\n);\nCREATE TABLE IF NOT EXISTS payment.events (event_id text PRIMARY KEY, body jsonb NOT NULL);\nCOMMIT;\n",
+        "transactional-005_event_delivery.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nDO $$\nDECLARE source text;\nBEGIN\n    FOREACH source IN ARRAY ARRAY['admission.events','inventory.events','inventory.outcomes','orders.events','orders.outcomes','payment.events'] LOOP\n        EXECUTE format('ALTER TABLE %s ADD COLUMN IF NOT EXISTS delivered_at timestamptz,\n            ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp(),\n            ADD COLUMN IF NOT EXISTS delivery_attempts integer NOT NULL DEFAULT 0,\n            ADD COLUMN IF NOT EXISTS dead_at timestamptz', source);\n        EXECUTE format('CREATE INDEX IF NOT EXISTS %I ON %s (next_attempt_at,event_id) WHERE delivered_at IS NULL AND dead_at IS NULL',\n            split_part(source,'.',2)||'_delivery_pending', source);\n    END LOOP;\nEND $$;\nCOMMIT;\n",
+        "migrate.sh": "#!/bin/sh\nset -eu\n\nwait_for_db() {\n    attempts=0\n    until \"$@\" exec -T \"$database\" psql -U flashkart_admin -d flashkart -Atqc 'SELECT 1' >/dev/null 2>&1; do\n        attempts=$((attempts + 1))\n        if [ \"$attempts\" -ge 30 ]; then\n            echo \"PostgreSQL startup timed out for $database\" >&2\n            return 1\n        fi\n        sleep 1\n    done\n}\n\nfor id in a b c d; do\n    database=\"postgres-$id\"\n    wait_for_db \"$@\"\n    {\n        cat <<'SQL'\nBEGIN;\nSELECT pg_advisory_xact_lock(1);\nSELECT format('CREATE ROLE replica_app LOGIN PASSWORD %L', :'app_password')\nWHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'replica_app') \\gexec\nCOMMIT;\nSQL\n        cat migrations/replica/*.sql\n    } | \"$@\" exec -T \"$database\" psql -X -v ON_ERROR_STOP=1 -U flashkart_admin -d flashkart -v \"app_password=flashkart-local-$id\"\ndone\n\ndatabase=postgres-transactional\nwait_for_db \"$@\"\n{\n    cat <<'SQL'\nBEGIN;\nSELECT pg_advisory_xact_lock(1);\nSELECT format('CREATE ROLE %I LOGIN PASSWORD %L', role_name, 'flashkart-local-' || role_name)\nFROM unnest(ARRAY['flash_sale_app','admission_app','inventory_app','orders_app','payment_app']) AS role_name\nWHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = role_name) \\gexec\nCOMMIT;\nSQL\n    cat migrations/transactional/*.sql\n} | \"$@\" exec -T \"$database\" psql -X -v ON_ERROR_STOP=1 -U flashkart_admin -d flashkart\n",
+        "adapter": "#!/bin/sh\nset -eu\nshift 2\ndatabase=$1\nshift 2\nexec psql -h \"$database\" \"$@\"\n"
+      }
+    },
+    {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "name": "migrate",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "1",
+          "argocd.argoproj.io/hook": "Sync",
+          "argocd.argoproj.io/hook-delete-policy": "BeforeHookCreation"
+        }
+      },
+      "spec": {
+        "backoffLimit": 4,
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "migrate"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "migrate",
+                "image": "postgres:17",
+                "env": [
+                  {
+                    "name": "PGPASSWORD",
+                    "value": "flashkart-local-admin"
+                  }
+                ],
+                "command": [
+                  "sh",
+                  "-ec",
+                  "\nmkdir -p /tmp/migrations/replica /tmp/migrations/transactional\nfor group in replica transactional; do\n    for path in /sql/\"$group\"-*.sql; do\n        name=${path##*/}\n        cp \"$path\" \"/tmp/migrations/$group/${name#*-}\"\n    done\ndone\ncd /tmp\nsh /sql/migrate.sh /sql/adapter\n"
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "sql",
+                    "mountPath": "/sql"
+                  }
+                ]
+              }
+            ],
+            "restartPolicy": "Never",
+            "volumes": [
+              {
+                "name": "sql",
+                "configMap": {
+                  "name": "migrations",
+                  "defaultMode": 365
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "kafka"
+      },
+      "spec": {
+        "selector": {
+          "app": "kafka"
+        },
+        "ports": [
+          {
+            "name": "kafka",
+            "port": 9092,
+            "targetPort": 9092
+          },
+          {
+            "name": "controller",
+            "port": 9093
+          }
+        ],
+        "publishNotReadyAddresses": true
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "StatefulSet",
+      "metadata": {
+        "name": "kafka"
+      },
+      "spec": {
+        "serviceName": "kafka",
+        "selector": {
+          "matchLabels": {
+            "app": "kafka"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "kafka"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "kafka",
+                "image": "apache/kafka:3.9.1",
+                "env": [
+                  {
+                    "name": "KAFKA_NODE_ID",
+                    "value": "1"
+                  },
+                  {
+                    "name": "KAFKA_PROCESS_ROLES",
+                    "value": "broker,controller"
+                  },
+                  {
+                    "name": "KAFKA_LISTENERS",
+                    "value": "BROKER://:9092,CONTROLLER://:9093"
+                  },
+                  {
+                    "name": "KAFKA_ADVERTISED_LISTENERS",
+                    "value": "BROKER://kafka:9092"
+                  },
+                  {
+                    "name": "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP",
+                    "value": "BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT"
+                  },
+                  {
+                    "name": "KAFKA_INTER_BROKER_LISTENER_NAME",
+                    "value": "BROKER"
+                  },
+                  {
+                    "name": "KAFKA_CONTROLLER_LISTENER_NAMES",
+                    "value": "CONTROLLER"
+                  },
+                  {
+                    "name": "KAFKA_CONTROLLER_QUORUM_VOTERS",
+                    "value": "1@kafka:9093"
+                  },
+                  {
+                    "name": "KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR",
+                    "value": "1"
+                  },
+                  {
+                    "name": "KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR",
+                    "value": "1"
+                  },
+                  {
+                    "name": "KAFKA_TRANSACTION_STATE_LOG_MIN_ISR",
+                    "value": "1"
+                  },
+                  {
+                    "name": "KAFKA_LOG_DIRS",
+                    "value": "/var/lib/kafka/data"
+                  }
+                ],
+                "readinessProbe": {
+                  "tcpSocket": {
+                    "port": 9092
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "name": "kafka",
+                    "mountPath": "/var/lib/kafka/data"
+                  }
+                ]
+              }
+            ],
+            "securityContext": {
+              "fsGroup": 1000
+            }
+          }
+        },
+        "volumeClaimTemplates": [
+          {
+            "metadata": {
+              "name": "kafka"
+            },
+            "spec": {
+              "accessModes": [
+                "ReadWriteOnce"
+              ],
+              "resources": {
+                "requests": {
+                  "storage": "2Gi"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "name": "kafka-topics",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "1",
+          "argocd.argoproj.io/hook": "Sync",
+          "argocd.argoproj.io/hook-delete-policy": "BeforeHookCreation"
+        }
+      },
+      "spec": {
+        "backoffLimit": 5,
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "kafka-topics"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "topics",
+                "image": "apache/kafka:3.9.1",
+                "command": [
+                  "sh",
+                  "-ec",
+                  "\nfor topic in purchase-events analytics-results; do\n    /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists         --topic \"$topic\" --partitions 3 --replication-factor 1\ndone\n"
+                ]
+              }
+            ],
+            "restartPolicy": "Never"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "replica-a"
+      },
+      "spec": {
+        "selector": {
+          "app": "replica-a"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "replica-a",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "replica-a"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "replica-a"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "replica-a",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "catalog-replica"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/a.json"
+                  },
+                  {
+                    "name": "FLASHKART_REPLICA_A_DSN",
+                    "value": "postgres://replica_app:flashkart-local-a@postgres-a/flashkart?sslmode=disable&pool_max_conns=8"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        },
+        "strategy": {
+          "type": "Recreate"
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "replica-b"
+      },
+      "spec": {
+        "selector": {
+          "app": "replica-b"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "replica-b",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "replica-b"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "replica-b"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "replica-b",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "catalog-replica"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/b.json"
+                  },
+                  {
+                    "name": "FLASHKART_REPLICA_B_DSN",
+                    "value": "postgres://replica_app:flashkart-local-b@postgres-b/flashkart?sslmode=disable&pool_max_conns=8"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        },
+        "strategy": {
+          "type": "Recreate"
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "replica-c"
+      },
+      "spec": {
+        "selector": {
+          "app": "replica-c"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "replica-c",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "replica-c"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "replica-c"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "replica-c",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "catalog-replica"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/c.json"
+                  },
+                  {
+                    "name": "FLASHKART_REPLICA_C_DSN",
+                    "value": "postgres://replica_app:flashkart-local-c@postgres-c/flashkart?sslmode=disable&pool_max_conns=8"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        },
+        "strategy": {
+          "type": "Recreate"
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "replica-d"
+      },
+      "spec": {
+        "selector": {
+          "app": "replica-d"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "replica-d",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "replica-d"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "replica-d"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "replica-d",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "catalog-replica"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/d.json"
+                  },
+                  {
+                    "name": "FLASHKART_REPLICA_D_DSN",
+                    "value": "postgres://replica_app:flashkart-local-d@postgres-d/flashkart?sslmode=disable&pool_max_conns=8"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        },
+        "strategy": {
+          "type": "Recreate"
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "flash-sale-manager"
+      },
+      "spec": {
+        "selector": {
+          "app": "flash-sale-manager"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "flash-sale-manager",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "flash-sale-manager"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "flash-sale-manager"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "flash-sale-manager",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "flash-sale-manager"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "FLASHKART_PUBLISH_EVENTS",
+                    "value": "1"
+                  },
+                  {
+                    "name": "FLASHKART_TRANSACTIONAL_DSN",
+                    "value": "postgres://flash_sale_app:flashkart-local-flash_sale_app@postgres-transactional/flashkart?sslmode=disable&pool_max_conns=8"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "inventory-reservation"
+      },
+      "spec": {
+        "selector": {
+          "app": "inventory-reservation"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "inventory-reservation",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "inventory-reservation"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "inventory-reservation"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "inventory-reservation",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "inventory-reservation"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "FLASHKART_PUBLISH_EVENTS",
+                    "value": "1"
+                  },
+                  {
+                    "name": "FLASHKART_TRANSACTIONAL_DSN",
+                    "value": "postgres://inventory_app:flashkart-local-inventory_app@postgres-transactional/flashkart?sslmode=disable&pool_max_conns=8"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "emulator-settings"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "emulator",
+                    "mountPath": "/emulator",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              },
+              {
+                "name": "emulator-tunnel",
+                "image": "flashkart-proxy",
+                "imagePullPolicy": "IfNotPresent",
+                "args": [
+                  "TCP-LISTEN:9297,bind=127.0.0.1,reuseaddr,fork",
+                  "TCP:emulator:9297"
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "10m",
+                    "memory": "8Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "emulator",
+                "secret": {
+                  "secretName": "emulator-files"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "admission-controller"
+      },
+      "spec": {
+        "selector": {
+          "app": "admission-controller"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "admission-controller",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "admission-controller"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "admission-controller"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "admission-controller",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "admission-controller"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "FLASHKART_PUBLISH_EVENTS",
+                    "value": "1"
+                  },
+                  {
+                    "name": "FLASHKART_TRANSACTIONAL_DSN",
+                    "value": "postgres://admission_app:flashkart-local-admission_app@postgres-transactional/flashkart?sslmode=disable&pool_max_conns=8"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "emulator-settings"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "emulator",
+                    "mountPath": "/emulator",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              },
+              {
+                "name": "emulator-tunnel",
+                "image": "flashkart-proxy",
+                "imagePullPolicy": "IfNotPresent",
+                "args": [
+                  "TCP-LISTEN:9297,bind=127.0.0.1,reuseaddr,fork",
+                  "TCP:emulator:9297"
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "10m",
+                    "memory": "8Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "emulator",
+                "secret": {
+                  "secretName": "emulator-files"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "autoscaling/v2",
+      "kind": "HorizontalPodAutoscaler",
+      "metadata": {
+        "name": "admission-controller",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "scaleTargetRef": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "admission-controller"
+        },
+        "minReplicas": 2,
+        "maxReplicas": 5,
+        "metrics": [
+          {
+            "type": "Resource",
+            "resource": {
+              "name": "cpu",
+              "target": {
+                "type": "Utilization",
+                "averageUtilization": 60
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "order-service"
+      },
+      "spec": {
+        "selector": {
+          "app": "order-service"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "order-service",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "order-service"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "order-service"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "order-service",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "order-service"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "FLASHKART_PUBLISH_EVENTS",
+                    "value": "1"
+                  },
+                  {
+                    "name": "FLASHKART_TRANSACTIONAL_DSN",
+                    "value": "postgres://orders_app:flashkart-local-orders_app@postgres-transactional/flashkart?sslmode=disable&pool_max_conns=8"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "emulator-settings"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "emulator",
+                    "mountPath": "/emulator",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              },
+              {
+                "name": "emulator-tunnel",
+                "image": "flashkart-proxy",
+                "imagePullPolicy": "IfNotPresent",
+                "args": [
+                  "TCP-LISTEN:9297,bind=127.0.0.1,reuseaddr,fork",
+                  "TCP:emulator:9297"
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "10m",
+                    "memory": "8Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "emulator",
+                "secret": {
+                  "secretName": "emulator-files"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "payment-service"
+      },
+      "spec": {
+        "selector": {
+          "app": "payment-service"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "payment-service",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "payment-service"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "payment-service"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "payment-service",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "payment-service"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "FLASHKART_PUBLISH_EVENTS",
+                    "value": "1"
+                  },
+                  {
+                    "name": "FLASHKART_TRANSACTIONAL_DSN",
+                    "value": "postgres://payment_app:flashkart-local-payment_app@postgres-transactional/flashkart?sslmode=disable&pool_max_conns=8"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "product-catalog"
+      },
+      "spec": {
+        "selector": {
+          "app": "product-catalog"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "product-catalog",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "product-catalog"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "product-catalog"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "product-catalog",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "product-catalog"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "autoscaling/v2",
+      "kind": "HorizontalPodAutoscaler",
+      "metadata": {
+        "name": "product-catalog",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "scaleTargetRef": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "product-catalog"
+        },
+        "minReplicas": 2,
+        "maxReplicas": 5,
+        "metrics": [
+          {
+            "type": "Resource",
+            "resource": {
+              "name": "cpu",
+              "target": {
+                "type": "Utilization",
+                "averageUtilization": 60
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "notification"
+      },
+      "spec": {
+        "selector": {
+          "app": "notification"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "notification",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "notification"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "notification"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "notification",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "notification"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "emulator-settings"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "emulator",
+                    "mountPath": "/emulator",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              },
+              {
+                "name": "emulator-tunnel",
+                "image": "flashkart-proxy",
+                "imagePullPolicy": "IfNotPresent",
+                "args": [
+                  "TCP-LISTEN:9297,bind=127.0.0.1,reuseaddr,fork",
+                  "TCP:emulator:9297"
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "10m",
+                    "memory": "8Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "emulator",
+                "secret": {
+                  "secretName": "emulator-files"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "analytics-api"
+      },
+      "spec": {
+        "selector": {
+          "app": "analytics-api"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "analytics-api",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "analytics-api"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "analytics-api"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "analytics-api",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "analytics-api"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  },
+                  {
+                    "secretRef": {
+                      "name": "emulator-settings"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "emulator",
+                    "mountPath": "/emulator",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              },
+              {
+                "name": "emulator-tunnel",
+                "image": "flashkart-proxy",
+                "imagePullPolicy": "IfNotPresent",
+                "args": [
+                  "TCP-LISTEN:9297,bind=127.0.0.1,reuseaddr,fork",
+                  "TCP:emulator:9297"
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "10m",
+                    "memory": "8Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "emulator",
+                "secret": {
+                  "secretName": "emulator-files"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "web"
+      },
+      "spec": {
+        "selector": {
+          "app": "web"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "web",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "3"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "web"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "web"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "nginx",
+                "image": "flashkart-web",
+                "imagePullPolicy": "IfNotPresent",
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

@@ -72,6 +72,13 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 			return err
 		}
 		defer stop()
+		deliveryMetrics := app.metrics
+		app.metrics = func(ctx context.Context, out io.Writer) {
+			workflowMetrics(db, name, out, ctx)
+			if deliveryMetrics != nil {
+				deliveryMetrics(ctx, out)
+			}
+		}
 	}
 
 	if name == "order-service" || name == "payment-service" {

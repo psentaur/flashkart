@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: emulator
+spec:
+  serviceName: emulator
+  selector:
+    matchLabels: {app: emulator}
+  template:
+    metadata:
+      labels: {app: emulator}
+    spec:
+      containers:
+        - name: emulator
+          image: flashkart-emulator:dev
+          imagePullPolicy: IfNotPresent
+          args: ["-b", "0.0.0.0", "-p", "9297", "-t", "off"]
+          env:
+            - {name: HOME, value: /data}
+          ports:
+            - {name: https, containerPort: 9297}
+          readinessProbe:
+            httpGet: {path: /__admin/health, port: 9297, scheme: HTTPS}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+  volumeClaimTemplates:
+    - metadata: {name: data}
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests: {storage: 1Gi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: emulator
+spec:
+  selector: {app: emulator}
+  ports:
+    - {name: https, port: 9297}

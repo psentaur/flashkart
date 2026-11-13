@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flink
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flink
+subjects:
+  - kind: ServiceAccount
+    name: flink
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+---
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: sales-analytics
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  image: flashkart-flink:dev
+  imagePullPolicy: IfNotPresent
+  flinkVersion: v1_20
+  serviceAccount: flink
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "1"
+    high-availability.type: kubernetes
+    high-availability.storageDir: file:///opt/flink/checkpoints/ha
+    state.checkpoints.dir: file:///opt/flink/checkpoints/analytics
+    metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+    metrics.reporter.prom.port: "9249"
+  podTemplate:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9249"
+    spec:
+      containers:
+        - name: flink-main-container
+          volumeMounts:
+            - name: checkpoints
+              mountPath: /opt/flink/checkpoints
+      volumes:
+        - name: checkpoints
+          persistentVolumeClaim:
+            claimName: flink-checkpoints
+      securityContext:
+        fsGroup: 9999
+  jobManager:
+    resource:
+      memory: 1024m
+      cpu: 0.5
+  taskManager:
+    resource:
+      memory: 1536m
+      cpu: 0.5
+  job:
+    jarURI: local:///opt/flink/usrlib/analytics.jar
+    args:
+      - --brokers
+      - kafka:9092
+      - --checkpoints
+      - file:///opt/flink/checkpoints/analytics
+      - --transactional-id-prefix
+      - flashkart-kind-sales
+    parallelism: 1
+    upgradeMode: last-state
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: flink-checkpoints
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 2Gi
