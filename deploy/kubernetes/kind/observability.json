@@ -1,0 +1,352 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "telemetry"
+      },
+      "data": {
+        "prometheus.yml": "global:\n  scrape_interval: 10s\nscrape_configs:\n- job_name: flashkart\n  kubernetes_sd_configs:\n  - role: pod\n    namespaces:\n      names: [flashkart]\n  relabel_configs:\n  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]\n    regex: \"true\"\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);(\\d+)'\n    replacement: '$1:$2'\n    target_label: __address__\n  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);'\n    replacement: '$1'\n    target_label: __address__\n  - source_labels: [__meta_kubernetes_pod_container_port_name, __meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_container_name]\n    regex: 'http;;.*|.*;9249;flink-main-container'\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_label_app]\n    target_label: app\n",
+        "loki.yml": "auth_enabled: false\nserver:\n  http_listen_port: 3100\ncommon:\n  instance_addr: 127.0.0.1\n  path_prefix: /tmp/loki\n  replication_factor: 1\n  ring:\n    kvstore:\n      store: inmemory\n  storage:\n    filesystem:\n      chunks_directory: /tmp/loki/chunks\n      rules_directory: /tmp/loki/rules\nschema_config:\n  configs:\n  - from: 2024-01-01\n    store: tsdb\n    object_store: filesystem\n    schema: v13\n    index:\n      prefix: index_\n      period: 24h\n",
+        "fluent-bit.conf": "[SERVICE]\n    Flush 1\n    Parsers_File /fluent-bit/etc/parsers.conf\n[INPUT]\n    Name tail\n    Path /var/log/containers/*_flashkart_*.log\n    Tag kube.*\n    multiline.parser docker, cri\n    DB /positions/tail.db\n    Skip_Long_Lines On\n[OUTPUT]\n    Name loki\n    Match kube.*\n    Host loki\n    Port 3100\n    Labels job=flashkart\n",
+        "datasources.yaml": "apiVersion: 1\ndatasources:\n- name: Prometheus\n  uid: prometheus\n  type: prometheus\n  url: http://prometheus:9090\n  isDefault: true\n- name: Loki\n  uid: loki\n  type: loki\n  url: http://loki:3100\n",
+        "provider.yaml": "apiVersion: 1\nproviders:\n- name: Flashkart\n  options:\n    path: /dashboards\n",
+        "flashkart.json": "{\"uid\": \"flashkart\", \"title\": \"Flashkart\", \"schemaVersion\": 39, \"refresh\": \"10s\", \"panels\": [{\"id\": 1, \"type\": \"timeseries\", \"title\": \"Application health\", \"gridPos\": {\"x\": 0, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (up{job=\\\"flashkart\\\"})\"}]}, {\"id\": 2, \"type\": \"timeseries\", \"title\": \"HTTP requests per second\", \"gridPos\": {\"x\": 12, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_http_requests_total[1m]))\"}]}, {\"id\": 3, \"type\": \"timeseries\", \"title\": \"Available stock by sale\", \"gridPos\": {\"x\": 0, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"flashkart_inventory_available_stock\"}]}, {\"id\": 4, \"type\": \"timeseries\", \"title\": \"Work waiting for delivery\", \"gridPos\": {\"x\": 12, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (source) (flashkart_outbox_pending) or max by (service) (flashkart_workflow_pending)\"}]}, {\"id\": 5, \"type\": \"timeseries\", \"title\": \"Replica backend failures\", \"gridPos\": {\"x\": 0, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_sql_failures_total[1m]))\"}]}, {\"id\": 6, \"type\": \"timeseries\", \"title\": \"Replica peer failures\", \"gridPos\": {\"x\": 12, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_peer_requests_total{result=\\\"error\\\"}[1m]))\"}]}, {\"id\": 7, \"type\": \"timeseries\", \"title\": \"Analytics event-time progress\", \"gridPos\": {\"x\": 0, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*currentOutputWatermark\\\"}\"}]}, {\"id\": 8, \"type\": \"timeseries\", \"title\": \"Analytics late events\", \"gridPos\": {\"x\": 12, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*lateEventsDropped\\\"}\"}]}]}"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "prometheus"
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "Role",
+      "metadata": {
+        "name": "prometheus"
+      },
+      "rules": [
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "pods"
+          ],
+          "verbs": [
+            "get",
+            "list",
+            "watch"
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "prometheus"
+      },
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "Role",
+        "name": "prometheus"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "prometheus"
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "prometheus"
+      },
+      "spec": {
+        "selector": {
+          "app": "prometheus"
+        },
+        "ports": [
+          {
+            "port": 9090
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "prometheus"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "prometheus"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "prometheus"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "prometheus",
+                "image": "prom/prometheus:v3.5.0",
+                "args": [
+                  "--config.file=/etc/prometheus/prometheus.yml",
+                  "--storage.tsdb.retention.time=24h"
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/etc/prometheus/prometheus.yml",
+                    "subPath": "prometheus.yml"
+                  }
+                ],
+                "ports": [
+                  {
+                    "containerPort": 9090
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "telemetry"
+                }
+              }
+            ],
+            "serviceAccountName": "prometheus"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "grafana"
+      },
+      "spec": {
+        "selector": {
+          "app": "grafana"
+        },
+        "ports": [
+          {
+            "port": 3000
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "grafana"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "grafana"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "grafana"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "grafana",
+                "image": "grafana/grafana:12.1.0",
+                "args": [],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/etc/grafana/provisioning/datasources/flashkart.yaml",
+                    "subPath": "datasources.yaml"
+                  },
+                  {
+                    "name": "config",
+                    "mountPath": "/etc/grafana/provisioning/dashboards/flashkart.yaml",
+                    "subPath": "provider.yaml"
+                  },
+                  {
+                    "name": "config",
+                    "mountPath": "/dashboards/flashkart.json",
+                    "subPath": "flashkart.json"
+                  }
+                ],
+                "ports": [
+                  {
+                    "containerPort": 3000
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "telemetry"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "loki"
+      },
+      "spec": {
+        "selector": {
+          "app": "loki"
+        },
+        "ports": [
+          {
+            "port": 3100
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "loki"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "loki"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "loki"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "loki",
+                "image": "grafana/loki:3.5.3",
+                "args": [
+                  "-config.file=/etc/loki/local-config.yaml"
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/etc/loki/local-config.yaml",
+                    "subPath": "loki.yml"
+                  }
+                ],
+                "ports": [
+                  {
+                    "containerPort": 3100
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "telemetry"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "DaemonSet",
+      "metadata": {
+        "name": "fluent-bit"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "fluent-bit"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "fluent-bit"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "fluent-bit",
+                "image": "fluent/fluent-bit:4.0.6",
+                "args": [
+                  "-c",
+                  "/fluent-bit/etc/fluent-bit.conf"
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/fluent-bit/etc/fluent-bit.conf",
+                    "subPath": "fluent-bit.conf"
+                  },
+                  {
+                    "name": "logs",
+                    "mountPath": "/var/log",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "positions",
+                    "mountPath": "/positions"
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "telemetry"
+                }
+              },
+              {
+                "name": "logs",
+                "hostPath": {
+                  "path": "/var/log"
+                }
+              },
+              {
+                "name": "positions",
+                "emptyDir": {}
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

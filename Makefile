@@ -117,3 +117,22 @@ run-web:
 
 test-e2e:
 	cd web && npm exec -- playwright test
+
+KIND ?= kind
+KUBECTL ?= kubectl
+KIND_CLUSTER ?= flashkart
+.PHONY: kind-up kind-images gitops-bootstrap test-load test-kubernetes
+kind-up:
+	$(KIND) create cluster --name "$(KIND_CLUSTER)" --config deploy/kubernetes/kind/cluster.yaml --wait 180s
+
+kind-images: build-analytics
+	KIND="$(KIND)" KIND_CLUSTER="$(KIND_CLUSTER)" sh deploy/kubernetes/build-images.sh
+
+gitops-bootstrap:
+	KUBECTL="$(KUBECTL)" KIND_CLUSTER="$(KIND_CLUSTER)" sh deploy/kubernetes/bootstrap.sh
+
+test-load:
+	KUBECTL="$(KUBECTL)" KIND_CLUSTER="$(KIND_CLUSTER)" sh tests/kubernetes.sh load
+
+test-kubernetes:
+	KUBECTL="$(KUBECTL)" KIND_CLUSTER="$(KIND_CLUSTER)" sh tests/kubernetes.sh recovery

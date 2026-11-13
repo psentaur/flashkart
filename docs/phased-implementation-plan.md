@@ -2,7 +2,7 @@
 
 This roadmap turns the [technical architecture](implementation-plan.md) into executable implementation phases. That document remains the source of truth for system behavior; this document defines build order, dependencies, deliverables, and completion checks.
 
-**Current status:** Phases 1–10 are implemented. Phase 10 passed the local Chromium suite against the marketplace and analytics services. Phases 11–12 are unstarted. [Phase 10 development](phase-10-development.md)
+**Current status:** Phases 1–10 are implemented. Phase 10 passed the local Chromium suite against the marketplace and analytics services. Phase 11 deployment and rehearsal tooling is in place, with full cluster validation pending. Phase 12 is unstarted. [Phase 10 development](phase-10-development.md)
 
 Develop and verify locally through Phase 11. Phase 12 covers AWS integration and reproducible deployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
 
@@ -255,7 +255,7 @@ The default execution order is sequential. Keep intermediate states explicit: fo
 - Dashboards and centralized logs cover all application components, including Notification's local runner and Flink.
 - Replacing a replica-agent pod preserves its state in PostgreSQL; backend outages and peer partitions remain distinguishable in telemetry.
 
-**Evidence:** local deployment, load-test, and recovery reports. Proposed commands: `make kind-up`, `make gitops-bootstrap`, `make test-load`, `make test-kubernetes`.
+**Evidence:** `make kind-up`, `make kind-images`, `make gitops-bootstrap`, `make test-load`, and `make test-kubernetes`. See the [Phase 11 development guide](phase-11-development.md) for rehearsal steps and validation status.
 
 ## Phase 12: AWS integration, teardown, and reproducible redeployment
 

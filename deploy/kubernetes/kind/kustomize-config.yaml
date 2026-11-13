@@ -1,0 +1,4 @@
+images:
+  - group: flink.apache.org
+    kind: FlinkDeployment
+    path: spec/image
