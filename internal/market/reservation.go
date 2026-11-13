@@ -66,7 +66,12 @@ func (i Inventory) Reserve(ctx context.Context, work PurchaseWork) error {
 			return err
 		}
 		if reason != "" {
-			return inventoryEvent(ctx, tx, purchaseEvent(work, "attempt.rejected", "", map[string]any{"reason": reason}))
+			if err := inventoryEvent(ctx, tx, purchaseEvent(work, "attempt.rejected", "", map[string]any{"reason": reason})); err != nil {
+				return err
+			}
+			outcome := terminalEvent(work, "REJECTED", reason, "")
+			_, err := tx.Exec(ctx, "INSERT INTO inventory.outcomes VALUES ($1,$2::jsonb)", outcome["event_id"], outcome)
+			return err
 		}
 		tag, err := tx.Exec(ctx, "UPDATE inventory.sales SET available_stock=available_stock-1 WHERE sale_id=$1 AND available_stock>0", work.SaleID)
 		if err != nil {
@@ -75,7 +80,11 @@ func (i Inventory) Reserve(ctx context.Context, work PurchaseWork) error {
 		if tag.RowsAffected() != 1 {
 			return errors.New("stock decrement was not confirmed")
 		}
-		expires := work.OccurredAt.Add(2 * time.Minute)
+		hold := i.HoldDuration
+		if hold <= 0 {
+			hold = 2 * time.Minute
+		}
+		expires := work.OccurredAt.Add(hold)
 		if _, err = tx.Exec(ctx, `INSERT INTO inventory.reservations VALUES ($1,$2,$3,$4,$5,'HELD')`,
 			work.AttemptID, work.SaleID, work.CustomerID, work.TraceID, expires); err != nil {
 			return err
@@ -175,10 +184,13 @@ func (i Inventory) transition(ctx context.Context, id, state string, target pb.R
 		if target == pb.ReservationState_RESERVATION_STATE_COMMITTED && !now.Before(expires) {
 			return status.Error(codes.FailedPrecondition, "reservation has expired")
 		}
+		if target == pb.ReservationState_RESERVATION_STATE_EXPIRED && now.Before(expires) {
+			return status.Error(codes.FailedPrecondition, "reservation has not expired")
+		}
 		if _, err = tx.Exec(ctx, "UPDATE inventory.reservations SET state=$2 WHERE reservation_id=$1", id, state); err != nil {
 			return err
 		}
-		if target == pb.ReservationState_RESERVATION_STATE_RELEASED {
+		if target == pb.ReservationState_RESERVATION_STATE_RELEASED || target == pb.ReservationState_RESERVATION_STATE_EXPIRED {
 			if _, err = tx.Exec(ctx, "UPDATE inventory.sales SET available_stock=available_stock+1 WHERE sale_id=$1", current.SaleId); err != nil {
 				return err
 			}

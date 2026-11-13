@@ -109,6 +109,7 @@ message SimulatePaymentRequest {
   string order_id = 3;
   int64 amount_minor = 4;
   string currency = 5;
+  Reservation reservation = 6;
 }
 message PaymentResult { string payment_id = 1; PaymentState state = 2; }
 service Payment {

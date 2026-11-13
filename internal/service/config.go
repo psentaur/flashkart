@@ -12,7 +12,10 @@ import (
 )
 
 type config struct {
-	InventoryGRPC      string            `json:"inventory_grpc_address"`
+	InventoryGRPC string `json:"inventory_grpc_address"`
+	OrderGRPC     string `json:"order_grpc_address"`
+	PaymentGRPC   string `json:"payment_grpc_address"`
+
 	Environment        string            `json:"environment"`
 	HTTP               string            `json:"http_address"`
 	GRPC               string            `json:"grpc_address"`
@@ -38,7 +41,7 @@ func address(value string, allowZero bool) bool {
 }
 
 func readConfig(path, name string) (config, error) {
-	cfg := config{Environment: "local", HTTP: "127.0.0.1:8080", PeerTimeoutMS: 250, OperationTimeoutMS: 1000, InventoryGRPC: "127.0.0.1:7101"}
+	cfg := config{Environment: "local", HTTP: "127.0.0.1:8080", PeerTimeoutMS: 250, OperationTimeoutMS: 1000, InventoryGRPC: "127.0.0.1:7101", OrderGRPC: "127.0.0.1:7102", PaymentGRPC: "127.0.0.1:7103"}
 	if path != "" {
 		file, err := os.Open(path)
 		if err != nil {

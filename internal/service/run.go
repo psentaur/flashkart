@@ -45,7 +45,7 @@ func Main(name string) {
 
 func runService(ctx context.Context, name string, cfg config, log *slog.Logger) error {
 	switch name {
-	case "product-catalog", "flash-sale-manager", "inventory-reservation", "admission-controller":
+	case "product-catalog", "flash-sale-manager", "inventory-reservation", "admission-controller", "order-service", "payment-service":
 		return runMarket(ctx, name, cfg, log)
 	case "catalog-replica":
 	default:

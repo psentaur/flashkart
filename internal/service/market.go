@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	pb "flashkart/gen/flashkart/v1"
@@ -50,14 +51,23 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 		if name == "inventory-reservation" {
 			table = "inventory.reservations"
 		}
-		if name == "admission-controller" {
+		switch name {
+		case "admission-controller":
 			table = "admission.attempts"
+		case "order-service":
+			table = "orders.purchases"
+		case "payment-service":
+			table = "payment.transactions"
 		}
 		app.ready = func(ctx context.Context) bool {
 			var ready bool
 			return db.QueryRow(ctx, "SELECT to_regclass($1) IS NOT NULL", table).Scan(&ready) == nil && ready
 		}
 	}
+	if name == "order-service" || name == "payment-service" {
+		return runCheckout(ctx, name, cfg, log, db, app)
+	}
+
 	if name == "admission-controller" || name == "inventory-reservation" {
 		queueURL := os.Getenv("FLASHKART_PURCHASE_QUEUE_URL")
 		var queue market.PurchaseQueue
@@ -100,7 +110,24 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 			if cfg.GRPC == "" {
 				return errors.New("inventory requires a gRPC listener")
 			}
-			inventory := market.Inventory{DB: db}
+			hold, err := checkoutDuration("FLASHKART_RESERVATION_TTL", "2m")
+			if err != nil {
+				return err
+			}
+			sweep, err := checkoutDuration("FLASHKART_EXPIRY_INTERVAL", "5s")
+			if err != nil {
+				return err
+			}
+			inventory := market.Inventory{DB: db, HoldDuration: hold}
+			orderConn, err := checkoutClient(cfg.OrderGRPC)
+			if err != nil {
+				return err
+			}
+			defer orderConn.Close()
+			var workers sync.WaitGroup
+			workers.Go(func() { inventory.DeliverOrders(workerCtx, pb.NewOrderClient(orderConn), log) })
+			workers.Go(func() { inventory.SweepExpired(workerCtx, log, sweep) })
+			defer func() { stop(); workers.Wait() }()
 			app.register = func(server *grpc.Server) { pb.RegisterInventoryServer(server, inventory) }
 			worker = func() { inventory.Consume(workerCtx, queue, log) }
 		}

@@ -54,7 +54,7 @@ def check_service(name, path):
                     base = "http://" + record["address"]
                     break
             for endpoint in ("healthz", "readyz", "metrics"):
-                if name in ("catalog-replica", "flash-sale-manager", "inventory-reservation", "admission-controller") and endpoint == "readyz":
+                if name in ("catalog-replica", "flash-sale-manager", "inventory-reservation", "admission-controller", "order-service", "payment-service") and endpoint == "readyz":
                     try:
                         urlopen(f"{base}/{endpoint}", timeout=3).close()
                     except HTTPError as error:

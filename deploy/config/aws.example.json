@@ -24,5 +24,7 @@
     "brokers": [],
     "auth": "iam"
   },
-  "inventory_grpc_address": "inventory-reservation:7101"
+  "inventory_grpc_address": "inventory-reservation:7101",
+  "order_grpc_address": "order-service:7102",
+  "payment_grpc_address": "payment-service:7103"
 }

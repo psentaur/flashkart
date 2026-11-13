@@ -93,3 +93,7 @@ test-catalog-publication:
 .PHONY: test-reservations
 test-reservations:
 	. deploy/local/postgres.env && FLASHKART_TEST_PURCHASE=1 $(GO) test -buildvcs=false -count=1 -v -run 'Test(Reservations|PurchaseQueue)$$' ./internal/market
+
+.PHONY: test-workflows
+test-workflows:
+	. deploy/local/postgres.env && FLASHKART_TEST_CHECKOUT=1 $(GO) test -buildvcs=false -count=1 -v -run 'Test(CheckoutWorkflow|ReservationExpiryRace)$$' ./internal/market
