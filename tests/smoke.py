@@ -18,6 +18,9 @@ env.pop("AWS_LAMBDA_RUNTIME_API", None)
 env["FLASHKART_REPLICA_A_DSN"] = (
     "postgres://replica_app@127.0.0.1:1/flashkart?sslmode=disable&connect_timeout=1"
 )
+env["FLASHKART_ADMIN_TOKEN"] = "smoke-only-token"
+env["FLASHKART_TRANSACTIONAL_DSN"] = env["FLASHKART_REPLICA_A_DSN"]
+env.pop("FLASHKART_PRODUCT_IMAGES_BUCKET", None)
 services = (
     "admission-controller", "analytics-api", "catalog-replica",
     "flash-sale-manager", "inventory-reservation", "notification",
@@ -48,7 +51,7 @@ def check_service(name, path):
                     base = "http://" + record["address"]
                     break
             for endpoint in ("healthz", "readyz", "metrics"):
-                if name == "catalog-replica" and endpoint == "readyz":
+                if name in ("catalog-replica", "flash-sale-manager", "inventory-reservation") and endpoint == "readyz":
                     try:
                         urlopen(f"{base}/{endpoint}", timeout=3).close()
                     except HTTPError as error:
@@ -62,7 +65,7 @@ def check_service(name, path):
                     if endpoint == "metrics":
                         assert b"flashkart_http_requests_total" in response.read()
             try:
-                urlopen(f"{base}/api/products", timeout=3).close()
+                urlopen(f"{base}/api/attempts", timeout=3).close()
             except HTTPError as error:
                 with error:
                     assert error.code == 501

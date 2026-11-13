@@ -44,7 +44,11 @@ func Main(name string) {
 }
 
 func runService(ctx context.Context, name string, cfg config, log *slog.Logger) error {
-	if name != "catalog-replica" {
+	switch name {
+	case "product-catalog", "flash-sale-manager", "inventory-reservation":
+		return runMarket(ctx, name, cfg, log)
+	case "catalog-replica":
+	default:
 		return serve(ctx, name, cfg, log, nil, nil)
 	}
 	dsn := os.Getenv(cfg.Databases[cfg.ReplicaID])
@@ -76,7 +80,14 @@ func runService(ctx context.Context, name string, cfg config, log *slog.Logger) 
 	return serve(ctx, name, cfg, log, store, coordinator)
 }
 
-func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store *replica.Store, coordinator *replica.Coordinator) error {
+func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store *replica.Store, coordinator *replica.Coordinator, apps ...serviceApp) error {
+	var app serviceApp
+	if len(apps) > 0 {
+		app = apps[0]
+	}
+	if store != nil {
+		app.ready = store.Ready
+	}
 	listener, err := net.Listen("tcp", cfg.HTTP)
 	if err != nil {
 		return err
@@ -102,10 +113,15 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 				pb.RegisterCatalogReplicationServer(grpcServer, coordinator)
 			}
 			pb.RegisterReplicaPeerServer(grpcServer, store)
+		}
+		if app.register != nil {
+			app.register(grpcServer)
+		}
+		if app.ready != nil {
 			healthServer.SetServingStatus("", healthpb.HealthCheckResponse_NOT_SERVING)
 			probeContext, stopProbes := context.WithCancel(ctx)
 			defer stopProbes()
-			go monitorReplica(probeContext, healthServer, store)
+			go monitorReadiness(probeContext, healthServer, app.ready)
 		}
 		go func() { failures <- grpcServer.Serve(peerListener) }()
 		log.Info("gRPC listening", "address", peerListener.Addr().String())
@@ -121,7 +137,7 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
 		probe, cancel := context.WithTimeout(r.Context(), time.Second)
 		defer cancel()
-		if !ready.Load() || store != nil && !store.Ready(probe) {
+		if !ready.Load() || app.ready != nil && !app.ready(probe) {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			return
 		}
@@ -148,12 +164,16 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 		})
 	})
 
+	var handler http.Handler = mux
+	if app.wrap != nil {
+		handler = app.wrap(mux)
+	}
 	server := &http.Server{
 		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       30 * time.Second,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requests.Add(1)
-			mux.ServeHTTP(w, r)
+			handler.ServeHTTP(w, r)
 		}),
 	}
 	go func() { failures <- server.Serve(listener) }()
@@ -191,13 +211,13 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 	return errors.Join(serveErr, shutdownErr)
 }
 
-func monitorReplica(ctx context.Context, healthServer *health.Server, store *replica.Store) {
+func monitorReadiness(ctx context.Context, healthServer *health.Server, ready func(context.Context) bool) {
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
 	for ctx.Err() == nil {
 		probe, cancel := context.WithTimeout(ctx, time.Second)
 		state := healthpb.HealthCheckResponse_NOT_SERVING
-		if store.Ready(probe) {
+		if ready(probe) {
 			state = healthpb.HealthCheckResponse_SERVING
 		}
 		cancel()

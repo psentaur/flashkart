@@ -16,6 +16,13 @@
     "c": "catalog-replica-c:7001",
     "d": "catalog-replica-d:7001"
   },
-  "aws": {"region": "ap-south-1", "endpoints": {}},
-  "kafka": {"brokers": [], "auth": "iam"}
+  "aws": {
+    "region": "ap-south-1",
+    "endpoints": {}
+  },
+  "kafka": {
+    "brokers": [],
+    "auth": "iam"
+  },
+  "inventory_grpc_address": "inventory-reservation:7101"
 }
