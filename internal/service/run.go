@@ -31,11 +31,7 @@ func Main(name string) {
 	defer cancel()
 	cfg, err := readConfig(*path, name)
 	if err == nil {
-		if api := os.Getenv("AWS_LAMBDA_RUNTIME_API"); name == "notification" && api != "" {
-			err = runLambda(ctx, api, log)
-		} else {
-			err = runService(ctx, name, cfg, log)
-		}
+		err = runService(ctx, name, cfg, log)
 	}
 	if err != nil {
 		log.Error("service failed", "error", err)
@@ -45,6 +41,11 @@ func Main(name string) {
 
 func runService(ctx context.Context, name string, cfg config, log *slog.Logger) error {
 	switch name {
+	case "notification":
+		if os.Getenv("FLASHKART_NOTIFICATION_TABLE") != "" || os.Getenv("AWS_LAMBDA_RUNTIME_API") != "" || cfg.Environment == "aws" {
+			return runNotifications(ctx, cfg, log)
+		}
+		return serve(ctx, name, cfg, log, nil, nil)
 	case "product-catalog", "flash-sale-manager", "inventory-reservation", "admission-controller", "order-service", "payment-service":
 		return runMarket(ctx, name, cfg, log)
 	case "catalog-replica":
@@ -143,11 +144,16 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 		}
 		w.WriteHeader(http.StatusOK)
 	})
-	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, _ *http.Request) {
+	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
 		fmt.Fprintf(w, "# TYPE flashkart_http_requests_total counter\nflashkart_http_requests_total %d\n", requests.Load())
 		if coordinator != nil {
 			coordinator.WriteMetrics(w)
+		}
+		if app.metrics != nil {
+			ctx, cancel := context.WithTimeout(r.Context(), time.Second)
+			defer cancel()
+			app.metrics(ctx, w)
 		}
 	})
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {

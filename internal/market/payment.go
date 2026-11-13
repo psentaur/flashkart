@@ -114,7 +114,7 @@ func (p Payment) run(ctx context.Context, id string, input *pb.SimulatePaymentRe
 		name := map[string]string{"SUCCEEDED": "payment.succeeded", "DECLINED": "payment.declined", "REFUNDED": "payment.refunded"}[next]
 		event := purchaseEvent(work, name, r.ReservationId, map[string]any{})
 		event["payment_id"], event["order_id"] = id, original.OrderId
-		if _, err := tx.Exec(ctx, "INSERT INTO payment.events VALUES ($1,$2::jsonb)", event["event_id"], event); err != nil {
+		if _, err := tx.Exec(ctx, "INSERT INTO payment.events(event_id,body) VALUES ($1,$2::jsonb)", event["event_id"], event); err != nil {
 			return err
 		}
 		state = next

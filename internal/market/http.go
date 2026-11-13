@@ -94,3 +94,13 @@ func matchesToken(expected, provided string) bool {
 	a, b := sha256.Sum256([]byte(expected)), sha256.Sum256([]byte(provided))
 	return expected != "" && subtle.ConstantTimeCompare(a[:], b[:]) == 1
 }
+
+func customerAuthorized(w http.ResponseWriter, r *http.Request, token string) bool {
+	scheme, provided, ok := strings.Cut(r.Header.Get("Authorization"), " ")
+	if ok && strings.EqualFold(scheme, "Bearer") && matchesToken(token, provided) {
+		return true
+	}
+	w.Header().Set("WWW-Authenticate", "Bearer")
+	writeError(w, r, 401, "UNAUTHENTICATED", "customer bearer token required")
+	return false
+}

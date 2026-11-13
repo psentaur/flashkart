@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -23,6 +24,7 @@ type serviceApp struct {
 	wrap     func(http.Handler) http.Handler
 	register func(*grpc.Server)
 	ready    func(context.Context) bool
+	metrics  func(context.Context, io.Writer)
 }
 
 func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) error {
@@ -64,6 +66,14 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 			return db.QueryRow(ctx, "SELECT to_regclass($1) IS NOT NULL", table).Scan(&ready) == nil && ready
 		}
 	}
+	if db != nil {
+		stop, err := startEventDelivery(ctx, name, cfg, db, &app, log)
+		if err != nil {
+			return err
+		}
+		defer stop()
+	}
+
 	if name == "order-service" || name == "payment-service" {
 		return runCheckout(ctx, name, cfg, log, db, app)
 	}
@@ -83,10 +93,9 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 		defer stop()
 		var worker func()
 		if name == "admission-controller" {
-			customerToken, customerID := os.Getenv("FLASHKART_CUSTOMER_TOKEN"), os.Getenv("FLASHKART_CUSTOMER_ID")
-			if strings.TrimSpace(customerToken) == "" || strings.ContainsAny(customerToken, " \t\r\n") ||
-				strings.TrimSpace(customerID) == "" || len(customerID) > 200 || strings.ContainsRune(customerID, 0) || customerToken == token {
-				return errors.New("a distinct customer token and customer ID are required")
+			customerToken, customerID, err := customerConfig()
+			if err != nil {
+				return err
 			}
 			settings := []struct {
 				name  string
@@ -102,6 +111,12 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 				}
 			}
 			admission := market.NewAdmission(db, log, settings[0].value, settings[1].value, settings[2].value)
+			if os.Getenv("FLASHKART_NOTIFICATION_TABLE") != "" || cfg.Environment == "aws" {
+				admission.Notifications, err = notificationStore(ctx, cfg)
+				if err != nil {
+					return err
+				}
+			}
 			app.wrap = func(fallback http.Handler) http.Handler {
 				return admission.Handler(customerToken, customerID, fallback)
 			}
@@ -170,4 +185,13 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 	go func() { defer close(done); publisher.Run(workCtx) }()
 	defer func() { stop(); <-done }()
 	return serve(ctx, name, cfg, log, nil, nil, app)
+}
+
+func customerConfig() (string, string, error) {
+	token, id := os.Getenv("FLASHKART_CUSTOMER_TOKEN"), os.Getenv("FLASHKART_CUSTOMER_ID")
+	if strings.TrimSpace(token) == "" || strings.ContainsAny(token, " \t\r\n") ||
+		strings.TrimSpace(id) == "" || len(id) > 200 || strings.ContainsRune(id, 0) || token == os.Getenv("FLASHKART_ADMIN_TOKEN") {
+		return "", "", errors.New("a distinct customer token and customer ID are required")
+	}
+	return token, id, nil
 }

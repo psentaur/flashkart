@@ -70,7 +70,7 @@ func (i Inventory) Reserve(ctx context.Context, work PurchaseWork) error {
 				return err
 			}
 			outcome := terminalEvent(work, "REJECTED", reason, "")
-			_, err := tx.Exec(ctx, "INSERT INTO inventory.outcomes VALUES ($1,$2::jsonb)", outcome["event_id"], outcome)
+			_, err := tx.Exec(ctx, "INSERT INTO inventory.outcomes(event_id,body) VALUES ($1,$2::jsonb)", outcome["event_id"], outcome)
 			return err
 		}
 		tag, err := tx.Exec(ctx, "UPDATE inventory.sales SET available_stock=available_stock-1 WHERE sale_id=$1 AND available_stock>0", work.SaleID)
@@ -101,7 +101,7 @@ func (i Inventory) Reserve(ctx context.Context, work PurchaseWork) error {
 }
 
 func inventoryEvent(ctx context.Context, tx pgx.Tx, event map[string]any) error {
-	_, err := tx.Exec(ctx, "INSERT INTO inventory.events VALUES ($1,$2::jsonb)", event["event_id"], event)
+	_, err := tx.Exec(ctx, "INSERT INTO inventory.events(event_id,body) VALUES ($1,$2::jsonb)", event["event_id"], event)
 	return err
 }
 

@@ -45,15 +45,10 @@ func NewPurchaseQueue(ctx context.Context, queueURL, region, endpoint, credentia
 		return nil, err
 	}
 	if local {
-		pem, err := os.ReadFile(caFile)
-		roots := x509.NewCertPool()
-		if err != nil || !roots.AppendCertsFromPEM(pem) {
-			return nil, errors.New("local SQS requires the emulator TLS CA")
+		sdk.HTTPClient, err = localAWSHTTP(caFile)
+		if err != nil {
+			return nil, err
 		}
-		transport := http.DefaultTransport.(*http.Transport).Clone()
-		transport.Proxy = nil
-		transport.TLSClientConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
-		sdk.HTTPClient = &http.Client{Transport: transport}
 	}
 	return sqsQueue{sqs.NewFromConfig(sdk, func(o *sqs.Options) {
 		if local {
@@ -82,4 +77,16 @@ func (q sqsQueue) Receive(ctx context.Context) ([]PurchaseMessage, error) {
 func (q sqsQueue) Delete(ctx context.Context, receipt string) error {
 	_, err := q.client.DeleteMessage(ctx, &sqs.DeleteMessageInput{QueueUrl: q.url, ReceiptHandle: aws.String(receipt)})
 	return err
+}
+
+func localAWSHTTP(caFile string) (*http.Client, error) {
+	pem, err := os.ReadFile(caFile)
+	roots := x509.NewCertPool()
+	if err != nil || !roots.AppendCertsFromPEM(pem) {
+		return nil, errors.New("local AWS service requires the emulator TLS CA")
+	}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
+	transport.TLSClientConfig = &tls.Config{RootCAs: roots, MinVersion: tls.VersionTLS12}
+	return &http.Client{Transport: transport}, nil
 }
