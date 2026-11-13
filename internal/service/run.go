@@ -41,6 +41,11 @@ func Main(name string) {
 
 func runService(ctx context.Context, name string, cfg config, log *slog.Logger) error {
 	switch name {
+	case "analytics-api":
+		if os.Getenv("FLASHKART_ANALYTICS_TABLE") != "" || cfg.Environment == "aws" {
+			return runAnalytics(ctx, cfg, log)
+		}
+		return serve(ctx, name, cfg, log, nil, nil)
 	case "notification":
 		if os.Getenv("FLASHKART_NOTIFICATION_TABLE") != "" || os.Getenv("AWS_LAMBDA_RUNTIME_API") != "" || cfg.Environment == "aws" {
 			return runNotifications(ctx, cfg, log)

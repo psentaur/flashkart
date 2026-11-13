@@ -47,6 +47,14 @@ func NewNotifications(ctx context.Context, table, region, endpoint, credentials,
 	if table == "" {
 		return nil, errors.New("notification table is required")
 	}
+	client, err := newDynamoClient(ctx, region, endpoint, credentials, ca, local)
+	if err != nil {
+		return nil, err
+	}
+	return &Notifications{client, aws.String(table)}, nil
+}
+
+func newDynamoClient(ctx context.Context, region, endpoint, credentials, ca string, local bool) (*dynamodb.Client, error) {
 	sdk, err := awsConfig(ctx, region, endpoint, credentials, local)
 	if err != nil {
 		return nil, err
@@ -57,12 +65,11 @@ func NewNotifications(ctx context.Context, table, region, endpoint, credentials,
 			return nil, err
 		}
 	}
-	client := dynamodb.NewFromConfig(sdk, func(o *dynamodb.Options) {
+	return dynamodb.NewFromConfig(sdk, func(o *dynamodb.Options) {
 		if local {
 			o.BaseEndpoint = aws.String(endpoint)
 		}
-	})
-	return &Notifications{client, aws.String(table)}, nil
+	}), nil
 }
 
 func av(value string) *types.AttributeValueMemberS { return &types.AttributeValueMemberS{Value: value} }

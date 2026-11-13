@@ -2,7 +2,7 @@
 
 This roadmap turns the [technical architecture](implementation-plan.md) into executable implementation phases. That document remains the source of truth for system behavior; this document defines build order, dependencies, deliverables, and completion checks.
 
-**Current status:** Phases 1–8 are implemented. Phase 8 passed local PostgreSQL, Kafka, SQS, and DynamoDB integration checks. Phases 9–12 are unstarted. [Phase 8 development](phase-8-development.md)
+**Current status:** Phases 1–9 are implemented. Phase 9 passed local Kafka and Flink checkpoint recovery, deterministic window, and DynamoDB projection checks. Phases 10–12 are unstarted. [Phase 9 development](phase-9-development.md)
 
 Develop and verify locally through Phase 11. Phase 12 covers AWS integration and reproducible deployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
 
@@ -213,7 +213,7 @@ The default execution order is sequential. Keep intermediate states explicit: fo
 - Restarting Flink from a checkpoint and restarting the projector after a database write but before offset commit do not inflate results.
 - Analytics can be queried through the API and traced back to source events.
 
-**Evidence:** deterministic aggregation and recovery tests. Proposed command: `make test-analytics`.
+**Evidence:** `make test-analytics` checks deterministic windows and checkpoint recovery. The Phase 9 guide lists the fixtures for testing DynamoDB projection and Kafka offset replay.
 
 ## Phase 10: Complete demo frontend
 

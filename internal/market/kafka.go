@@ -11,10 +11,14 @@ import (
 )
 
 func NewEventProducer(brokers []string, auth, region string) (*kgo.Client, error) {
+	return newKafkaClient(brokers, auth, region, kgo.DefaultProduceTopic("purchase-events"))
+}
+
+func newKafkaClient(brokers []string, auth, region string, extra ...kgo.Opt) (*kgo.Client, error) {
 	if len(brokers) == 0 {
 		return nil, errors.New("Kafka brokers are required")
 	}
-	options := []kgo.Opt{kgo.SeedBrokers(brokers...), kgo.RequiredAcks(kgo.AllISRAcks()), kgo.DefaultProduceTopic("purchase-events")}
+	options := []kgo.Opt{kgo.SeedBrokers(brokers...), kgo.RequiredAcks(kgo.AllISRAcks())}
 	switch auth {
 	case "", "plaintext":
 	case "iam":
@@ -28,5 +32,5 @@ func NewEventProducer(brokers []string, auth, region string) (*kgo.Client, error
 	default:
 		return nil, errors.New("unknown Kafka authentication")
 	}
-	return kgo.NewClient(options...)
+	return kgo.NewClient(append(options, extra...)...)
 }

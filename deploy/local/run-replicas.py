@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
         }
         queue_vars = ("FLASHKART_PURCHASE_QUEUE_URL", "FLASHKART_SQS_CREDENTIALS_FILE", "FLASHKART_SQS_CA_FILE")
         event_vars = ("FLASHKART_OUTCOME_QUEUE_URL", "FLASHKART_NOTIFICATION_TABLE", "FLASHKART_DYNAMODB_CREDENTIALS_FILE", "FLASHKART_DYNAMODB_CA_FILE")
-        excluded.update(event_vars)
+        excluded.update((*event_vars, "FLASHKART_ANALYTICS_TABLE"))
         customer_vars = ("FLASHKART_CUSTOMER_TOKEN", "FLASHKART_CUSTOMER_ID")
         excluded.update((*queue_vars, *customer_vars, "FLASHKART_ADMISSION_DSN", "FLASHKART_ORDERS_DSN", "FLASHKART_PAYMENT_DSN"))
         common = {key: value for key, value in os.environ.items() if key not in excluded}
@@ -65,6 +65,8 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
                 )
             if os.environ.get("FLASHKART_OUTCOME_QUEUE_URL") and os.environ.get("FLASHKART_NOTIFICATION_TABLE"):
                 services += (("notification", 8207, "", None),)
+            if os.environ.get("FLASHKART_ANALYTICS_TABLE"):
+                services += (("analytics-api", 8208, "", None),)
             for name, port, grpc, dsn in services:
                 settings = dict(config, http_address=f"127.0.0.1:{port}", grpc_address=grpc)
                 variables = {"FLASHKART_ADMIN_TOKEN": token} if name != "inventory-reservation" else {}
@@ -87,6 +89,9 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
                     variables.update({key: os.environ[key] for key in event_vars[1:]})
                     aws = settings.get("aws", {"region": "us-east-1", "endpoints": {}})
                     settings["aws"] = {"region": "us-east-1", "endpoints": aws["endpoints"] | {"dynamodb": os.environ["FLASHKART_DYNAMODB_ENDPOINT"]}}
+                if name == "analytics-api":
+                    variables.update({key: os.environ[key] for key in ("FLASHKART_ANALYTICS_TABLE", *event_vars[2:])})
+                    settings["aws"] = {"region": "us-east-1", "endpoints": {"dynamodb": os.environ["FLASHKART_DYNAMODB_ENDPOINT"]}}
                 start(name, binary.with_name(name), settings, variables)
 
         while not stopping:
