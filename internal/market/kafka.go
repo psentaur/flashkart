@@ -10,8 +10,12 @@ import (
 	"github.com/twmb/franz-go/pkg/sasl/oauth"
 )
 
-func NewEventProducer(brokers []string, auth, region string) (*kgo.Client, error) {
-	return newKafkaClient(brokers, auth, region, kgo.DefaultProduceTopic("purchase-events"))
+func NewEventProducer(brokers []string, auth, region string, topics ...string) (*kgo.Client, error) {
+	topic := "purchase-events"
+	if len(topics) != 0 && topics[0] != "" {
+		topic = topics[0]
+	}
+	return newKafkaClient(brokers, auth, region, kgo.DefaultProduceTopic(topic))
 }
 
 func newKafkaClient(brokers []string, auth, region string, extra ...kgo.Opt) (*kgo.Client, error) {

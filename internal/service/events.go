@@ -41,7 +41,7 @@ func startEventDelivery(ctx context.Context, name string, cfg config, db *pgxpoo
 	var kafka *kgo.Client
 	if len(cfg.Kafka.Brokers) > 0 && (cfg.Environment == "aws" || os.Getenv("FLASHKART_PUBLISH_EVENTS") == "1") {
 		var err error
-		kafka, err = market.NewEventProducer(cfg.Kafka.Brokers, cfg.Kafka.Auth, cfg.AWS.Region)
+		kafka, err = market.NewEventProducer(cfg.Kafka.Brokers, cfg.Kafka.Auth, cfg.AWS.Region, os.Getenv("FLASHKART_PURCHASE_EVENTS_TOPIC"))
 		if err != nil {
 			return nil, err
 		}
