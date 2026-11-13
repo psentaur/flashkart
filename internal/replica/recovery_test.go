@@ -33,7 +33,7 @@ type recoveryCluster struct {
 	driver       *Client
 	partition    atomic.Bool
 	right        map[string]bool
-	dropReply    atomic.Bool
+	dropReply    atomic.Pointer[pb.Mutation]
 	lostTarget   string
 	sqlBlocked   map[string]*atomic.Bool
 }
@@ -65,9 +65,12 @@ func startRecoveryCluster(t *testing.T, right map[string]bool, lostTarget string
 						return status.Error(codes.Unavailable, "test peer partition")
 					}
 					err := invoke(ctx, method, req, reply, conn, opts...)
-					if err == nil && target == cluster.lostTarget && method == pb.ReplicaPeer_DeliverHint_FullMethodName &&
-						cluster.dropReply.CompareAndSwap(true, false) {
-						return status.Error(codes.Unavailable, "test lost reply after destination commit")
+					if err == nil && target == cluster.lostTarget && method == pb.ReplicaPeer_DeliverHint_FullMethodName {
+						expected := cluster.dropReply.Load()
+						if expected != nil && proto.Equal(req.(*pb.ApplyMutationRequest).GetMutation(), expected) &&
+							cluster.dropReply.CompareAndSwap(expected, nil) {
+							return status.Error(codes.Unavailable, "test lost reply after destination commit")
+						}
 					}
 					return err
 				}))
@@ -217,9 +220,9 @@ func TestReplicationRecovery(t *testing.T) {
 	}
 
 	cluster.partition.Store(false)
-	cluster.dropReply.Store(true)
+	cluster.dropReply.Store(rightValue)
 	cluster.coordinators[fallback].recoverPass(ctx, true)
-	if !physical(left, rightValue) || !slices.Contains(hints(fallback, key), left) {
+	if cluster.dropReply.Load() != nil || !physical(left, rightValue) || !slices.Contains(hints(fallback, key), left) {
 		t.Fatal("destination commit with lost reply did not preserve the source hint")
 	}
 	restartFallback()
