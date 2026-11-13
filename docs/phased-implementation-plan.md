@@ -2,7 +2,7 @@
 
 This roadmap turns the [technical architecture](implementation-plan.md) into executable implementation phases. That document remains the source of truth for system behavior; this document defines build order, dependencies, deliverables, and completion checks.
 
-**Current status:** Phases 1–5 passed their implementation checks. Phase 6 passed local PostgreSQL concurrency, admission replay, and SQS emulator delivery checks. Phases 7–12 are unstarted. [Phase 6 development](phase-6-development.md)
+**Current status:** Phases 1–6 passed their implementation checks. Phase 7 passed local PostgreSQL and gRPC checkout tests for successful, declined, delayed, and lost-reply payments, as well as confirmation and expiry races. Phases 8–12 are unstarted. [Phase 7 development](phase-7-development.md)
 
 Develop and verify locally through Phase 11. Phase 12 covers AWS integration and reproducible deployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
 
@@ -171,7 +171,7 @@ The default execution order is sequential. Keep intermediate states explicit: fo
 - Duplicate RPCs yield one order/payment effect. Crashes after payment success but before Order records it recover using the existing payment result.
 - Repeated confirmation/expiry races have one winner. Late successful payments trigger one refund, and releases never return stock twice.
 
-**Evidence:** workflow, concurrency, and crash-recovery tests. Proposed command: `make test-workflows`.
+**Evidence:** `make test-workflows` passed against PostgreSQL and loopback gRPC.
 
 ## Phase 8: Notifications and reliable business-event delivery
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	pb "flashkart/gen/flashkart/v1"
 	"github.com/jackc/pgx/v5"
@@ -14,7 +15,8 @@ import (
 
 type Inventory struct {
 	pb.UnimplementedInventoryServer
-	DB *pgxpool.Pool
+	DB           *pgxpool.Pool
+	HoldDuration time.Duration
 }
 
 func (i Inventory) PrepareSale(ctx context.Context, req *pb.PrepareSaleRequest) (*pb.Ack, error) {

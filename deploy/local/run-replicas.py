@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
         }
         queue_vars = ("FLASHKART_PURCHASE_QUEUE_URL", "FLASHKART_SQS_CREDENTIALS_FILE", "FLASHKART_SQS_CA_FILE")
         customer_vars = ("FLASHKART_CUSTOMER_TOKEN", "FLASHKART_CUSTOMER_ID")
-        excluded.update((*queue_vars, *customer_vars, "FLASHKART_ADMISSION_DSN"))
+        excluded.update((*queue_vars, *customer_vars, "FLASHKART_ADMISSION_DSN", "FLASHKART_ORDERS_DSN", "FLASHKART_PAYMENT_DSN"))
         common = {key: value for key, value in os.environ.items() if key not in excluded}
 
         def start(name, executable, settings, variables):
@@ -56,11 +56,15 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
                 ("product-catalog", 8201, "", None),
             )
             if os.environ.get("FLASHKART_PURCHASE_QUEUE_URL"):
-                services += (("admission-controller", 8204, "", "FLASHKART_ADMISSION_DSN"),)
+                services += (
+                    ("admission-controller", 8204, "", "FLASHKART_ADMISSION_DSN"),
+                    ("order-service", 8205, "127.0.0.1:7102", "FLASHKART_ORDERS_DSN"),
+                    ("payment-service", 8206, "127.0.0.1:7103", "FLASHKART_PAYMENT_DSN"),
+                )
             for name, port, grpc, dsn in services:
                 settings = dict(config, http_address=f"127.0.0.1:{port}", grpc_address=grpc)
                 variables = {"FLASHKART_ADMIN_TOKEN": token} if name != "inventory-reservation" else {}
-                if name == "admission-controller":
+                if name in ("admission-controller", "order-service"):
                     variables.update({key: os.environ[key] for key in customer_vars})
                 if name in ("admission-controller", "inventory-reservation") and os.environ.get(queue_vars[0]):
                     variables.update({key: os.environ[key] for key in queue_vars})
