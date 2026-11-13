@@ -114,7 +114,7 @@ function SaleEditor({ token }: { token: string }) {
   const [error, setError] = useState<unknown>();
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const operation = useRef<string | undefined>(undefined);
+  const [operation, setOperation] = useState<string>();
   const progress = useQuery<Publication>(publication ? "/api/admin/publications/" + segment(publication.operation_id) : null, token, 1400, value => value.state === "PUBLISHED");
   const state = progress.data || publication;
   const published = useQuery<Sale>(state?.state === "PUBLISHED" ? "/api/sales/" + segment(state.sale_id) : null);
@@ -126,6 +126,7 @@ function SaleEditor({ token }: { token: string }) {
 
   async function save(e: FormEvent) {
     e.preventDefault();
+    if (busy || operation) return;
     setError(undefined);
     setBusy(true);
     try {
@@ -138,35 +139,42 @@ function SaleEditor({ token }: { token: string }) {
   }
 
   async function publish() {
-    if (!draft || dirty || busy) return;
-    operation.current ||= operationID();
+    if (!draft || busy || (dirty && !operation)) return;
+    const id = operation || operationID();
+    setOperation(id);
     setError(undefined);
     setBusy(true);
     try {
       setPublication(await api<Publication>(`/api/admin/sale-drafts/${segment(draft.sale_id)}/publish`,
-        { method: "POST", token, body: { operation_id: operation.current } }));
-    } catch (err) { setError(err); }
-    finally { setBusy(false); }
+        { method: "POST", token, body: { operation_id: id } }));
+    } catch (err) {
+      if (!operation && err instanceof ApiError && [400, 401, 403, 404, 409].includes(err.status)) {
+        setOperation(undefined);
+      }
+      setError(err);
+    } finally { setBusy(false); }
   }
 
   return <section className="panel">
     <h2>Sale publication</h2>
-    {!state && <form onSubmit={save} className="form-grid">
-      <label>Sale product ID<input required value={terms.product_id} onChange={e => update("product_id", e.target.value)} /></label>
-      <label>Price in minor units<input type="number" min="0" step="1" required value={Number.isNaN(terms.price_minor) ? "" : terms.price_minor} onChange={e => update("price_minor", e.target.valueAsNumber)} /></label>
-      <label>Currency<input required pattern="[A-Z]{3}" maxLength={3} value={terms.currency} onChange={e => update("currency", e.target.value.toUpperCase())} /></label>
-      <label>Stock limit<input type="number" min="1" max="4294967295" step="1" required value={Number.isNaN(terms.stock) ? "" : terms.stock} onChange={e => update("stock", e.target.valueAsNumber)} /></label>
-      <label>Starts at<input required type="datetime-local" value={terms.starts_at} onChange={e => update("starts_at", e.target.value)} /></label>
-      <label>Ends at<input required type="datetime-local" value={terms.ends_at} onChange={e => update("ends_at", e.target.value)} /></label>
-      <div className="full catalog-list"><button disabled={busy}>{draft ? "Save draft changes" : "Create draft"}</button>
-        {draft && <button className="secondary" type="button" disabled={dirty || busy} onClick={() => void publish()}>{operation.current ? "Retry publication" : "Publish sale"}</button>}</div>
+    {!state && <form onSubmit={save}>
+      <fieldset className="form-grid sale-fields" disabled={busy || !!operation}>
+        <label>Sale product ID<input required value={terms.product_id} onChange={e => update("product_id", e.target.value)} /></label>
+        <label>Price in minor units<input type="number" min="0" step="1" required value={Number.isNaN(terms.price_minor) ? "" : terms.price_minor} onChange={e => update("price_minor", e.target.valueAsNumber)} /></label>
+        <label>Currency<input required pattern="[A-Z]{3}" maxLength={3} value={terms.currency} onChange={e => update("currency", e.target.value.toUpperCase())} /></label>
+        <label>Stock limit<input type="number" min="1" max="4294967295" step="1" required value={Number.isNaN(terms.stock) ? "" : terms.stock} onChange={e => update("stock", e.target.valueAsNumber)} /></label>
+        <label>Starts at<input required type="datetime-local" value={terms.starts_at} onChange={e => update("starts_at", e.target.value)} /></label>
+        <label>Ends at<input required type="datetime-local" value={terms.ends_at} onChange={e => update("ends_at", e.target.value)} /></label>
+      </fieldset>
+      <div className="catalog-list sale-actions"><button disabled={busy || !!operation}>{draft ? "Save draft changes" : "Create draft"}</button>
+        {draft && <button className="secondary" type="button" disabled={busy || (dirty && !operation)} onClick={() => void publish()}>{operation ? "Retry publication" : "Publish sale"}</button>}</div>
     </form>}
     {draft && !state && <p role="status">Draft saved · {draft.sale_id}</p>}
     {error !== undefined && <p role="alert" className="error">{message(error)}</p>}
     {state && <div aria-live="polite"><p><span className={`pill ${state.state === "PUBLISHED" ? "live" : ""}`}>{state.state}</span> <span className="identifier">Operation {state.operation_id}</span></p>
       <Feedback query={progress} /><Feedback query={published} />
       {published.data && <><h3>Published terms</h3><SaleTerms sale={published.data} />
-        <button className="secondary" onClick={() => { setDraft(undefined); setPublication(undefined); operation.current = undefined; }}>Create another draft</button></>}
+        <button className="secondary" onClick={() => { setDraft(undefined); setPublication(undefined); setOperation(undefined); }}>Create another draft</button></>}
     </div>}
   </section>;
 }
