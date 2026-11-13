@@ -74,10 +74,12 @@ func (c Catalog) Handler(token string, fallback http.Handler) http.Handler {
 	mux.HandleFunc("GET /api/products/{product_id}", c.get(productKind, "product_id"))
 	mux.HandleFunc("GET /api/sales", c.list(saleKind))
 	mux.HandleFunc("GET /api/sales/{sale_id}", c.get(saleKind, "sale_id"))
+	mux.HandleFunc("GET /api/admin/products/{product_id}", admin(token, c.editView))
 	mux.HandleFunc("PUT /api/admin/products/{product_id}", admin(token, c.write(false)))
 	mux.HandleFunc("POST /api/admin/products/{product_id}/resolve", admin(token, c.write(true)))
 	mux.HandleFunc("GET /api/admin/replicas", admin(token, c.inspect))
 	mux.HandleFunc("GET /api/admin/replicas/products/{product_id}", admin(token, c.inspectVersions))
+	mux.HandleFunc("GET /api/admin/replicas/products/{product_id}/owners", admin(token, c.inspectOwners))
 	return serveAPI(mux, fallback)
 }
 
@@ -100,6 +102,20 @@ func (c Catalog) get(kind pb.DocumentKind, param string) http.HandlerFunc {
 		}
 		c.writeView(w, r, kind, versions)
 	}
+}
+
+// editView returns stored image references so editing a product does not persist a signed URL.
+func (c Catalog) editView(w http.ResponseWriter, r *http.Request) {
+	versions, err := readDocument(r.Context(), c.Replicas, productKind, r.PathValue("product_id"), r.Header.Get("X-Correlation-ID"))
+	if err != nil {
+		serviceError(w, r, err)
+		return
+	}
+	if len(versions.Siblings) != 1 {
+		c.writeView(w, r, productKind, versions)
+		return
+	}
+	send(w, 200, map[string]any{"product": json.RawMessage(versions.Siblings[0].DocumentJson), "context": contextJSON(versions.Context)})
 }
 
 func (c Catalog) writeView(w http.ResponseWriter, r *http.Request, kind pb.DocumentKind, versions *pb.DocumentVersions) {
@@ -292,4 +308,13 @@ func (c Catalog) inspectVersions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	send(w, 200, siblings)
+}
+
+func (c Catalog) inspectOwners(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("product_id")
+	if !validID(id) {
+		writeError(w, r, 400, "INVALID_ARGUMENT", "invalid product ID")
+		return
+	}
+	send(w, 200, replica.PreferredOwners(&pb.DocumentKey{Kind: productKind, Id: id}))
 }

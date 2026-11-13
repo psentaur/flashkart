@@ -154,7 +154,7 @@ func (a *Analytics) Handler(fallback http.Handler) http.Handler {
 	return serveAPI(mux, fallback)
 }
 
-func (a *Analytics) Run(ctx context.Context, brokers []string, auth, region, group string, log *slog.Logger) error {
+func (a *Analytics) Run(ctx context.Context, brokers []string, auth, region, group, eventsTopic, resultsTopic string, log *slog.Logger) error {
 	producer, err := newKafkaClient(brokers, auth, region, kgo.RecordPartitioner(kgo.ManualPartitioner()))
 	if err != nil {
 		return err
@@ -166,7 +166,7 @@ func (a *Analytics) Run(ctx context.Context, brokers []string, auth, region, gro
 		defer close(done)
 		for heartbeatCtx.Err() == nil {
 			work, cancel := context.WithTimeout(heartbeatCtx, 4*time.Second)
-			err := publishHeartbeats(work, producer)
+			err := publishHeartbeats(work, producer, eventsTopic)
 			cancel()
 			if err != nil && heartbeatCtx.Err() == nil {
 				log.Warn("analytics heartbeat failed", "error", err)
@@ -178,7 +178,7 @@ func (a *Analytics) Run(ctx context.Context, brokers []string, auth, region, gro
 
 	for ctx.Err() == nil {
 		consumer, err := newKafkaClient(brokers, auth, region, kgo.ConsumerGroup(group),
-			kgo.ConsumeTopics("analytics-results"), kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()),
+			kgo.ConsumeTopics(resultsTopic), kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()),
 			kgo.FetchIsolationLevel(kgo.ReadCommitted()),
 			kgo.DisableAutoCommit(), kgo.BlockRebalanceOnPoll())
 		if err != nil {
@@ -221,8 +221,7 @@ func (a *Analytics) consume(ctx context.Context, consumer *kgo.Client) error {
 	return nil
 }
 
-func publishHeartbeats(ctx context.Context, producer *kgo.Client) error {
-	const topic = "purchase-events"
+func publishHeartbeats(ctx context.Context, producer *kgo.Client, topic string) error {
 	request := kmsg.NewPtrMetadataRequest()
 	request.AllowAutoTopicCreation = false
 	request.Topics = []kmsg.MetadataRequestTopic{{Topic: aws.String(topic)}}

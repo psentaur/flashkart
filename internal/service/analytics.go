@@ -19,11 +19,19 @@ func runAnalytics(ctx context.Context, cfg config, log *slog.Logger) error {
 	if group == "" {
 		group = "flashkart-analytics-projection-v1"
 	}
+	topic := os.Getenv("FLASHKART_ANALYTICS_RESULTS_TOPIC")
+	if topic == "" {
+		topic = "analytics-results"
+	}
+	eventsTopic := os.Getenv("FLASHKART_PURCHASE_EVENTS_TOPIC")
+	if eventsTopic == "" {
+		eventsTopic = "purchase-events"
+	}
 	work, stop := context.WithCancel(ctx)
 	defer stop()
 	done := make(chan error, 1)
 	go func() {
-		done <- projection.Run(work, cfg.Kafka.Brokers, cfg.Kafka.Auth, cfg.AWS.Region, group, log)
+		done <- projection.Run(work, cfg.Kafka.Brokers, cfg.Kafka.Auth, cfg.AWS.Region, group, eventsTopic, topic, log)
 		stop()
 	}()
 	err = serve(work, "analytics-api", cfg, log, nil, nil, serviceApp{wrap: func(fallback http.Handler) http.Handler {

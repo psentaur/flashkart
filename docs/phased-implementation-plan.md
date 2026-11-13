@@ -2,7 +2,7 @@
 
 This roadmap turns the [technical architecture](implementation-plan.md) into executable implementation phases. That document remains the source of truth for system behavior; this document defines build order, dependencies, deliverables, and completion checks.
 
-**Current status:** Phases 1–9 are implemented. Phase 9 passed local Kafka and Flink checkpoint recovery, deterministic window, and DynamoDB projection checks. Phases 10–12 are unstarted. [Phase 9 development](phase-9-development.md)
+**Current status:** Phases 1–10 are implemented. Phase 10 passed the local Chromium suite against the marketplace and analytics services. Phases 11–12 are unstarted. [Phase 10 development](phase-10-development.md)
 
 Develop and verify locally through Phase 11. Phase 12 covers AWS integration and reproducible deployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
 
@@ -233,7 +233,7 @@ The default execution order is sequential. Keep intermediate states explicit: fo
 - A repeated click or network retry does not create another purchase intent accidentally.
 - Admin actions are protected; demo customer queries respect their identity boundary; conflict resolution and analytics display real persisted data.
 
-**Evidence:** browser end-to-end tests and a complete local demo. Proposed command: `make test-e2e`.
+**Evidence:** `make test-e2e` runs the Chromium suite against the local marketplace. The Phase 10 guide describes the success and decline fixtures and the optional live analytics assertion.
 
 ## Phase 11: Local Kubernetes, GitOps, observability, and HPA
 

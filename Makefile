@@ -110,3 +110,10 @@ test-analytics: build-analytics
 
 test-analytics-projection:
 	$(GO) test -buildvcs=false -count=1 -v -run 'TestAnalytics(Result|Projection)$$' ./internal/market
+
+.PHONY: run-web test-e2e
+run-web:
+	npm --prefix web run dev
+
+test-e2e:
+	cd web && npm exec -- playwright test
