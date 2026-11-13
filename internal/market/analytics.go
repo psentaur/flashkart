@@ -179,6 +179,7 @@ func (a *Analytics) Run(ctx context.Context, brokers []string, auth, region, gro
 	for ctx.Err() == nil {
 		consumer, err := newKafkaClient(brokers, auth, region, kgo.ConsumerGroup(group),
 			kgo.ConsumeTopics("analytics-results"), kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()),
+			kgo.FetchIsolationLevel(kgo.ReadCommitted()),
 			kgo.DisableAutoCommit(), kgo.BlockRebalanceOnPoll())
 		if err != nil {
 			return err

@@ -7,10 +7,16 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.AggregateFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
+import org.apache.flink.api.common.state.AggregatingStateDescriptor;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.common.time.Time;
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.api.common.typeutils.base.StringSerializer;
+import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
@@ -29,13 +35,20 @@ import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindo
 import org.apache.flink.streaming.api.windowing.triggers.Trigger;
 import org.apache.flink.streaming.api.windowing.triggers.TriggerResult;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.streaming.runtime.operators.windowing.WindowOperator;
+import org.apache.flink.streaming.runtime.operators.windowing.functions.InternalSingleValueProcessWindowFunction;
+import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 import org.apache.flink.util.Collector;
 import org.apache.flink.util.OutputTag;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 public final class SalesAnalytics {
     static final long LATENESS_MS = 30_000;
+    private static final Duration WINDOW_SIZE = Duration.ofMinutes(1);
+    private static final ValueStateDescriptor<Long> FINALIZED_THROUGH =
+        new ValueStateDescriptor<>("finalized-through", Types.LONG);
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final OutputTag<Event> LATE = new OutputTag<Event>("late-purchase-events") {};
 
@@ -44,6 +57,7 @@ public final class SalesAnalytics {
     public static void main(String[] args) throws Exception {
         ParameterTool options = ParameterTool.fromArgs(args);
         String brokers = options.getRequired("brokers");
+        String transactionalIdPrefix = options.getRequired("transactional-id-prefix");
         String resultsTopic = options.get("results-topic", "analytics-results");
         Properties kafka = new Properties();
         if (options.has("kafka-properties")) {
@@ -71,10 +85,14 @@ public final class SalesAnalytics {
             .withIdleness(Duration.ofSeconds(30)), "purchase-events").uid("purchase-events");
         var results = windows(input);
         results.getSideOutput(LATE).addSink(new LateEvents()).name("count dropped late events").uid("late-count");
+        Properties producer = new Properties();
+        producer.putAll(kafka);
+        producer.putIfAbsent(ProducerConfig.TRANSACTION_TIMEOUT_CONFIG, "600000");
         results.sinkTo(KafkaSink.<Snapshot>builder()
             .setBootstrapServers(brokers)
-            .setKafkaProducerConfig(kafka)
-            .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+            .setKafkaProducerConfig(producer)
+            .setDeliveryGuarantee(DeliveryGuarantee.EXACTLY_ONCE)
+            .setTransactionalIdPrefix(transactionalIdPrefix)
             .setRecordSerializer((KafkaRecordSerializationSchema<Snapshot>) (snapshot, context, timestamp) ->
                 new ProducerRecord<>(resultsTopic, snapshot.sale.getBytes(StandardCharsets.UTF_8),
                     snapshot.body.getBytes(StandardCharsets.UTF_8)))
@@ -83,13 +101,33 @@ public final class SalesAnalytics {
     }
 
     static SingleOutputStreamOperator<Snapshot> windows(DataStream<Event> input) {
+        KeySelector<Event, String> saleKey = event -> event.sale;
+        ExecutionConfig config = input.getExecutionEnvironment().getConfig();
         return input.filter(event -> !event.type.equals("analytics.heartbeat"))
-            .keyBy(event -> event.sale)
-            .window(TumblingEventTimeWindows.of(Duration.ofMinutes(1)))
-            .allowedLateness(org.apache.flink.streaming.api.windowing.time.Time.milliseconds(LATENESS_MS))
-            .trigger(new FinalTrigger())
-            .sideOutputLateData(LATE)
-            .aggregate(new Aggregate(), new Finalize()).name("finalized sale windows").uid("sale-windows");
+            .keyBy(saleKey)
+            .transform("finalized sale windows", Types.POJO(Snapshot.class), new SaleWindows(saleKey, config))
+            .uid("sale-windows");
+    }
+
+    static final class SaleWindows extends WindowOperator<String, Event, Totals, Snapshot, TimeWindow> {
+        SaleWindows(KeySelector<Event, String> saleKey, ExecutionConfig config) {
+            super(TumblingEventTimeWindows.of(WINDOW_SIZE), new TimeWindow.Serializer(), saleKey,
+                StringSerializer.INSTANCE,
+                new AggregatingStateDescriptor<>("window-contents", new Aggregate(),
+                    Types.POJO(Totals.class).createSerializer(config.getSerializerConfig())),
+                new InternalSingleValueProcessWindowFunction<>(new Finalize()),
+                new FinalTrigger(), LATENESS_MS, LATE);
+        }
+
+        @Override
+        public void processElement(StreamRecord<Event> record) throws Exception {
+            Long finalizedThrough = getPartitionedState(FINALIZED_THROUGH).value();
+            if (finalizedThrough != null && record.getTimestamp() < finalizedThrough) {
+                output.collect(LATE, record);
+                return;
+            }
+            super.processElement(record);
+        }
     }
 
     public static class Event {
@@ -217,7 +255,10 @@ public final class SalesAnalytics {
     static final class Finalize extends ProcessWindowFunction<Totals, Snapshot, String, TimeWindow> {
         @Override
         public void process(String sale, Context ctx, Iterable<Totals> input, Collector<Snapshot> out) throws Exception {
-            out.collect(snapshot(sale, ctx.window().getStart(), ctx.window().getEnd(), input.iterator().next()));
+            long end = ctx.window().getEnd();
+            // Keyed global state survives cleanup of the window and its timers.
+            ctx.globalState().getState(FINALIZED_THROUGH).update(end);
+            out.collect(snapshot(sale, ctx.window().getStart(), end, input.iterator().next()));
         }
     }
 

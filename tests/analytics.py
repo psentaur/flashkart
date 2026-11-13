@@ -5,7 +5,7 @@ import json
 import shlex
 import subprocess
 import time
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 from uuid import uuid4
 
 from jsonschema import Draft202012Validator
@@ -31,8 +31,11 @@ def kafka(tool, *args, data=None, timeout=45):
                *args, data=data, timeout=timeout)
 
 
-def api(path):
-    with urlopen(f"http://127.0.0.1:8081/{path}", timeout=4) as response:
+def api(path, payload=None):
+    data = json.dumps(payload).encode() if payload is not None else None
+    request = Request(f"http://127.0.0.1:8081/{path}", data=data,
+                      headers={"Content-Type": "application/json"})
+    with urlopen(request, timeout=4) as response:
         return json.load(response)
 
 
@@ -54,12 +57,54 @@ def start(checkpoint=None):
     output = run("flink-jobmanager", "/opt/flink/bin/flink", "run", "-d", "-p", "1",
                  *restore, f"/tmp/{events}.jar", "--brokers", "kafka:29092",
                  "--checkpoints", f"file:///opt/flink/checkpoints/{events}",
-                 "--checkpoint-ms", "1000", "--group", events,
-                 "--events-topic", events, "--results-topic", results)
+                 "--checkpoint-ms", "300000", "--group", events,
+                 "--events-topic", events, "--results-topic", results,
+                 "--transactional-id-prefix", results)
     job = output.strip().splitlines()[-1].split()[-1]
     jobs.append(job)
     wait_for(lambda: api(f"jobs/{job}")["state"] == "RUNNING", "Flink job startup")
     return job
+
+
+def checkpoint_and_wait(job):
+    path = f"jobs/{job}/checkpoints"
+    trigger = api(path, {})["request-id"]
+
+    def completed():
+        result = api(f"{path}/{trigger}")
+        if result["status"]["id"] == "COMPLETED":
+            assert not result["operation"].get("failure-cause"), result
+            return True
+
+    wait_for(completed, "checkpoint completion")
+
+
+def cancel(job):
+    run("flink-jobmanager", "/opt/flink/bin/flink", "cancel", job)
+    wait_for(lambda: api(f"jobs/{job}")["state"] == "CANCELED", "canceled job")
+
+
+def retained_checkpoint(job):
+    checkpoint_dir = f"/opt/flink/checkpoints/{events}/{job}"
+
+    def find_checkpoint():
+        paths = run("flink-jobmanager", "find", checkpoint_dir, "-name", "_metadata").splitlines()
+        if len(paths) == 1:
+            return "file://" + paths[0].rsplit("/", 1)[0]
+
+    return wait_for(find_checkpoint, "retained checkpoint")
+
+
+def consume(count, isolation, timeout_ms="25000"):
+    output = kafka("console-consumer", "--topic", results, "--partition", "0", "--from-beginning",
+                   "--max-messages", str(count),
+                   "--timeout-ms", timeout_ms, "--consumer-property", f"isolation.level={isolation}")
+    return [json.loads(line) for line in output.splitlines()]
+
+
+def late_count(job):
+    vertex = next(v for v in api(f"jobs/{job}")["vertices"] if "count dropped late events" in v["name"])
+    return metric(job, vertex, ".lateEventsDropped")
 
 
 def produce(*records):
@@ -118,31 +163,34 @@ try:
             event("attempt.accepted", "boundary", 60),
             event("analytics.heartbeat", "heartbeat-before-restore", 70))
     wait_for(lambda: source_progress(first) >= (base + 59) * 1000, "initial Kafka watermark")
-    initial = api(f"jobs/{first}/checkpoints")["latest"].get("completed")
-    last_id = initial["id"] if initial else -1
-
-    def new_checkpoint():
-        checkpoint = api(f"jobs/{first}/checkpoints")["latest"].get("completed")
-        if checkpoint and checkpoint["id"] > last_id:
-            return checkpoint["external_path"]
-
-    wait_for(new_checkpoint, "checkpoint with open windows")
-    run("flink-jobmanager", "/opt/flink/bin/flink", "cancel", first)
-    wait_for(lambda: api(f"jobs/{first}")["state"] == "CANCELED", "canceled job")
-    checkpoint_dir = f"/opt/flink/checkpoints/{events}/{first}"
-    metadata = run("flink-jobmanager", "find", checkpoint_dir, "-name", "_metadata").splitlines()
-    assert len(metadata) == 1, metadata
-    checkpoint = "file://" + metadata[0].rsplit("/", 1)[0]
-    restored = start(checkpoint)
+    checkpoint_and_wait(first)
+    cancel(first)
+    restored = start(retained_checkpoint(first))
     produce(event("analytics.heartbeat", "open-late-period", 80))
     wait_for(lambda: source_progress(restored) >= (base + 69) * 1000, "watermark inside allowed lateness")
     produce(accepted, event("order.confirmed", "allowed-late", 59, latency_ms=40),
             event("analytics.heartbeat", "finish-first-window", 104))
     wait_for(lambda: source_progress(restored) >= (base + 93) * 1000, "watermark past first deadline")
-    produce(event("attempt.accepted", "too-late", 7), event("analytics.heartbeat", "finish-second-window", 164))
-    output = kafka("console-consumer", "--topic", results, "--from-beginning", "--max-messages", "2",
-                   "--timeout-ms", "25000", timeout=35)
-    records = [json.loads(line) for line in output.splitlines()]
+    checkpoint_and_wait(restored)
+    assert len(consume(1, "read_committed")) == 1
+    cancel(restored)
+    finalized = retained_checkpoint(restored)
+    restored = start(finalized)
+    produce(event("attempt.accepted", "too-late-after-restore", 7))
+    wait_for(lambda: late_count(restored) == 1, "restored finalized-window cutoff")
+    finish_second = event("analytics.heartbeat", "finish-second-window", 164)
+    produce(finish_second)
+    assert len(consume(2, "read_uncommitted")) == 2
+    committed = consume(2, "read_committed", "3000")
+    assert len(committed) == 1, committed
+
+    # Cancel before checkpointing the second result, then replay its input.
+    cancel(restored)
+    recovered = start(finalized)
+    wait_for(lambda: source_progress(recovered) >= (base + 153) * 1000, "second window watermark")
+    checkpoint_and_wait(recovered)
+    records = consume(3, "read_committed", "5000")
+    assert len(records) == 2, records
     with open("contracts/events/analytics-result.v1.schema.json") as contract:
         schema = Draft202012Validator(json.load(contract), format_checker=Draft202012Validator.FORMAT_CHECKER)
     for record in records:
@@ -155,11 +203,7 @@ try:
     assert second_result == dict(starts_at=instant(base + 60), ends_at=instant(base + 120),
                                  demand=1, admission_rejections=0, stock_rejections=0, reservations=0,
                                  confirmed_purchases=0, average_latency_ms=None), second_result
-    def counted_late():
-        vertex = next(v for v in api(f"jobs/{restored}")["vertices"] if "count dropped late events" in v["name"])
-        return metric(restored, vertex, ".lateEventsDropped") == 1
-    wait_for(counted_late, "late-event counter")
-    print("Flink checkpoint recovery, deduplication, late events and both final windows verified.")
+    print("Flink checkpoint recovery, window totals and transactional Kafka visibility verified.")
 except subprocess.CalledProcessError as error:
     raise RuntimeError(f"{error.cmd}\n{error.stdout}\n{error.stderr}") from error
 finally:

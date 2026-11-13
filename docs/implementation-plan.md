@@ -135,7 +135,7 @@ Use a versioned JSON event envelope with `event_id`, `event_type`, `occurred_at`
 - Allow ten seconds of out-of-order arrival and thirty seconds of lateness; count events dropped beyond the lateness boundary.
 - Produce final window snapshots of demand, admission rejections, stock rejections, reservations, confirmed purchases, and processing latency.
 - The analytics companion emits partition heartbeats so idle traffic does not indefinitely prevent window completion. Heartbeats do not contribute to business aggregates.
-- Enable checkpoints and an at-least-once Kafka sink to `analytics-results`.
+- Commit Kafka transactions to `analytics-results` with Flink checkpoints and consume committed results in the projector.
 - Project complete results into DynamoDB using conditional upserts keyed by sale/window; duplicate results do not increment totals.
 - Notification Lambda conditionally writes terminal outcomes keyed by customer/attempt. Duplicate or delayed messages cannot regress a terminal outcome.
 
