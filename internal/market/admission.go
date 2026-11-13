@@ -8,7 +8,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -44,6 +43,7 @@ func purchaseEvent(p PurchaseWork, name, reservation string, payload map[string]
 
 type Admission struct {
 	DB                  *pgxpool.Pool
+	Notifications       *Notifications
 	Log                 *slog.Logger
 	slots               chan struct{}
 	mu                  sync.Mutex
@@ -75,10 +75,7 @@ var errThrottled = errors.New("admission is throttled")
 func (a *Admission) Handler(token, customerID string, fallback http.Handler) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/attempts", func(w http.ResponseWriter, r *http.Request) {
-		provided := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-		if provided == r.Header.Get("Authorization") || !matchesToken(token, provided) {
-			w.Header().Set("WWW-Authenticate", "Bearer")
-			writeError(w, r, 401, "UNAUTHENTICATED", "customer bearer token required")
+		if !customerAuthorized(w, r, token) {
 			return
 		}
 		var input struct {
@@ -112,6 +109,37 @@ func (a *Admission) Handler(token, customerID string, fallback http.Handler) htt
 		default:
 			send(w, 202, map[string]string{"attempt_id": work.AttemptID, "sale_id": work.SaleID, "state": "QUEUED"})
 		}
+	})
+	mux.HandleFunc("GET /api/attempts/{attempt_id}", func(w http.ResponseWriter, r *http.Request) {
+		if !customerAuthorized(w, r, token) {
+			return
+		}
+		id := r.PathValue("attempt_id")
+		if !validID(id) {
+			writeError(w, r, 400, "INVALID_ARGUMENT", "invalid attempt ID")
+			return
+		}
+		result := AttemptView{ID: id, State: "QUEUED"}
+		err := a.DB.QueryRow(r.Context(), "SELECT sale_id FROM admission.attempts WHERE attempt_id=$1 AND customer_id=$2", id, customerID).Scan(&result.Sale)
+		if errors.Is(err, pgx.ErrNoRows) {
+			writeError(w, r, 404, "NOT_FOUND", "attempt not found")
+			return
+		}
+		if err != nil {
+			writeError(w, r, 503, "UNAVAILABLE", "attempt lookup unavailable")
+			return
+		}
+		if a.Notifications != nil {
+			outcome, err := a.Notifications.Get(r.Context(), customerID, id)
+			if err != nil {
+				writeError(w, r, 503, "UNAVAILABLE", "attempt outcome unavailable")
+				return
+			}
+			if outcome != nil && outcome.Attempt.Sale == result.Sale {
+				result = outcome.Attempt
+			}
+		}
+		send(w, 200, result)
 	})
 	return serveAPI(mux, fallback)
 }
@@ -160,7 +188,7 @@ func (a *Admission) accept(ctx context.Context, work PurchaseWork) error {
 				return err
 			}
 		}
-		_, err = tx.Exec(ctx, "INSERT INTO admission.events VALUES ($1,$2::jsonb) ON CONFLICT DO NOTHING", event["event_id"], event)
+		_, err = tx.Exec(ctx, "INSERT INTO admission.events(event_id,body) VALUES ($1,$2::jsonb) ON CONFLICT DO NOTHING", event["event_id"], event)
 		return err
 	})
 	if err == nil && throttled {

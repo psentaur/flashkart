@@ -1,4 +1,4 @@
-"""Start the replica agents and optionally the Phase 5 services."""
+"""Start the replica agents and optionally the marketplace services."""
 import json
 import os
 from pathlib import Path
@@ -27,6 +27,8 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
             "FLASHKART_S3_CREDENTIALS_FILE", "FLASHKART_PRODUCT_IMAGES_BUCKET",
         }
         queue_vars = ("FLASHKART_PURCHASE_QUEUE_URL", "FLASHKART_SQS_CREDENTIALS_FILE", "FLASHKART_SQS_CA_FILE")
+        event_vars = ("FLASHKART_OUTCOME_QUEUE_URL", "FLASHKART_NOTIFICATION_TABLE", "FLASHKART_DYNAMODB_CREDENTIALS_FILE", "FLASHKART_DYNAMODB_CA_FILE")
+        excluded.update(event_vars)
         customer_vars = ("FLASHKART_CUSTOMER_TOKEN", "FLASHKART_CUSTOMER_ID")
         excluded.update((*queue_vars, *customer_vars, "FLASHKART_ADMISSION_DSN", "FLASHKART_ORDERS_DSN", "FLASHKART_PAYMENT_DSN"))
         common = {key: value for key, value in os.environ.items() if key not in excluded}
@@ -61,10 +63,12 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
                     ("order-service", 8205, "127.0.0.1:7102", "FLASHKART_ORDERS_DSN"),
                     ("payment-service", 8206, "127.0.0.1:7103", "FLASHKART_PAYMENT_DSN"),
                 )
+            if os.environ.get("FLASHKART_OUTCOME_QUEUE_URL") and os.environ.get("FLASHKART_NOTIFICATION_TABLE"):
+                services += (("notification", 8207, "", None),)
             for name, port, grpc, dsn in services:
                 settings = dict(config, http_address=f"127.0.0.1:{port}", grpc_address=grpc)
                 variables = {"FLASHKART_ADMIN_TOKEN": token} if name != "inventory-reservation" else {}
-                if name in ("admission-controller", "order-service"):
+                if name in ("admission-controller", "order-service", "notification"):
                     variables.update({key: os.environ[key] for key in customer_vars})
                 if name in ("admission-controller", "inventory-reservation") and os.environ.get(queue_vars[0]):
                     variables.update({key: os.environ[key] for key in queue_vars})
@@ -75,6 +79,14 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
                     variables["FLASHKART_PRODUCT_IMAGES_BUCKET"] = os.environ["FLASHKART_PRODUCT_IMAGES_BUCKET"]
                     variables["FLASHKART_S3_CREDENTIALS_FILE"] = os.environ["FLASHKART_S3_CREDENTIALS_FILE"]
                     settings["aws"] = {"region": "us-east-1", "endpoints": {"s3": os.environ["FLASHKART_S3_ENDPOINT"]}}
+                if name in ("inventory-reservation", "order-service", "notification") and os.environ.get(event_vars[0]):
+                    variables[event_vars[0]] = os.environ[event_vars[0]]
+                    variables.update({key: os.environ[key] for key in queue_vars[1:]})
+                    settings["aws"] = {"region": "us-east-1", "endpoints": {"sqs": os.environ["FLASHKART_SQS_ENDPOINT"]}}
+                if name in ("admission-controller", "notification") and os.environ.get(event_vars[1]):
+                    variables.update({key: os.environ[key] for key in event_vars[1:]})
+                    aws = settings.get("aws", {"region": "us-east-1", "endpoints": {}})
+                    settings["aws"] = {"region": "us-east-1", "endpoints": aws["endpoints"] | {"dynamodb": os.environ["FLASHKART_DYNAMODB_ENDPOINT"]}}
                 start(name, binary.with_name(name), settings, variables)
 
         while not stopping:

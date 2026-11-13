@@ -22,6 +22,9 @@ env["FLASHKART_ADMIN_TOKEN"] = "smoke-only-token"
 env["FLASHKART_TRANSACTIONAL_DSN"] = env["FLASHKART_REPLICA_A_DSN"]
 env.pop("FLASHKART_PRODUCT_IMAGES_BUCKET", None)
 env.pop("FLASHKART_PURCHASE_QUEUE_URL", None)
+env.pop("FLASHKART_OUTCOME_QUEUE_URL", None)
+env.pop("FLASHKART_NOTIFICATION_TABLE", None)
+env.pop("FLASHKART_PUBLISH_EVENTS", None)
 env["FLASHKART_CUSTOMER_TOKEN"] = "smoke-customer-token"
 env["FLASHKART_CUSTOMER_ID"] = "smoke-customer"
 services = (

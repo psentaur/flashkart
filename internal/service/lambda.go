@@ -1,17 +1,20 @@
 package service
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"flashkart/internal/market"
 )
 
-func runLambda(ctx context.Context, address string, log *slog.Logger) error {
+func runLambda(ctx context.Context, address string, handle func(context.Context, []byte) (market.BatchResponse, error)) error {
 	if !validRuntimeAddress(address) {
 		return fmt.Errorf("invalid Lambda Runtime API address")
 	}
@@ -32,7 +35,7 @@ func runLambda(ctx context.Context, address string, log *slog.Logger) error {
 		}
 		id := resp.Header.Get("Lambda-Runtime-Aws-Request-Id")
 		invocationID := resp.Header.Get("Lambda-Runtime-Invocation-Id")
-		_, drainErr := io.Copy(io.Discard, resp.Body)
+		body, drainErr := io.ReadAll(io.LimitReader(resp.Body, 7<<20))
 		resp.Body.Close()
 		if drainErr != nil {
 			return drainErr
@@ -40,8 +43,20 @@ func runLambda(ctx context.Context, address string, log *slog.Logger) error {
 		if resp.StatusCode != http.StatusOK || id == "" {
 			return fmt.Errorf("Lambda invocation polling returned HTTP %d or omitted request ID", resp.StatusCode)
 		}
-		req, err = http.NewRequestWithContext(ctx, http.MethodPost, base+url.PathEscape(id)+"/error",
-			strings.NewReader(`{"errorType":"NOT_IMPLEMENTED","errorMessage":"Notification handler is pending"}`))
+		work, cancel := context.WithTimeout(ctx, 20*time.Second)
+		response, handleErr := handle(work, body)
+		cancel()
+		path := "response"
+		var resultBody any = response
+		if handleErr != nil {
+			path = "error"
+			resultBody = map[string]string{"errorType": "Function.InvalidEvent", "errorMessage": "Invalid SQS invocation"}
+		}
+		encoded, err := json.Marshal(resultBody)
+		if err != nil {
+			return err
+		}
+		req, err = http.NewRequestWithContext(ctx, http.MethodPost, base+url.PathEscape(id)+"/"+path, bytes.NewReader(encoded))
 		if err != nil {
 			return err
 		}
@@ -55,9 +70,8 @@ func runLambda(ctx context.Context, address string, log *slog.Logger) error {
 		}
 		result.Body.Close()
 		if result.StatusCode != http.StatusAccepted {
-			return fmt.Errorf("Lambda invocation error reporting returned HTTP %d", result.StatusCode)
+			return fmt.Errorf("Lambda invocation response returned HTTP %d", result.StatusCode)
 		}
-		log.Info("invocation marked failed", "request_id", id)
 	}
 	return nil
 }

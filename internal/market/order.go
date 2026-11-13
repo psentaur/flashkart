@@ -193,11 +193,11 @@ func (o Orders) finish(ctx context.Context, id string, created time.Time, req *p
 		}
 		event := purchaseEvent(work, name, r.ReservationId, payload)
 		event["order_id"] = id
-		if _, err := tx.Exec(ctx, "INSERT INTO orders.events VALUES ($1,$2::jsonb)", event["event_id"], event); err != nil {
+		if _, err := tx.Exec(ctx, "INSERT INTO orders.events(event_id,body) VALUES ($1,$2::jsonb)", event["event_id"], event); err != nil {
 			return err
 		}
 		outcome := terminalEvent(work, state, reason, id)
-		_, err = tx.Exec(ctx, "INSERT INTO orders.outcomes VALUES ($1,$2::jsonb)", outcome["event_id"], outcome)
+		_, err = tx.Exec(ctx, "INSERT INTO orders.outcomes(event_id,body) VALUES ($1,$2::jsonb)", outcome["event_id"], outcome)
 		return err
 	})
 }

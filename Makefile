@@ -97,3 +97,7 @@ test-reservations:
 .PHONY: test-workflows
 test-workflows:
 	. deploy/local/postgres.env && FLASHKART_TEST_CHECKOUT=1 $(GO) test -buildvcs=false -count=1 -v -run 'Test(CheckoutWorkflow|ReservationExpiryRace)$$' ./internal/market
+
+.PHONY: test-events-notifications
+test-events-notifications:
+	. deploy/local/postgres.env && FLASHKART_TEST_EVENTS=1 $(GO) test -buildvcs=false -count=1 -v -run 'Test(BatchFailures|EventDelivery|NotificationAndKafka)$$' ./internal/market

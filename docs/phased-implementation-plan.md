@@ -2,7 +2,7 @@
 
 This roadmap turns the [technical architecture](implementation-plan.md) into executable implementation phases. That document remains the source of truth for system behavior; this document defines build order, dependencies, deliverables, and completion checks.
 
-**Current status:** Phases 1–6 passed their implementation checks. Phase 7 passed local PostgreSQL and gRPC checkout tests for successful, declined, delayed, and lost-reply payments, as well as confirmation and expiry races. Phases 8–12 are unstarted. [Phase 7 development](phase-7-development.md)
+**Current status:** Phases 1–8 are implemented. Phase 8 passed local PostgreSQL, Kafka, SQS, and DynamoDB integration checks. Phases 9–12 are unstarted. [Phase 8 development](phase-8-development.md)
 
 Develop and verify locally through Phase 11. Phase 12 covers AWS integration and reproducible deployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
 
@@ -192,7 +192,7 @@ The default execution order is sequential. Keep intermediate states explicit: fo
 - Kafka/SQS interruption, publish-before-ack crashes, and consumer restarts preserve delivery; replay retains original event IDs.
 - Captured Kafka records match the event schemas and recorded transaction outcomes.
 
-**Evidence:** notification and event-delivery integration tests. Proposed command: `make test-events-notifications`.
+**Evidence:** `make test-events-notifications` covers local outbox replay, Kafka publication, SQS delivery, conditional DynamoDB writes, and customer API queries. See the Phase 8 guide for transport fixtures.
 
 ## Phase 9: Stateful Flink analytics and result projection
 
