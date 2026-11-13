@@ -196,6 +196,64 @@
           "minLength": 1
         },
         "event_type": {
+          "const": "reservation.committed"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "trace_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sale_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attempt_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "customer_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reservation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "payload": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false,
+          "required": []
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "event_id",
+        "event_type",
+        "occurred_at",
+        "trace_id",
+        "sale_id",
+        "attempt_id",
+        "customer_id",
+        "reservation_id",
+        "payload"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "event_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "event_type": {
           "const": "reservation.released"
         },
         "occurred_at": {

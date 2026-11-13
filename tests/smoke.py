@@ -21,6 +21,9 @@ env["FLASHKART_REPLICA_A_DSN"] = (
 env["FLASHKART_ADMIN_TOKEN"] = "smoke-only-token"
 env["FLASHKART_TRANSACTIONAL_DSN"] = env["FLASHKART_REPLICA_A_DSN"]
 env.pop("FLASHKART_PRODUCT_IMAGES_BUCKET", None)
+env.pop("FLASHKART_PURCHASE_QUEUE_URL", None)
+env["FLASHKART_CUSTOMER_TOKEN"] = "smoke-customer-token"
+env["FLASHKART_CUSTOMER_ID"] = "smoke-customer"
 services = (
     "admission-controller", "analytics-api", "catalog-replica",
     "flash-sale-manager", "inventory-reservation", "notification",
@@ -51,7 +54,7 @@ def check_service(name, path):
                     base = "http://" + record["address"]
                     break
             for endpoint in ("healthz", "readyz", "metrics"):
-                if name in ("catalog-replica", "flash-sale-manager", "inventory-reservation") and endpoint == "readyz":
+                if name in ("catalog-replica", "flash-sale-manager", "inventory-reservation", "admission-controller") and endpoint == "readyz":
                     try:
                         urlopen(f"{base}/{endpoint}", timeout=3).close()
                     except HTTPError as error:

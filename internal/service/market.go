@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	pb "flashkart/gen/flashkart/v1"
@@ -25,7 +27,7 @@ type serviceApp struct {
 func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) error {
 	app := serviceApp{}
 	token := os.Getenv("FLASHKART_ADMIN_TOKEN")
-	if name != "inventory-reservation" && token == "" {
+	if (name == "product-catalog" || name == "flash-sale-manager") && token == "" {
 		return errors.New("FLASHKART_ADMIN_TOKEN is required")
 	}
 	var db *pgxpool.Pool
@@ -46,19 +48,66 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 		defer db.Close()
 		table := "flash_sale.drafts"
 		if name == "inventory-reservation" {
-			table = "inventory.sales"
+			table = "inventory.reservations"
+		}
+		if name == "admission-controller" {
+			table = "admission.attempts"
 		}
 		app.ready = func(ctx context.Context) bool {
 			var ready bool
 			return db.QueryRow(ctx, "SELECT to_regclass($1) IS NOT NULL", table).Scan(&ready) == nil && ready
 		}
 	}
-	if name == "inventory-reservation" {
-		if cfg.GRPC == "" {
-			return errors.New("inventory requires a gRPC listener")
+	if name == "admission-controller" || name == "inventory-reservation" {
+		queueURL := os.Getenv("FLASHKART_PURCHASE_QUEUE_URL")
+		var queue market.PurchaseQueue
+		if queueURL != "" || cfg.Environment == "aws" {
+			var err error
+			queue, err = market.NewPurchaseQueue(ctx, queueURL, cfg.AWS.Region, cfg.AWS.Endpoints["sqs"],
+				os.Getenv("FLASHKART_SQS_CREDENTIALS_FILE"), os.Getenv("FLASHKART_SQS_CA_FILE"), cfg.Environment == "local")
+			if err != nil {
+				return err
+			}
 		}
-		app.register = func(server *grpc.Server) {
-			pb.RegisterInventoryServer(server, market.Inventory{DB: db})
+		workerCtx, stop := context.WithCancel(ctx)
+		defer stop()
+		var worker func()
+		if name == "admission-controller" {
+			customerToken, customerID := os.Getenv("FLASHKART_CUSTOMER_TOKEN"), os.Getenv("FLASHKART_CUSTOMER_ID")
+			if strings.TrimSpace(customerToken) == "" || strings.ContainsAny(customerToken, " \t\r\n") ||
+				strings.TrimSpace(customerID) == "" || len(customerID) > 200 || strings.ContainsRune(customerID, 0) || customerToken == token {
+				return errors.New("a distinct customer token and customer ID are required")
+			}
+			settings := []struct {
+				name  string
+				value int
+			}{{"FLASHKART_ADMISSION_RATE", 200}, {"FLASHKART_ADMISSION_BURST", 200}, {"FLASHKART_ADMISSION_CONCURRENCY", 32}}
+			for i := range settings {
+				if raw := os.Getenv(settings[i].name); raw != "" {
+					n, err := strconv.Atoi(raw)
+					if err != nil || n < 1 || n > 100000 {
+						return errors.New("invalid " + settings[i].name)
+					}
+					settings[i].value = n
+				}
+			}
+			admission := market.NewAdmission(db, log, settings[0].value, settings[1].value, settings[2].value)
+			app.wrap = func(fallback http.Handler) http.Handler {
+				return admission.Handler(customerToken, customerID, fallback)
+			}
+			worker = func() { admission.Run(workerCtx, queue) }
+		} else {
+			if cfg.GRPC == "" {
+				return errors.New("inventory requires a gRPC listener")
+			}
+			inventory := market.Inventory{DB: db}
+			app.register = func(server *grpc.Server) { pb.RegisterInventoryServer(server, inventory) }
+			worker = func() { inventory.Consume(workerCtx, queue, log) }
+		}
+		if queue != nil {
+			done := make(chan struct{})
+			go func() { defer close(done); worker() }()
+			defer func() { stop(); <-done }()
 		}
 		return serve(ctx, name, cfg, log, nil, nil, app)
 	}

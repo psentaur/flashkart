@@ -34,7 +34,7 @@ jobs:
           python -m pip install -r tests/requirements.txt
       - run: make build test-unit test-contracts test-smoke
       - name: Verify local PostgreSQL persistence
-        run: make dev-up migrate seed test-persistence test-replication-core test-replication-recovery test-catalog-publication
+        run: make dev-up migrate seed test-persistence test-replication-core test-replication-recovery test-catalog-publication test-reservations
       - name: Stop local dependencies
         if: always()
         run: make dev-down

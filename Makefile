@@ -89,3 +89,7 @@ run-market: build-go
 
 test-catalog-publication:
 	. deploy/local/postgres.env && FLASHKART_TEST_MARKET=1 $(GO) test -buildvcs=false -count=1 -v ./internal/market
+
+.PHONY: test-reservations
+test-reservations:
+	. deploy/local/postgres.env && FLASHKART_TEST_PURCHASE=1 $(GO) test -buildvcs=false -count=1 -v -run 'Test(Reservations|PurchaseQueue)$$' ./internal/market

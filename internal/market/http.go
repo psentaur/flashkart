@@ -35,7 +35,6 @@ func serveAPI(mux *http.ServeMux, fallback http.Handler) http.Handler {
 }
 
 func admin(token string, handler http.HandlerFunc) http.HandlerFunc {
-	expected := sha256.Sum256([]byte(token))
 	return func(w http.ResponseWriter, r *http.Request) {
 		scheme, provided, ok := strings.Cut(r.Header.Get("Authorization"), " ")
 		if !ok || !strings.EqualFold(scheme, "Bearer") || provided == "" {
@@ -43,8 +42,7 @@ func admin(token string, handler http.HandlerFunc) http.HandlerFunc {
 			writeError(w, r, 401, "UNAUTHENTICATED", "administrator bearer token required")
 			return
 		}
-		actual := sha256.Sum256([]byte(provided))
-		if token == "" || subtle.ConstantTimeCompare(expected[:], actual[:]) != 1 {
+		if !matchesToken(token, provided) {
 			writeError(w, r, 403, "FORBIDDEN", "administrator access required")
 			return
 		}
@@ -90,4 +88,9 @@ func serviceError(w http.ResponseWriter, r *http.Request, err error) {
 	default:
 		writeError(w, r, 500, "INTERNAL", "operation failed")
 	}
+}
+
+func matchesToken(expected, provided string) bool {
+	a, b := sha256.Sum256([]byte(expected)), sha256.Sum256([]byte(provided))
+	return expected != "" && subtle.ConstantTimeCompare(a[:], b[:]) == 1
 }
