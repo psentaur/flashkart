@@ -2,7 +2,7 @@
 
 This roadmap turns the [technical architecture](implementation-plan.md) into executable implementation phases. That document remains the source of truth for system behavior; this document defines build order, dependencies, deliverables, and completion checks.
 
-**Current status:** Phases 1–10 are implemented. Phase 10 passed the local Chromium suite against the marketplace and analytics services. Phase 11 deployment and rehearsal tooling is in place, with full cluster validation pending. Phase 12 is unstarted. [Phase 10 development](phase-10-development.md)
+**Current status:** Phases 1–10 are implemented. Phase 10 passed the local Chromium suite against the marketplace and analytics services. Phase 11 deployment and rehearsal tooling is in place, with full cluster validation pending. Phase 12 AWS infrastructure and deployment tooling is in place. Live acceptance and recreation remain pending. [Phase 10 development](phase-10-development.md)
 
 Develop and verify locally through Phase 11. Phase 12 covers AWS integration and reproducible deployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
 

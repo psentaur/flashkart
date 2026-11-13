@@ -1,0 +1,91 @@
+#!/bin/sh
+set -eu
+: "${GITOPS_REPO:?Set the URL of the cloud manifest repository}"
+: "${GITOPS_REVISION:?Set the deployment revision}"
+: "${GITOPS_PATH:?Set the path to the rendered overlay}"
+: "${FLASHKART_ADMIN_TOKEN:?Set the administrator token}"
+: "${FLASHKART_CUSTOMER_TOKEN:?Set the customer token}"
+work=$(mktemp -d)
+chmod 700 "$work"
+trap 'rm -rf "$work"' EXIT
+tf() { terraform -chdir=deploy/aws/environment "$@"; }
+tf output -json deployment >"$work/settings.json"
+tf output -json database_passwords >"$work/passwords.json"
+name=$(jq -er .name "$work/settings.json")
+region=$(jq -er .region "$work/settings.json")
+export KUBECONFIG="$work/kubeconfig"
+aws eks update-kubeconfig --name "$name" --region "$region" >/dev/null
+ns() { kubectl create namespace "$1" --dry-run=client -o yaml | kubectl apply -f -; }
+ns argocd
+ns flashkart
+kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.1.8/manifests/install.yaml
+kubectl wait --for=condition=Established crd/applications.argoproj.io --timeout=180s
+
+curl -fsSL https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o "$work/ca.pem"
+kubectl -n flashkart create configmap rds-ca --from-file="$work/ca.pem" --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n flashkart create secret generic demo-tokens \
+    --from-literal=FLASHKART_ADMIN_TOKEN="$FLASHKART_ADMIN_TOKEN" \
+    --from-literal=FLASHKART_CUSTOMER_TOKEN="$FLASHKART_CUSTOMER_TOKEN" \
+    --from-literal=FLASHKART_CUSTOMER_ID=cloud-buyer --dry-run=client -o yaml | kubectl apply -f -
+
+python3 - "$work" <<'PY' | kubectl apply -f -
+import json, pathlib, sys
+work = pathlib.Path(sys.argv[1])
+settings = json.loads((work / "settings.json").read_text())
+passwords = json.loads((work / "passwords.json").read_text())
+objects = []
+def secret(name, data):
+    objects.append(dict(apiVersion="v1", kind="Secret", metadata=dict(name=name, namespace="flashkart"), stringData=data))
+secret("migration-passwords", passwords)
+roles = {"flash-sale-manager":"flash_sale_app", "inventory-reservation":"inventory_app",
+         "admission-controller":"admission_app", "order-service":"orders_app", "payment-service":"payment_app"}
+for name, key in {**roles, **{f"replica-{k}": k for k in "abcd"}}.items():
+    backend = key if key in "abcd" else "transactional"
+    role = "replica_app" if key in "abcd" else key
+    host = settings["databases"][backend]["host"]
+    secret(f"db-{name}", {"dsn": f"postgres://{role}:{passwords[key]}@{host}/flashkart?sslmode=verify-full&sslrootcert=/rds/ca.pem&pool_max_conns=8"})
+print(json.dumps(dict(apiVersion="v1", kind="List", items=objects)))
+PY
+
+python3 - "$work/settings.json" <<'PY' | kubectl apply -f -
+import json, os, sys
+s = json.load(open(sys.argv[1]))
+apps = []
+def app(name, namespace, source):
+    apps.append({"apiVersion":"argoproj.io/v1alpha1", "kind":"Application",
+       "metadata":{"name":name,"namespace":"argocd","finalizers":["resources-finalizer.argocd.argoproj.io"]},
+       "spec":{"project":"default","source":source,"destination":{"server":"https://kubernetes.default.svc","namespace":namespace},
+               "syncPolicy":{"automated":{"prune":True,"selfHeal":True},"syncOptions":["CreateNamespace=true","ServerSideApply=true"]}}})
+def chart(repo, name, rev, values):
+    return {"repoURL":repo,"chart":name,"targetRevision":rev,"helm":{"valuesObject":values}}
+app("cloud-lb-controller","kube-system",chart("https://aws.github.io/eks-charts","aws-load-balancer-controller","1.13.4",{
+    "clusterName":s["name"],"fullnameOverride":"aws-load-balancer-controller","region":s["region"],"vpcId":s["vpc"],
+    "serviceAccount":{"annotations":{"eks.amazonaws.com/role-arn":s["controller_role"]}}}))
+app("cloud-metrics-server","kube-system",chart("https://kubernetes-sigs.github.io/metrics-server/","metrics-server","3.13.0",{}))
+app("cloud-flink-operator","flink-operator",chart("public.ecr.aws/emr-on-eks","flink-kubernetes-operator","7.13.0",{
+    "watchNamespaces":["flashkart"],"webhook":{"create":False},"emrContainers":{"awsRegion":s["region"]}}))
+print(json.dumps({"apiVersion":"v1","kind":"List","items":apps}))
+PY
+kubectl -n argocd create secret generic emr-helm-repo \
+    --from-literal=type=helm --from-literal=name=emr-on-eks \
+    --from-literal=url=public.ecr.aws/emr-on-eks --from-literal=enableOCI=true \
+    --dry-run=client -o yaml | kubectl label --local -f - argocd.argoproj.io/secret-type=repository -o yaml | kubectl apply -f -
+for crd in flinkdeployments.flink.apache.org targetgroupbindings.elbv2.k8s.aws; do
+    for n in $(seq 1 90); do
+        if kubectl get crd "$crd" >/dev/null 2>&1; then break; fi
+        sleep 5
+    done
+    kubectl wait --for=condition=Established "crd/$crd" --timeout=120s
+done
+kubectl -n kube-system rollout status deployment/aws-load-balancer-controller --timeout=300s
+python3 - <<'PY' | kubectl apply -f -
+import json, os
+print(json.dumps({"apiVersion":"argoproj.io/v1alpha1","kind":"Application",
+ "metadata":{"name":"flashkart-cloud","namespace":"argocd","finalizers":["resources-finalizer.argocd.argoproj.io"]},
+ "spec":{"project":"default","source":{"repoURL":os.environ["GITOPS_REPO"],"targetRevision":os.environ["GITOPS_REVISION"],"path":os.environ["GITOPS_PATH"]},
+ "destination":{"server":"https://kubernetes.default.svc","namespace":"flashkart"},
+ "syncPolicy":{"automated":{"prune":True,"selfHeal":True},"syncOptions":["ServerSideApply=true"]}}}))
+PY
+
+kubectl -n argocd wait --for=jsonpath='{.status.sync.status}'=Synced application/flashkart-cloud --timeout=20m
+kubectl -n argocd wait --for=jsonpath='{.status.health.status}'=Healthy application/flashkart-cloud --timeout=20m

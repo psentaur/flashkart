@@ -50,6 +50,17 @@ elif action == "product":
     product(value)
 elif action == "read":
     assert api("/api/products/" + value)["product"]["product_id"] == value
+elif action in ("read-ready", "read-unready"):
+    expected = action == "read-ready"
+    for _ in range(60):
+        statuses = api("/api/admin/replicas")
+        replica = next(item for item in statuses if item["replica_id"] == value)
+        if replica["backend_ready"] == expected:
+            print(json.dumps(statuses))
+            break
+        time.sleep(2)
+    else:
+        raise AssertionError(statuses)
 elif action == "sale":
     identifier = value + "-sale"
     product(identifier)
