@@ -101,3 +101,12 @@ test-workflows:
 .PHONY: test-events-notifications
 test-events-notifications:
 	. deploy/local/postgres.env && FLASHKART_TEST_EVENTS=1 $(GO) test -buildvcs=false -count=1 -v -run 'Test(BatchFailures|EventDelivery|NotificationAndKafka)$$' ./internal/market
+
+.PHONY: test-analytics test-analytics-projection
+test-analytics: build-analytics
+	$(LOCAL_COMPOSE) --profile flink up -d kafka flink-jobmanager flink-taskmanager
+	$(PYTHON) tests/analytics.py --compose "$(LOCAL_COMPOSE) --profile flink"
+	$(MAKE) test-analytics-projection
+
+test-analytics-projection:
+	$(GO) test -buildvcs=false -count=1 -v -run 'TestAnalytics(Result|Projection)$$' ./internal/market
