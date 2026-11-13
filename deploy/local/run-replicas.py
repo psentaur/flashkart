@@ -26,6 +26,9 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
             "FLASHKART_FLASH_SALE_DSN", "FLASHKART_INVENTORY_DSN", "FLASHKART_ADMIN_TOKEN",
             "FLASHKART_S3_CREDENTIALS_FILE", "FLASHKART_PRODUCT_IMAGES_BUCKET",
         }
+        queue_vars = ("FLASHKART_PURCHASE_QUEUE_URL", "FLASHKART_SQS_CREDENTIALS_FILE", "FLASHKART_SQS_CA_FILE")
+        customer_vars = ("FLASHKART_CUSTOMER_TOKEN", "FLASHKART_CUSTOMER_ID")
+        excluded.update((*queue_vars, *customer_vars, "FLASHKART_ADMISSION_DSN"))
         common = {key: value for key, value in os.environ.items() if key not in excluded}
 
         def start(name, executable, settings, variables):
@@ -52,9 +55,16 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
                 ("flash-sale-manager", 8202, "", "FLASHKART_FLASH_SALE_DSN"),
                 ("product-catalog", 8201, "", None),
             )
+            if os.environ.get("FLASHKART_PURCHASE_QUEUE_URL"):
+                services += (("admission-controller", 8204, "", "FLASHKART_ADMISSION_DSN"),)
             for name, port, grpc, dsn in services:
                 settings = dict(config, http_address=f"127.0.0.1:{port}", grpc_address=grpc)
-                variables = {} if name == "inventory-reservation" else {"FLASHKART_ADMIN_TOKEN": token}
+                variables = {"FLASHKART_ADMIN_TOKEN": token} if name != "inventory-reservation" else {}
+                if name == "admission-controller":
+                    variables.update({key: os.environ[key] for key in customer_vars})
+                if name in ("admission-controller", "inventory-reservation") and os.environ.get(queue_vars[0]):
+                    variables.update({key: os.environ[key] for key in queue_vars})
+                    settings["aws"] = {"region": "us-east-1", "endpoints": {"sqs": os.environ["FLASHKART_SQS_ENDPOINT"]}}
                 if dsn:
                     variables[config["database_env"]["transactional"]] = os.environ[dsn]
                 if name == "product-catalog" and os.environ.get("FLASHKART_PRODUCT_IMAGES_BUCKET"):

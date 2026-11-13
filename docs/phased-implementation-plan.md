@@ -2,7 +2,7 @@
 
 This roadmap turns the [technical architecture](implementation-plan.md) into executable implementation phases. That document remains the source of truth for system behavior; this document defines build order, dependencies, deliverables, and completion checks.
 
-**Current status:** Phase 1 passed hosted CI. Phases 2–5 are implemented and verified locally. Phase 5 verified catalog access with one replica down, conflict resolution, recovery after lost publication replies, and signed image downloads through AWS Emulator. Lambda invocation and event source mappings remain open for later verification. Phases 6–12 are unstarted. [Phase 5 development](phase-5-development.md)
+**Current status:** Phases 1–5 passed their implementation checks. Phase 6 passed local PostgreSQL concurrency, admission replay, and SQS emulator delivery checks. Phases 7–12 are unstarted. [Phase 6 development](phase-6-development.md)
 
 Develop and verify locally through Phase 11. Phase 12 covers AWS integration and reproducible deployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
 
@@ -150,7 +150,7 @@ The default execution order is sequential. Keep intermediate states explicit: fo
 - A queued attempt still checks the sale window when processed. Inactive, ended, or exhausted sales produce stable rejection outcomes.
 - Queue interruption and crashes around SQL commit/outbox publication recover without losing accepted attempts. `202` is sent only after durable acceptance.
 
-**Evidence:** concurrency and delivery tests. Proposed command: `make test-reservations`.
+**Evidence:** `make test-reservations` passed against PostgreSQL and an isolated signed SQS emulator queue.
 
 ## Phase 7: Orders, payments, expiry, and compensation
 

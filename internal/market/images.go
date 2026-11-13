@@ -23,31 +23,9 @@ func NewImages(ctx context.Context, bucket, region, endpoint, credentialsFile st
 	if bucket == "" {
 		return nil, nil
 	}
-	if region == "" {
-		return nil, errors.New("product images require an AWS region")
-	}
-	var sdk aws.Config
-	if local {
-		u, err := url.Parse(endpoint)
-		if err != nil || u.Scheme != "https" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" ||
-			!net.ParseIP(u.Hostname()).IsLoopback() || credentialsFile == "" {
-			return nil, errors.New("local product images require a loopback HTTPS S3 endpoint and emulator credentials file")
-		}
-		profile, err := config.LoadSharedConfigProfile(ctx, "default", func(o *config.LoadSharedConfigOptions) {
-			o.ConfigFiles = []string{}
-			o.CredentialsFiles = []string{credentialsFile}
-		})
-		if err != nil || !profile.Credentials.HasKeys() {
-			return nil, errors.New("could not read dedicated emulator credentials")
-		}
-		sdk = aws.Config{Region: region, Credentials: credentials.NewStaticCredentialsProvider(
-			profile.Credentials.AccessKeyID, profile.Credentials.SecretAccessKey, profile.Credentials.SessionToken)}
-	} else {
-		var err error
-		sdk, err = config.LoadDefaultConfig(ctx, config.WithRegion(region))
-		if err != nil {
-			return nil, errors.New("could not load AWS image configuration")
-		}
+	sdk, err := awsConfig(ctx, region, endpoint, credentialsFile, local)
+	if err != nil {
+		return nil, err
 	}
 	client := s3.NewFromConfig(sdk, func(o *s3.Options) {
 		if local {
@@ -97,4 +75,34 @@ func (i *Images) Resolve(ctx context.Context, value string) (string, error) {
 		return "", err
 	}
 	return request.URL, nil
+}
+
+func awsConfig(ctx context.Context, region, endpoint, credentialsFile string, local bool) (aws.Config, error) {
+	if region == "" {
+		return aws.Config{}, errors.New("AWS services require a region")
+	}
+	var sdk aws.Config
+	if local {
+		u, err := url.Parse(endpoint)
+		if err != nil || u.Scheme != "https" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" ||
+			!net.ParseIP(u.Hostname()).IsLoopback() || credentialsFile == "" {
+			return aws.Config{}, errors.New("local AWS services require a loopback HTTPS endpoint and emulator credentials file")
+		}
+		profile, err := config.LoadSharedConfigProfile(ctx, "default", func(o *config.LoadSharedConfigOptions) {
+			o.ConfigFiles = []string{}
+			o.CredentialsFiles = []string{credentialsFile}
+		})
+		if err != nil || !profile.Credentials.HasKeys() {
+			return aws.Config{}, errors.New("could not read dedicated emulator credentials")
+		}
+		sdk = aws.Config{Region: region, Credentials: credentials.NewStaticCredentialsProvider(
+			profile.Credentials.AccessKeyID, profile.Credentials.SecretAccessKey, profile.Credentials.SessionToken)}
+	} else {
+		var err error
+		sdk, err = config.LoadDefaultConfig(ctx, config.WithRegion(region))
+		if err != nil {
+			return aws.Config{}, errors.New("could not load AWS configuration")
+		}
+	}
+	return sdk, nil
 }
