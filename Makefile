@@ -82,3 +82,10 @@ replica-db-fault:
 	@case "$(REPLICA)" in a|b|c|d) ;; *) echo "REPLICA must be a, b, c, or d" >&2; exit 2;; esac
 	@case "$(FAULT)" in stop|start|restart) ;; *) echo "FAULT must be stop, start, or restart" >&2; exit 2;; esac
 	$(LOCAL_COMPOSE) $(FAULT) postgres-$(REPLICA)
+
+.PHONY: run-market test-catalog-publication
+run-market: build-go
+	. deploy/local/postgres.env && $(PYTHON) deploy/local/run-replicas.py "$(BUILD)/bin/catalog-replica" --market
+
+test-catalog-publication:
+	. deploy/local/postgres.env && FLASHKART_TEST_MARKET=1 $(GO) test -buildvcs=false -count=1 -v ./internal/market

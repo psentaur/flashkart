@@ -2,7 +2,7 @@
 
 This roadmap turns the [technical architecture](implementation-plan.md) into executable implementation phases. That document remains the source of truth for system behavior; this document defines build order, dependencies, deliverables, and completion checks.
 
-**Current status:** Phase 1 passed hosted CI. Phases 2–4 are implemented and verified locally. The recovery tests covered partitioned writes, stale reads, hint replay, SQL connection loss, and convergence. A local PostgreSQL restart preserved pending hints and their envelopes. Lambda invocation and event source mappings remain open for later verification. Phases 5–12 are unstarted. [Phase 4 development](phase-4-development.md)
+**Current status:** Phase 1 passed hosted CI. Phases 2–5 are implemented and verified locally. Phase 5 verified catalog access with one replica down, conflict resolution, recovery after lost publication replies, and signed image downloads through AWS Emulator. Lambda invocation and event source mappings remain open for later verification. Phases 6–12 are unstarted. [Phase 5 development](phase-5-development.md)
 
 Develop and verify locally through Phase 11. Phase 12 covers AWS integration and reproducible deployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
 
@@ -129,7 +129,7 @@ The default execution order is sequential. Keep intermediate states explicit: fo
 - Crashes after each publication step resume the same operation. Lost preparation responses do not allocate replacement versions on another origin.
 - Published-term edits are rejected, and unresolved catalog conflicts remain visible instead of silently selecting a price.
 
-**Evidence:** catalog and publication integration tests. Proposed command: `make test-catalog-publication`.
+**Evidence:** `make test-catalog-publication` passed with PostgreSQL and loopback gRPC. The local service launcher completed a publication through HTTP, and a signed image download succeeded against AWS Emulator.
 
 ## Phase 6: Admission, queues, and atomic reservations
 
