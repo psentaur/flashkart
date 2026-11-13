@@ -102,6 +102,9 @@ func readConfig(path, name string) (config, error) {
 			return cfg, errors.New("unexpected replica identity")
 		}
 	}
+	if cfg.Environment == "aws" && cfg.AWS.Region == "" {
+		cfg.AWS.Region = os.Getenv("AWS_REGION")
+	}
 	if cfg.Environment == "aws" && (cfg.AWS.Region == "" || len(cfg.AWS.Endpoints) != 0 || cfg.Kafka.Auth != "iam") {
 		return cfg, errors.New("AWS configuration requires a region, standard AWS endpoints and Kafka IAM authentication")
 	}

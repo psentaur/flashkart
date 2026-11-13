@@ -96,17 +96,19 @@ func runNotifications(ctx context.Context, cfg config, log *slog.Logger) error {
 	if err != nil {
 		return err
 	}
-	queue, err := outcomeQueue(ctx, cfg)
-	if err != nil {
-		return err
+	if cfg.Environment == "local" {
+		queue, err := outcomeQueue(ctx, cfg)
+		if err != nil {
+			return err
+		}
+		work, stop := context.WithCancel(ctx)
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			store.Run(work, queue, func() { log.Warn("notification message will retry") })
+		}()
+		defer func() { stop(); <-done }()
 	}
-	work, stop := context.WithCancel(ctx)
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
-		store.Run(work, queue, func() { log.Warn("notification message will retry") })
-	}()
-	defer func() { stop(); <-done }()
 	app := serviceApp{wrap: func(fallback http.Handler) http.Handler { return store.Handler(token, customer, fallback) }}
 	return serve(ctx, "notification", cfg, log, nil, nil, app)
 }

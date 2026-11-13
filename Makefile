@@ -136,3 +136,26 @@ test-load:
 
 test-kubernetes:
 	KUBECTL="$(KUBECTL)" KIND_CLUSTER="$(KIND_CLUSTER)" sh tests/kubernetes.sh recovery
+
+.PHONY: cloud-images cloud-render cloud-gitops cloud-smoke test-cloud demo teardown-demo
+cloud-images: build-analytics
+	sh deploy/aws/build-images.sh
+
+cloud-render:
+	terraform -chdir=deploy/aws/environment output -json deployment | $(PYTHON) deploy/aws/render.py build/cloud/manifests
+
+cloud-gitops:
+	sh deploy/aws/gitops.sh
+
+cloud-smoke:
+	sh deploy/aws/acceptance.sh smoke
+
+test-cloud:
+	sh deploy/aws/acceptance.sh acceptance
+
+demo: cloud-gitops
+	sh deploy/aws/publish-web.sh
+	$(MAKE) cloud-smoke
+
+teardown-demo:
+	sh deploy/aws/teardown.sh
