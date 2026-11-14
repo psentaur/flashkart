@@ -60,8 +60,8 @@ for backend in (*replicas, "transactional"):
                  "volumeMounts": [{"name": "data", "mountPath": "/var/lib/postgresql/data"}]}
     add("apps/v1", "StatefulSet", name, spec={
         "serviceName": name, "selector": {"matchLabels": {"app": name}}, "template": pod(name, container),
-        "volumeClaimTemplates": [{"metadata": {"name": "data"}, "spec": {
-            "accessModes": ["ReadWriteOnce"], "resources": {"requests": {"storage": "1Gi"}}}}],
+        "volumeClaimTemplates": [{"apiVersion": "v1", "kind": "PersistentVolumeClaim", "metadata": {"name": "data"}, "spec": {
+            "accessModes": ["ReadWriteOnce"], "volumeMode": "Filesystem", "resources": {"requests": {"storage": "1Gi"}}}}],
     })
 
 migration = (root / "deploy/local/migrate.sh").read_text()
@@ -112,8 +112,8 @@ add("apps/v1", "StatefulSet", "kafka", spec={
                              "readinessProbe": {"tcpSocket": {"port": 9092}},
                              "volumeMounts": [{"name": "kafka", "mountPath": "/var/lib/kafka/data"}]},
                     securityContext={"fsGroup": 1000}),
-    "volumeClaimTemplates": [{"metadata": {"name": "kafka"}, "spec": {
-        "accessModes": ["ReadWriteOnce"], "resources": {"requests": {"storage": "2Gi"}}}}],
+    "volumeClaimTemplates": [{"apiVersion": "v1", "kind": "PersistentVolumeClaim", "metadata": {"name": "kafka"}, "spec": {
+        "accessModes": ["ReadWriteOnce"], "volumeMode": "Filesystem", "resources": {"requests": {"storage": "2Gi"}}}}],
 })
 add("batch/v1", "Job", "kafka-topics", 1, spec={"backoffLimit": 5, "template": pod("kafka-topics", {
     "name": "topics", "image": "apache/kafka:3.9.1", "command": ["sh", "-ec", '''

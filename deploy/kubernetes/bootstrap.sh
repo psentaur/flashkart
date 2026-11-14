@@ -14,6 +14,7 @@ kube -n flashkart create secret generic demo-tokens \
     --from-literal=FLASHKART_ADMIN_TOKEN="$FLASHKART_ADMIN_TOKEN" \
     --from-literal=FLASHKART_CUSTOMER_TOKEN="$FLASHKART_CUSTOMER_TOKEN" \
     --from-literal=FLASHKART_CUSTOMER_ID=kind-buyer --dry-run=client -o yaml | kube apply -f -
+kube -n argocd rollout status deployment/argocd-repo-server --timeout=300s
 kube apply -f deploy/kubernetes/platform/argocd-flink.yaml
 
 application() {
@@ -24,6 +25,8 @@ print(json.dumps({
     "apiVersion": "argoproj.io/v1alpha1", "kind": "Application",
     "metadata": {"name": name, "namespace": "argocd"},
     "spec": {"project": "default",
+        "ignoreDifferences": [{"group": "apps", "kind": "StatefulSet",
+            "jqPathExpressions": [".spec.volumeClaimTemplates[] | .status"]}],
         "source": {"repoURL": os.environ["GITOPS_REPO"], "targetRevision": os.environ["GITOPS_REVISION"], "path": path},
         "destination": {"server": "https://kubernetes.default.svc", "namespace": namespace},
         "syncPolicy": {"automated": {"prune": True, "selfHeal": True}, "syncOptions": ["ServerSideApply=true"]}},
@@ -32,7 +35,6 @@ PY
 }
 application metrics-server deploy/kubernetes/platform/metrics-server kube-system
 application flashkart-emulator deploy/kubernetes/platform flashkart
-kube -n argocd rollout status deployment/argocd-repo-server --timeout=300s
 deadline=0
 until kube -n flashkart get statefulset emulator >/dev/null 2>&1; do
     deadline=$((deadline + 1))
@@ -42,6 +44,9 @@ done
 kube -n flashkart rollout status statefulset/emulator --timeout=300s
 sh deploy/kubernetes/emulator-bootstrap.sh
 kube wait --for=condition=Established crd/flinkdeployments.flink.apache.org --timeout=300s
-kube -n argocd wait --for=jsonpath='{.status.sync.status}'=Synced application/flink-operator --timeout=300s
+kube -n argocd wait --for=jsonpath='{.status.operationState.phase}'=Succeeded application/flink-operator --timeout=300s
 kube -n argocd wait --for=jsonpath='{.status.health.status}'=Healthy application/flink-operator --timeout=300s
 application flashkart deploy/kubernetes/kind flashkart
+
+kube -n argocd wait --for=jsonpath='{.status.sync.status}'=Synced application/flashkart --timeout=15m
+kube -n argocd wait --for=jsonpath='{.status.health.status}'=Healthy application/flashkart --timeout=15m
