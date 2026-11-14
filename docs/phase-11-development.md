@@ -11,7 +11,13 @@ export GITOPS_REPO=https://github.com/psentaur/flashkart.git
 export GITOPS_REVISION=your-kind-deployment-branch
 export FLASHKART_ADMIN_TOKEN=local-admin
 export FLASHKART_CUSTOMER_TOKEN=local-customer
-make kind-up kind-images gitops-bootstrap
+# For Podman, set these before creating the cluster.
+export CONTAINER_ENGINE=podman
+export KIND_EXPERIMENTAL_PROVIDER=podman
+make kind-up kind-images
+# If the kind node uses Podman's 2,048-process limit:
+podman update --pids-limit 8192 "${KIND_CLUSTER:-flashkart}-control-plane"
+make gitops-bootstrap
 kubectl --context kind-flashkart -n argocd get applications
 kubectl --context kind-flashkart -n flashkart get pods,hpa
 ```

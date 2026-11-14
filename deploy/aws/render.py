@@ -1,4 +1,5 @@
 """Render non-secret cloud GitOps objects from Terraform's deployment output."""
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -156,6 +157,14 @@ for obj in observability:
         obj["data"]["datasources.yaml"] = obj["data"]["datasources.yaml"].split("- name: Loki")[0]
         del obj["data"]["loki.yml"]
     objects.append(obj)
+
+telemetry = next(obj["data"] for obj in observability if obj["kind"] == "ConfigMap" and obj["metadata"]["name"] == "telemetry")
+checksum = hashlib.sha256(json.dumps(telemetry, sort_keys=True).encode()).hexdigest()
+for obj in observability:
+    if (obj["kind"], obj["metadata"]["name"]) in {
+        ("Deployment", "prometheus"), ("Deployment", "grafana"), ("DaemonSet", "fluent-bit")
+    }:
+        obj["spec"]["template"]["metadata"]["annotations"]["flashkart.io/telemetry-config"] = checksum
 
 output.mkdir(parents=True, exist_ok=True)
 (output / "resources.json").write_text(json.dumps({"apiVersion": "v1", "kind": "List", "items": objects}, indent=2) + "\n")

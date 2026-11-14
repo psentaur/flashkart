@@ -4,6 +4,17 @@ set -eu
 : "${GITOPS_REVISION:?Set GITOPS_REVISION to the branch containing the deployed image tags}"
 : "${FLASHKART_ADMIN_TOKEN:?Set the local admin token}"
 : "${FLASHKART_CUSTOMER_TOKEN:?Set the local customer token}"
+if printf '%s\n' "$GITOPS_REVISION" | grep -Eq '^[[:xdigit:]]{40}$'; then
+    revision=$(printf '%s' "$GITOPS_REVISION" | tr 'A-F' 'a-f')
+else
+    revision=$(git ls-remote --exit-code "$GITOPS_REPO" "$GITOPS_REVISION" "$GITOPS_REVISION^{}" |
+        awk '$2 ~ /\^\{\}$/ { peeled=$1; next } { sha=$1; refs++ }
+             END { if (refs == 1) print (peeled != "" ? peeled : sha); else exit 1 }') || {
+        echo 'GITOPS_REVISION must resolve to one Git ref or be a full commit SHA.' >&2
+        exit 2
+    }
+fi
+export FLASHKART_GITOPS_COMMIT="$revision"
 kube() { "${KUBECTL:-kubectl}" --context "kind-${KIND_CLUSTER:-flashkart}" "$@"; }
 
 kube create namespace argocd --dry-run=client -o yaml | kube apply -f -
@@ -27,7 +38,7 @@ print(json.dumps({
     "spec": {"project": "default",
         "ignoreDifferences": [{"group": "apps", "kind": "StatefulSet",
             "jqPathExpressions": [".spec.volumeClaimTemplates[] | .status"]}],
-        "source": {"repoURL": os.environ["GITOPS_REPO"], "targetRevision": os.environ["GITOPS_REVISION"], "path": path},
+        "source": {"repoURL": os.environ["GITOPS_REPO"], "targetRevision": os.environ["FLASHKART_GITOPS_COMMIT"], "path": path},
         "destination": {"server": "https://kubernetes.default.svc", "namespace": namespace},
         "syncPolicy": {"automated": {"prune": True, "selfHeal": True}, "syncOptions": ["ServerSideApply=true"]}},
 }))
@@ -48,5 +59,18 @@ kube -n argocd wait --for=jsonpath='{.status.operationState.phase}'=Succeeded ap
 kube -n argocd wait --for=jsonpath='{.status.health.status}'=Healthy application/flink-operator --timeout=300s
 application flashkart deploy/kubernetes/kind flashkart
 
-kube -n argocd wait --for=jsonpath='{.status.sync.status}'=Synced application/flashkart --timeout=15m
-kube -n argocd wait --for=jsonpath='{.status.health.status}'=Healthy application/flashkart --timeout=15m
+for _ in $(seq 1 180); do
+    if kube -n argocd get application/flashkart -o json | jq -e \
+        --arg revision "$revision" --arg repo "$GITOPS_REPO" '
+        .status.sync as $sync |
+        $sync.revision == $revision and $sync.status == "Synced" and
+        $sync.comparedTo.source.targetRevision == $revision and
+        $sync.comparedTo.source.repoURL == $repo and
+        $sync.comparedTo.source.path == "deploy/kubernetes/kind" and
+        .status.health.status == "Healthy"' >/dev/null; then
+        exit 0
+    fi
+    sleep 5
+done
+echo "Timed out waiting for flashkart at $revision" >&2
+exit 1
