@@ -264,7 +264,7 @@ The default execution order is sequential. Keep intermediate states explicit: fo
 
 **Deliverables**
 
-- Implement Terraform for networking, EKS, four independent replica RDS instances, the transactional RDS instance, IAM, image registry, SQS/DLQs, Lambda, DynamoDB, S3, MSK Serverless, CloudFront/ALB routing, and centralized logging. Keep bootstrap state/build artifacts separate from the disposable application environment.
+- Implement Terraform for networking, EKS, four independent replica RDS instances, the transactional RDS instance, IAM, image registry, SQS/DLQs, Lambda, DynamoDB, S3, MSK Serverless, public ALB routing, and centralized logging. Keep bootstrap state/build artifacts separate from the disposable application environment.
 - Bootstrap ArgoCD and deploy cloud overlays, migration Jobs, EMR's Flink operator/job, and applications through GitOps. Replica agents use RDS and have no persistent local volumes.
 - Configure scoped credentials, real MSK IAM authentication, Lambda-SQS invocation, RDS connectivity, and S3 checkpoints. Use the same business code, contracts, and seed fixtures as the local deployment.
 - Run the cloud acceptance suite: public customer/admin flows, real permissions, Kafka token refresh, Lambda retry behavior, checkpoint restoration, SQL outages, centralized logging, and sustained EKS HPA scaling.

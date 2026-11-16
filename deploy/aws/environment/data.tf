@@ -2,7 +2,7 @@ locals {
   databases = { a = 0, b = 1, c = 0, d = 1, transactional = 0 }
   queues    = toset(["purchases", "outcomes"])
   keys      = { notifications = ["customer_id", "attempt_id"], analytics = ["sale_id", "starts_at"] }
-  buckets   = toset(["frontend", "checkpoints", "images"])
+  buckets   = toset(["checkpoints", "images"])
 }
 resource "aws_db_subnet_group" "private" {
   name       = var.name

@@ -1,0 +1,2637 @@
+{
+  "apiVersion": "v1",
+  "kind": "List",
+  "items": [
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "admission-controller",
+        "annotations": {
+          "eks.amazonaws.com/role-arn": "arn:aws:iam::224033508410:role/flashkart-demo-admission-controller"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "analytics-api",
+        "annotations": {
+          "eks.amazonaws.com/role-arn": "arn:aws:iam::224033508410:role/flashkart-demo-analytics-api"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "flink",
+        "annotations": {
+          "eks.amazonaws.com/role-arn": "arn:aws:iam::224033508410:role/flashkart-demo-flink"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "fluent-bit",
+        "annotations": {
+          "eks.amazonaws.com/role-arn": "arn:aws:iam::224033508410:role/flashkart-demo-fluent-bit"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "inventory-reservation",
+        "annotations": {
+          "eks.amazonaws.com/role-arn": "arn:aws:iam::224033508410:role/flashkart-demo-inventory-reservation"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "kafka-topics",
+        "annotations": {
+          "eks.amazonaws.com/role-arn": "arn:aws:iam::224033508410:role/flashkart-demo-kafka-topics"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "migrations",
+        "annotations": {
+          "eks.amazonaws.com/role-arn": "arn:aws:iam::224033508410:role/flashkart-demo-migrations"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "notification",
+        "annotations": {
+          "eks.amazonaws.com/role-arn": "arn:aws:iam::224033508410:role/flashkart-demo-notification"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "order-service",
+        "annotations": {
+          "eks.amazonaws.com/role-arn": "arn:aws:iam::224033508410:role/flashkart-demo-order-service"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "payment-service",
+        "annotations": {
+          "eks.amazonaws.com/role-arn": "arn:aws:iam::224033508410:role/flashkart-demo-payment-service"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "product-catalog",
+        "annotations": {
+          "eks.amazonaws.com/role-arn": "arn:aws:iam::224033508410:role/flashkart-demo-product-catalog"
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "flink-kafka"
+      },
+      "data": {
+        "client.properties": "security.protocol=SASL_SSL\nsasl.mechanism=AWS_MSK_IAM\nsasl.jaas.config=software.amazon.msk.auth.iam.IAMLoginModule required;\nsasl.client.callback.handler.class=software.amazon.msk.auth.iam.IAMClientCallbackHandler"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "service-config"
+      },
+      "data": {
+        "market.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"a\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "a.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"a\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "b.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"b\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "c.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"c\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "d.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"d\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "migrations"
+      },
+      "data": {
+        "replica-001_documents.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nCREATE SCHEMA IF NOT EXISTS replica AUTHORIZATION replica_app;\nSET LOCAL ROLE replica_app;\nCREATE TABLE IF NOT EXISTS replica.schema_version (\n    version integer PRIMARY KEY\n);\nCREATE TABLE IF NOT EXISTS replica.documents (\n    kind integer NOT NULL CHECK (kind IN (1, 2)),\n    document_id text NOT NULL,\n    counter bigint NOT NULL DEFAULT 0 CHECK (counter >= 0),\n    PRIMARY KEY (kind, document_id)\n);\nCREATE TABLE IF NOT EXISTS replica.prepared (\n    operation_id text PRIMARY KEY,\n    request bytea NOT NULL,\n    envelope bytea NOT NULL\n);\nCREATE TABLE IF NOT EXISTS replica.versions (\n    kind integer NOT NULL,\n    document_id text NOT NULL,\n    origin text NOT NULL CHECK (origin IN ('a', 'b', 'c', 'd')),\n    counter bigint NOT NULL CHECK (counter > 0),\n    operation_id text NOT NULL UNIQUE,\n    envelope bytea NOT NULL,\n    visible boolean NOT NULL DEFAULT true,\n    PRIMARY KEY (kind, document_id, origin, counter),\n    FOREIGN KEY (kind, document_id) REFERENCES replica.documents\n);\nCREATE TABLE IF NOT EXISTS replica.hints (\n    kind integer NOT NULL,\n    document_id text NOT NULL,\n    origin text NOT NULL,\n    counter bigint NOT NULL,\n    target text NOT NULL CHECK (target IN ('a', 'b', 'c', 'd')),\n    PRIMARY KEY (kind, document_id, origin, counter, target),\n    FOREIGN KEY (kind, document_id, origin, counter) REFERENCES replica.versions\n);\nINSERT INTO replica.schema_version (version) VALUES (1) ON CONFLICT DO NOTHING;\nCOMMIT;\n",
+        "replica-002_visible_documents_index.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nSET LOCAL ROLE replica_app;\nCREATE INDEX IF NOT EXISTS versions_visible_document_c\n    ON replica.versions (kind, document_id COLLATE \"C\") WHERE visible;\nDROP INDEX IF EXISTS replica.versions_visible;\nINSERT INTO replica.schema_version (version) VALUES (2) ON CONFLICT DO NOTHING;\nCOMMIT;\n",
+        "replica-003_hint_age.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nSET LOCAL ROLE replica_app;\nALTER TABLE replica.hints ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT clock_timestamp();\nINSERT INTO replica.schema_version (version) VALUES (3) ON CONFLICT DO NOTHING;\nCOMMIT;\n",
+        "transactional-001_ownership.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nCREATE SCHEMA IF NOT EXISTS flash_sale AUTHORIZATION flash_sale_app;\nCREATE SCHEMA IF NOT EXISTS admission AUTHORIZATION admission_app;\nCREATE SCHEMA IF NOT EXISTS inventory AUTHORIZATION inventory_app;\nCREATE SCHEMA IF NOT EXISTS orders AUTHORIZATION orders_app;\nCREATE SCHEMA IF NOT EXISTS payment AUTHORIZATION payment_app;\nCOMMIT;\n",
+        "transactional-002_sale_publication.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nSET LOCAL ROLE flash_sale_app;\nCREATE TABLE IF NOT EXISTS flash_sale.drafts (\n    sale_id text PRIMARY KEY,\n    terms jsonb NOT NULL,\n    state text NOT NULL DEFAULT 'DRAFT' CHECK (state IN ('DRAFT','PENDING','PUBLISHED')),\n    operation_id text UNIQUE,\n    origin text CHECK (origin IN ('a','b','c','d')),\n    step smallint NOT NULL DEFAULT 0 CHECK (step BETWEEN 0 AND 4),\n    envelope bytea,\n    next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp(),\n    correlation_id text,\n    CHECK ((state = 'DRAFT') = (operation_id IS NULL)),\n    CHECK ((operation_id IS NULL) = (origin IS NULL)),\n    CHECK ((step >= 2) = (envelope IS NOT NULL)),\n    CHECK ((step = 4) = (state = 'PUBLISHED'))\n);\nCREATE INDEX IF NOT EXISTS drafts_pending ON flash_sale.drafts (next_attempt_at, sale_id) WHERE state='PENDING';\nRESET ROLE;\nSET LOCAL ROLE inventory_app;\nCREATE TABLE IF NOT EXISTS inventory.sales (\n    sale_id text PRIMARY KEY,\n    operation_id text NOT NULL UNIQUE,\n    terms jsonb NOT NULL,\n    available_stock bigint NOT NULL CHECK (available_stock >= 0),\n    active boolean NOT NULL DEFAULT false\n);\nCOMMIT;\n",
+        "transactional-003_purchase_reservations.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nSET LOCAL ROLE admission_app;\nCREATE TABLE IF NOT EXISTS admission.attempts (\n    attempt_id text PRIMARY KEY,\n    sale_id text NOT NULL,\n    customer_id text NOT NULL\n);\nCREATE TABLE IF NOT EXISTS admission.purchase_outbox (\n    attempt_id text PRIMARY KEY REFERENCES admission.attempts,\n    body jsonb NOT NULL,\n    next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp(),\n    sent_at timestamptz\n);\nCREATE INDEX IF NOT EXISTS purchase_outbox_pending\n    ON admission.purchase_outbox(next_attempt_at, attempt_id) WHERE sent_at IS NULL;\nCREATE TABLE IF NOT EXISTS admission.events (\n    event_id text PRIMARY KEY,\n    body jsonb NOT NULL\n);\nRESET ROLE;\nSET LOCAL ROLE inventory_app;\nCREATE TABLE IF NOT EXISTS inventory.attempts (\n    attempt_id text PRIMARY KEY,\n    sale_id text NOT NULL,\n    customer_id text NOT NULL,\n    rejection text CHECK (rejection IN ('INACTIVE','ENDED','SOLD_OUT'))\n);\nCREATE TABLE IF NOT EXISTS inventory.reservations (\n    reservation_id text PRIMARY KEY REFERENCES inventory.attempts(attempt_id),\n    sale_id text NOT NULL REFERENCES inventory.sales,\n    customer_id text NOT NULL,\n    trace_id text NOT NULL,\n    expires_at timestamptz NOT NULL,\n    state text NOT NULL CHECK (state IN ('HELD','COMMITTED','RELEASED','EXPIRED'))\n);\nCREATE TABLE IF NOT EXISTS inventory.order_work (\n    reservation_id text PRIMARY KEY REFERENCES inventory.reservations,\n    body jsonb NOT NULL\n);\nCREATE TABLE IF NOT EXISTS inventory.events (\n    event_id text PRIMARY KEY,\n    body jsonb NOT NULL\n);\nCOMMIT;\n",
+        "transactional-004_order_workflows.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nSET LOCAL ROLE inventory_app;\nALTER TABLE inventory.order_work ADD COLUMN IF NOT EXISTS delivered_at timestamptz;\nALTER TABLE inventory.order_work ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp();\nCREATE INDEX IF NOT EXISTS order_work_pending ON inventory.order_work(next_attempt_at,reservation_id) WHERE delivered_at IS NULL;\nCREATE INDEX IF NOT EXISTS reservations_expiring ON inventory.reservations(expires_at,reservation_id) WHERE state='HELD';\nCREATE TABLE IF NOT EXISTS inventory.outcomes (event_id text PRIMARY KEY, body jsonb NOT NULL);\nRESET ROLE;\nSET LOCAL ROLE orders_app;\nCREATE TABLE IF NOT EXISTS orders.purchases (\n    order_id text PRIMARY KEY,\n    customer_id text NOT NULL,\n    request bytea NOT NULL,\n    state text NOT NULL DEFAULT 'PENDING' CHECK (state IN ('PENDING','CONFIRMED','CANCELLED')),\n    created_at timestamptz NOT NULL DEFAULT clock_timestamp(),\n    next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp()\n);\nCREATE INDEX IF NOT EXISTS purchases_pending ON orders.purchases(next_attempt_at,order_id) WHERE state='PENDING';\nCREATE TABLE IF NOT EXISTS orders.events (event_id text PRIMARY KEY, body jsonb NOT NULL);\nCREATE TABLE IF NOT EXISTS orders.outcomes (event_id text PRIMARY KEY, body jsonb NOT NULL);\nRESET ROLE;\nSET LOCAL ROLE payment_app;\nCREATE TABLE IF NOT EXISTS payment.transactions (\n    payment_id text PRIMARY KEY,\n    request bytea NOT NULL,\n    state text NOT NULL CHECK (state IN ('PENDING','SUCCEEDED','DECLINED','REFUNDED')),\n    decision text NOT NULL CHECK (decision IN ('SUCCEEDED','DECLINED')),\n    due_at timestamptz NOT NULL,\n    lose_reply boolean NOT NULL\n);\nCREATE TABLE IF NOT EXISTS payment.events (event_id text PRIMARY KEY, body jsonb NOT NULL);\nCOMMIT;\n",
+        "transactional-005_event_delivery.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nDO $$\nDECLARE source text;\nBEGIN\n    FOREACH source IN ARRAY ARRAY['admission.events','inventory.events','inventory.outcomes','orders.events','orders.outcomes','payment.events'] LOOP\n        EXECUTE format('ALTER TABLE %s ADD COLUMN IF NOT EXISTS delivered_at timestamptz,\n            ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp(),\n            ADD COLUMN IF NOT EXISTS delivery_attempts integer NOT NULL DEFAULT 0,\n            ADD COLUMN IF NOT EXISTS dead_at timestamptz', source);\n        EXECUTE format('CREATE INDEX IF NOT EXISTS %I ON %s (next_attempt_at,event_id) WHERE delivered_at IS NULL AND dead_at IS NULL',\n            split_part(source,'.',2)||'_delivery_pending', source);\n    END LOOP;\nEND $$;\nCOMMIT;\n",
+        "migrate.sh": "#!/bin/sh\nset -eu\nexport PGUSER=flashkart_admin PGDATABASE=flashkart PGSSLMODE=verify-full PGSSLROOTCERT=/rds/ca.pem\nfor backend in a b c d transactional; do\n    export PGHOST=$(jq -er --arg key \"$backend\" '.[$key].host' /sql/databases.json)\n    secret=$(jq -er --arg key \"$backend\" '.[$key].admin_secret' /sql/databases.json)\n    PGPASSWORD=$(aws secretsmanager get-secret-value --secret-id \"$secret\" --query SecretString --output text | jq -er .password)\n    export PGPASSWORD\n    if [ \"$backend\" = transactional ]; then\n        group=transactional\n        roles='flash_sale_app inventory_app admission_app orders_app payment_app'\n    else\n        group=replica\n        roles=replica_app\n    fi\n    for role in $roles; do\n        key=$role\n        if [ \"$group\" = replica ]; then key=$backend; fi\n        password=$(cat \"/database/$key\")\n        psql -X -v ON_ERROR_STOP=1 -v role=\"$role\" -v password=\"$password\" <<'SQL'\nBEGIN;\nSELECT pg_advisory_xact_lock(1);\nSELECT format('CREATE ROLE %I LOGIN PASSWORD %L', :'role', :'password')\nWHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'role') \\gexec\nSELECT format('GRANT %I TO flashkart_admin', :'role') \\gexec\nSELECT format('ALTER ROLE %I PASSWORD %L', :'role', :'password') \\gexec\nCOMMIT;\nSQL\n    done\n    for file in /sql/\"$group\"-*.sql; do psql -X -v ON_ERROR_STOP=1 -f \"$file\"; done\ndone\n",
+        "databases.json": "{\"a\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-ad17f4a5-0a5a-43a3-b0e4-d986d07ede67-rdh2wM\", \"host\": \"flashkart-demo-a.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"b\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-6c5e2abd-3e54-42b9-a61a-d61bd04dbdae-8TBIlc\", \"host\": \"flashkart-demo-b.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"c\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-8451ce95-4373-41b2-afb2-4aa629d15ab6-RELFxe\", \"host\": \"flashkart-demo-c.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"d\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-76505acf-fb85-48ee-81e7-2861392ec1bd-NCsOgb\", \"host\": \"flashkart-demo-d.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"transactional\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-1d0e023b-91ec-418d-a74a-f69aa04cd62a-IvE1Gu\", \"host\": \"flashkart-demo-transactional.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}}"
+      }
+    },
+    {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "name": "migrate",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "1",
+          "argocd.argoproj.io/hook": "Sync",
+          "argocd.argoproj.io/hook-delete-policy": "BeforeHookCreation"
+        }
+      },
+      "spec": {
+        "backoffLimit": 4,
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "migrate"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "migrate",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:migrations-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "command": [
+                  "sh",
+                  "/sql/migrate.sh"
+                ],
+                "env": [
+                  {
+                    "name": "AWS_REGION",
+                    "value": "ap-south-1"
+                  },
+                  {
+                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                    "value": "regional"
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "sql",
+                    "mountPath": "/sql",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "database",
+                    "mountPath": "/database",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "rds-ca",
+                    "mountPath": "/rds",
+                    "readOnly": true
+                  }
+                ]
+              }
+            ],
+            "restartPolicy": "Never",
+            "volumes": [
+              {
+                "name": "sql",
+                "configMap": {
+                  "name": "migrations",
+                  "defaultMode": 365
+                }
+              },
+              {
+                "name": "database",
+                "secret": {
+                  "secretName": "migration-passwords"
+                }
+              },
+              {
+                "name": "rds-ca",
+                "configMap": {
+                  "name": "rds-ca"
+                }
+              }
+            ],
+            "serviceAccountName": "migrations"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "batch/v1",
+      "kind": "Job",
+      "metadata": {
+        "name": "kafka-topics",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "1",
+          "argocd.argoproj.io/hook": "Sync",
+          "argocd.argoproj.io/hook-delete-policy": "BeforeHookCreation"
+        }
+      },
+      "spec": {
+        "backoffLimit": 5,
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "kafka-topics"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "topics",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "command": [
+                  "kafka-topics"
+                ],
+                "env": [
+                  {
+                    "name": "AWS_REGION",
+                    "value": "ap-south-1"
+                  },
+                  {
+                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                    "value": "regional"
+                  },
+                  {
+                    "name": "KAFKA_BROKERS",
+                    "value": "boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098"
+                  }
+                ]
+              }
+            ],
+            "restartPolicy": "Never",
+            "serviceAccountName": "kafka-topics"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "replica-a"
+      },
+      "spec": {
+        "selector": {
+          "app": "replica-a"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "replica-a",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "replica-a"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "replica-a",
+              "flashkart-replica": "true"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "replica-a",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "catalog-replica"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/a.json"
+                  },
+                  {
+                    "name": "FLASHKART_REPLICA_A_DSN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "db-replica-a",
+                        "key": "dsn"
+                      }
+                    }
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "rds-ca",
+                    "mountPath": "/rds",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "rds-ca",
+                "configMap": {
+                  "name": "rds-ca"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30,
+            "topologySpreadConstraints": [
+              {
+                "maxSkew": 1,
+                "topologyKey": "topology.kubernetes.io/zone",
+                "whenUnsatisfiable": "ScheduleAnyway",
+                "labelSelector": {
+                  "matchLabels": {
+                    "flashkart-replica": "true"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "strategy": {
+          "type": "Recreate"
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "replica-b"
+      },
+      "spec": {
+        "selector": {
+          "app": "replica-b"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "replica-b",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "replica-b"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "replica-b",
+              "flashkart-replica": "true"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "replica-b",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "catalog-replica"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/b.json"
+                  },
+                  {
+                    "name": "FLASHKART_REPLICA_B_DSN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "db-replica-b",
+                        "key": "dsn"
+                      }
+                    }
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "rds-ca",
+                    "mountPath": "/rds",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "rds-ca",
+                "configMap": {
+                  "name": "rds-ca"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30,
+            "topologySpreadConstraints": [
+              {
+                "maxSkew": 1,
+                "topologyKey": "topology.kubernetes.io/zone",
+                "whenUnsatisfiable": "ScheduleAnyway",
+                "labelSelector": {
+                  "matchLabels": {
+                    "flashkart-replica": "true"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "strategy": {
+          "type": "Recreate"
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "replica-c"
+      },
+      "spec": {
+        "selector": {
+          "app": "replica-c"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "replica-c",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "replica-c"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "replica-c",
+              "flashkart-replica": "true"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "replica-c",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "catalog-replica"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/c.json"
+                  },
+                  {
+                    "name": "FLASHKART_REPLICA_C_DSN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "db-replica-c",
+                        "key": "dsn"
+                      }
+                    }
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "rds-ca",
+                    "mountPath": "/rds",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "rds-ca",
+                "configMap": {
+                  "name": "rds-ca"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30,
+            "topologySpreadConstraints": [
+              {
+                "maxSkew": 1,
+                "topologyKey": "topology.kubernetes.io/zone",
+                "whenUnsatisfiable": "ScheduleAnyway",
+                "labelSelector": {
+                  "matchLabels": {
+                    "flashkart-replica": "true"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "strategy": {
+          "type": "Recreate"
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "replica-d"
+      },
+      "spec": {
+        "selector": {
+          "app": "replica-d"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "replica-d",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "replica-d"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "replica-d",
+              "flashkart-replica": "true"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "replica-d",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "catalog-replica"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/d.json"
+                  },
+                  {
+                    "name": "FLASHKART_REPLICA_D_DSN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "db-replica-d",
+                        "key": "dsn"
+                      }
+                    }
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "rds-ca",
+                    "mountPath": "/rds",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "rds-ca",
+                "configMap": {
+                  "name": "rds-ca"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30,
+            "topologySpreadConstraints": [
+              {
+                "maxSkew": 1,
+                "topologyKey": "topology.kubernetes.io/zone",
+                "whenUnsatisfiable": "ScheduleAnyway",
+                "labelSelector": {
+                  "matchLabels": {
+                    "flashkart-replica": "true"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "strategy": {
+          "type": "Recreate"
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "flash-sale-manager"
+      },
+      "spec": {
+        "selector": {
+          "app": "flash-sale-manager"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "flash-sale-manager",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "flash-sale-manager"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "flash-sale-manager"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "flash-sale-manager",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "flash-sale-manager"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "FLASHKART_PUBLISH_EVENTS",
+                    "value": "1"
+                  },
+                  {
+                    "name": "FLASHKART_TRANSACTIONAL_DSN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "db-flash-sale-manager",
+                        "key": "dsn"
+                      }
+                    }
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "rds-ca",
+                    "mountPath": "/rds",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "rds-ca",
+                "configMap": {
+                  "name": "rds-ca"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "inventory-reservation"
+      },
+      "spec": {
+        "selector": {
+          "app": "inventory-reservation"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "inventory-reservation",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "inventory-reservation"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "inventory-reservation"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "inventory-reservation",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "inventory-reservation"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "FLASHKART_PUBLISH_EVENTS",
+                    "value": "1"
+                  },
+                  {
+                    "name": "FLASHKART_TRANSACTIONAL_DSN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "db-inventory-reservation",
+                        "key": "dsn"
+                      }
+                    }
+                  },
+                  {
+                    "name": "AWS_REGION",
+                    "value": "ap-south-1"
+                  },
+                  {
+                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                    "value": "regional"
+                  },
+                  {
+                    "name": "FLASHKART_PURCHASE_QUEUE_URL",
+                    "value": "https://sqs.ap-south-1.amazonaws.com/224033508410/flashkart-demo-purchases"
+                  },
+                  {
+                    "name": "FLASHKART_OUTCOME_QUEUE_URL",
+                    "value": "https://sqs.ap-south-1.amazonaws.com/224033508410/flashkart-demo-outcomes"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "rds-ca",
+                    "mountPath": "/rds",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "rds-ca",
+                "configMap": {
+                  "name": "rds-ca"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30,
+            "serviceAccountName": "inventory-reservation"
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "admission-controller"
+      },
+      "spec": {
+        "selector": {
+          "app": "admission-controller"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "admission-controller",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "admission-controller"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "admission-controller"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "admission-controller",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "admission-controller"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "FLASHKART_PUBLISH_EVENTS",
+                    "value": "1"
+                  },
+                  {
+                    "name": "FLASHKART_TRANSACTIONAL_DSN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "db-admission-controller",
+                        "key": "dsn"
+                      }
+                    }
+                  },
+                  {
+                    "name": "AWS_REGION",
+                    "value": "ap-south-1"
+                  },
+                  {
+                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                    "value": "regional"
+                  },
+                  {
+                    "name": "FLASHKART_PURCHASE_QUEUE_URL",
+                    "value": "https://sqs.ap-south-1.amazonaws.com/224033508410/flashkart-demo-purchases"
+                  },
+                  {
+                    "name": "FLASHKART_NOTIFICATION_TABLE",
+                    "value": "flashkart-demo-notifications"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "rds-ca",
+                    "mountPath": "/rds",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "rds-ca",
+                "configMap": {
+                  "name": "rds-ca"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30,
+            "serviceAccountName": "admission-controller"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "autoscaling/v2",
+      "kind": "HorizontalPodAutoscaler",
+      "metadata": {
+        "name": "admission-controller",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "scaleTargetRef": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "admission-controller"
+        },
+        "minReplicas": 2,
+        "maxReplicas": 5,
+        "metrics": [
+          {
+            "type": "Resource",
+            "resource": {
+              "name": "cpu",
+              "target": {
+                "type": "Utilization",
+                "averageUtilization": 60
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "order-service"
+      },
+      "spec": {
+        "selector": {
+          "app": "order-service"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "order-service",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "order-service"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "order-service"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "order-service",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "order-service"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "FLASHKART_PUBLISH_EVENTS",
+                    "value": "1"
+                  },
+                  {
+                    "name": "FLASHKART_TRANSACTIONAL_DSN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "db-order-service",
+                        "key": "dsn"
+                      }
+                    }
+                  },
+                  {
+                    "name": "AWS_REGION",
+                    "value": "ap-south-1"
+                  },
+                  {
+                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                    "value": "regional"
+                  },
+                  {
+                    "name": "FLASHKART_OUTCOME_QUEUE_URL",
+                    "value": "https://sqs.ap-south-1.amazonaws.com/224033508410/flashkart-demo-outcomes"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "rds-ca",
+                    "mountPath": "/rds",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "rds-ca",
+                "configMap": {
+                  "name": "rds-ca"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30,
+            "serviceAccountName": "order-service"
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "payment-service"
+      },
+      "spec": {
+        "selector": {
+          "app": "payment-service"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          },
+          {
+            "name": "grpc",
+            "port": 7001,
+            "targetPort": 7001
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "payment-service",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "payment-service"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "payment-service"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "payment-service",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "payment-service"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "FLASHKART_PUBLISH_EVENTS",
+                    "value": "1"
+                  },
+                  {
+                    "name": "FLASHKART_TRANSACTIONAL_DSN",
+                    "valueFrom": {
+                      "secretKeyRef": {
+                        "name": "db-payment-service",
+                        "key": "dsn"
+                      }
+                    }
+                  },
+                  {
+                    "name": "AWS_REGION",
+                    "value": "ap-south-1"
+                  },
+                  {
+                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                    "value": "regional"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  },
+                  {
+                    "name": "grpc",
+                    "containerPort": 7001
+                  }
+                ],
+                "envFrom": [],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "rds-ca",
+                    "mountPath": "/rds",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              },
+              {
+                "name": "rds-ca",
+                "configMap": {
+                  "name": "rds-ca"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30,
+            "serviceAccountName": "payment-service"
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "product-catalog"
+      },
+      "spec": {
+        "selector": {
+          "app": "product-catalog"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "product-catalog",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "product-catalog"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "product-catalog"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "product-catalog",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "product-catalog"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "AWS_REGION",
+                    "value": "ap-south-1"
+                  },
+                  {
+                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                    "value": "regional"
+                  },
+                  {
+                    "name": "FLASHKART_PRODUCT_IMAGES_BUCKET",
+                    "value": "flashkart-demo-224033508410-ap-south-1-images"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30,
+            "serviceAccountName": "product-catalog"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "autoscaling/v2",
+      "kind": "HorizontalPodAutoscaler",
+      "metadata": {
+        "name": "product-catalog",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "scaleTargetRef": {
+          "apiVersion": "apps/v1",
+          "kind": "Deployment",
+          "name": "product-catalog"
+        },
+        "minReplicas": 2,
+        "maxReplicas": 5,
+        "metrics": [
+          {
+            "type": "Resource",
+            "resource": {
+              "name": "cpu",
+              "target": {
+                "type": "Utilization",
+                "averageUtilization": 60
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "notification"
+      },
+      "spec": {
+        "selector": {
+          "app": "notification"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "notification",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "notification"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "notification"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "notification",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "notification"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "AWS_REGION",
+                    "value": "ap-south-1"
+                  },
+                  {
+                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                    "value": "regional"
+                  },
+                  {
+                    "name": "FLASHKART_NOTIFICATION_TABLE",
+                    "value": "flashkart-demo-notifications"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30,
+            "serviceAccountName": "notification"
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "analytics-api"
+      },
+      "spec": {
+        "selector": {
+          "app": "analytics-api"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "analytics-api",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "analytics-api"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "analytics-api"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "analytics-api",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "analytics-api"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  },
+                  {
+                    "name": "AWS_REGION",
+                    "value": "ap-south-1"
+                  },
+                  {
+                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                    "value": "regional"
+                  },
+                  {
+                    "name": "FLASHKART_ANALYTICS_TABLE",
+                    "value": "flashkart-demo-analytics"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "envFrom": [],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30,
+            "serviceAccountName": "analytics-api"
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "web"
+      },
+      "spec": {
+        "selector": {
+          "app": "web"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "web",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "3"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "web"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "web"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "nginx",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:web-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+                "imagePullPolicy": "IfNotPresent",
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "elbv2.k8s.aws/v1beta1",
+      "kind": "TargetGroupBinding",
+      "metadata": {
+        "name": "api",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "3"
+        }
+      },
+      "spec": {
+        "serviceRef": {
+          "name": "web",
+          "port": 8080
+        },
+        "targetGroupARN": "arn:aws:elasticloadbalancing:ap-south-1:224033508410:targetgroup/flashkart-demo-api/e4e15a5a939f62bb",
+        "targetType": "ip"
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "flink"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "flink"
+        }
+      ],
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "ClusterRole",
+        "name": "edit"
+      }
+    },
+    {
+      "apiVersion": "flink.apache.org/v1beta1",
+      "kind": "FlinkDeployment",
+      "metadata": {
+        "name": "sales-analytics",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:flink-251ed9da744b6538f2b9c4c7dac95df6acea650d",
+        "flinkVersion": "v1_20",
+        "serviceAccount": "flink",
+        "flinkConfiguration": {
+          "high-availability.type": "kubernetes",
+          "high-availability.storageDir": "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/ha",
+          "state.checkpoints.dir": "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/checkpoints",
+          "taskmanager.numberOfTaskSlots": "1",
+          "fs.s3a.endpoint.region": "ap-south-1",
+          "metrics.reporter.prom.factory.class": "org.apache.flink.metrics.prometheus.PrometheusReporterFactory",
+          "metrics.reporter.prom.port": "9249"
+        },
+        "podTemplate": {
+          "metadata": {
+            "annotations": {
+              "prometheus.io/scrape": "true",
+              "prometheus.io/port": "9249"
+            }
+          },
+          "spec": {
+            "volumes": [
+              {
+                "name": "kafka",
+                "configMap": {
+                  "name": "flink-kafka"
+                }
+              }
+            ],
+            "containers": [
+              {
+                "name": "flink-main-container",
+                "volumeMounts": [
+                  {
+                    "name": "kafka",
+                    "mountPath": "/kafka",
+                    "readOnly": true
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "jobManager": {
+          "resource": {
+            "memory": "1024m",
+            "cpu": 0.5
+          }
+        },
+        "taskManager": {
+          "resource": {
+            "memory": "1536m",
+            "cpu": 0.5
+          }
+        },
+        "job": {
+          "jarURI": "local:///opt/flink/usrlib/analytics.jar",
+          "parallelism": 1,
+          "upgradeMode": "last-state",
+          "args": [
+            "--brokers",
+            "boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098",
+            "--checkpoints",
+            "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/checkpoints",
+            "--transactional-id-prefix",
+            "flashkart-demo-sales",
+            "--kafka-properties",
+            "/kafka/client.properties"
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ConfigMap",
+      "metadata": {
+        "name": "telemetry"
+      },
+      "data": {
+        "prometheus.yml": "global:\n  scrape_interval: 10s\nscrape_configs:\n- job_name: flashkart\n  kubernetes_sd_configs:\n  - role: pod\n    namespaces:\n      names: [flashkart]\n  relabel_configs:\n  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]\n    regex: \"true\"\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);(\\d+)'\n    replacement: '$1:$2'\n    target_label: __address__\n  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);'\n    replacement: '$1'\n    target_label: __address__\n  - source_labels: [__meta_kubernetes_pod_container_port_name, __meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_container_name]\n    regex: 'http;;.*|.*;9249;flink-main-container'\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_label_app]\n    target_label: app\n",
+        "fluent-bit.conf": "[SERVICE]\n    Flush 1\n    Parsers_File /fluent-bit/etc/parsers.conf\n[INPUT]\n    Name tail\n    Path /var/log/containers/*_flashkart_*.log\n    Tag kube.*\n    multiline.parser docker, cri\n    DB /positions/tail.db\n    Skip_Long_Lines On\n    Inotify_Watcher Off\n[OUTPUT]\n    Name cloudwatch_logs\n    Match kube.*\n    region ap-south-1\n    log_group_name /flashkart/flashkart-demo/application\n    log_stream_prefix pod-\n    auto_create_group false\n",
+        "datasources.yaml": "apiVersion: 1\ndatasources:\n- name: Prometheus\n  uid: prometheus\n  type: prometheus\n  url: http://prometheus:9090\n  isDefault: true\n",
+        "provider.yaml": "apiVersion: 1\nproviders:\n- name: Flashkart\n  options:\n    path: /dashboards\n",
+        "flashkart.json": "{\"uid\": \"flashkart\", \"title\": \"Flashkart\", \"schemaVersion\": 39, \"refresh\": \"10s\", \"panels\": [{\"id\": 1, \"type\": \"timeseries\", \"title\": \"Application health\", \"gridPos\": {\"x\": 0, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (up{job=\\\"flashkart\\\"})\"}]}, {\"id\": 2, \"type\": \"timeseries\", \"title\": \"HTTP requests per second\", \"gridPos\": {\"x\": 12, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_http_requests_total[1m]))\"}]}, {\"id\": 3, \"type\": \"timeseries\", \"title\": \"Available stock by sale\", \"gridPos\": {\"x\": 0, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"flashkart_inventory_available_stock\"}]}, {\"id\": 4, \"type\": \"timeseries\", \"title\": \"Work waiting for delivery\", \"gridPos\": {\"x\": 12, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (source) (flashkart_outbox_pending) or max by (service) (flashkart_workflow_pending)\"}]}, {\"id\": 5, \"type\": \"timeseries\", \"title\": \"Replica backend failures\", \"gridPos\": {\"x\": 0, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_sql_failures_total[1m]))\"}]}, {\"id\": 6, \"type\": \"timeseries\", \"title\": \"Replica peer failures\", \"gridPos\": {\"x\": 12, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_peer_requests_total{result=\\\"error\\\"}[1m]))\"}]}, {\"id\": 7, \"type\": \"timeseries\", \"title\": \"Analytics event-time progress\", \"gridPos\": {\"x\": 0, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*currentOutputWatermark\\\"}\"}]}, {\"id\": 8, \"type\": \"timeseries\", \"title\": \"Analytics late events\", \"gridPos\": {\"x\": 12, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*lateEventsDropped\\\"}\"}]}]}"
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "prometheus"
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "Role",
+      "metadata": {
+        "name": "prometheus"
+      },
+      "rules": [
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "pods"
+          ],
+          "verbs": [
+            "get",
+            "list",
+            "watch"
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "RoleBinding",
+      "metadata": {
+        "name": "prometheus"
+      },
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "Role",
+        "name": "prometheus"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "prometheus"
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "prometheus"
+      },
+      "spec": {
+        "selector": {
+          "app": "prometheus"
+        },
+        "ports": [
+          {
+            "port": 9090
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "prometheus"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "prometheus"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "prometheus"
+            },
+            "annotations": {
+              "flashkart.io/telemetry-config": "3556ab8bd3538d0a12459d863511941e27f1c98aca0479fd156d7e74fc788018"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "prometheus",
+                "image": "prom/prometheus:v3.5.0",
+                "args": [
+                  "--config.file=/etc/prometheus/prometheus.yml",
+                  "--storage.tsdb.retention.time=24h"
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/etc/prometheus/prometheus.yml",
+                    "subPath": "prometheus.yml"
+                  }
+                ],
+                "ports": [
+                  {
+                    "containerPort": 9090
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "telemetry"
+                }
+              }
+            ],
+            "serviceAccountName": "prometheus"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "grafana"
+      },
+      "spec": {
+        "selector": {
+          "app": "grafana"
+        },
+        "ports": [
+          {
+            "port": 3000
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "grafana"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "grafana"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "grafana"
+            },
+            "annotations": {
+              "flashkart.io/telemetry-config": "3556ab8bd3538d0a12459d863511941e27f1c98aca0479fd156d7e74fc788018"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "grafana",
+                "image": "grafana/grafana:12.1.0",
+                "args": [],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/etc/grafana/provisioning/datasources/flashkart.yaml",
+                    "subPath": "datasources.yaml"
+                  },
+                  {
+                    "name": "config",
+                    "mountPath": "/etc/grafana/provisioning/dashboards/flashkart.yaml",
+                    "subPath": "provider.yaml"
+                  },
+                  {
+                    "name": "config",
+                    "mountPath": "/dashboards/flashkart.json",
+                    "subPath": "flashkart.json"
+                  }
+                ],
+                "ports": [
+                  {
+                    "containerPort": 3000
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "telemetry"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "DaemonSet",
+      "metadata": {
+        "name": "fluent-bit"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "fluent-bit"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "fluent-bit"
+            },
+            "annotations": {
+              "flashkart.io/telemetry-config": "3556ab8bd3538d0a12459d863511941e27f1c98aca0479fd156d7e74fc788018"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "fluent-bit",
+                "image": "fluent/fluent-bit:4.0.6",
+                "args": [
+                  "-c",
+                  "/fluent-bit/etc/fluent-bit.conf"
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/fluent-bit/etc/fluent-bit.conf",
+                    "subPath": "fluent-bit.conf"
+                  },
+                  {
+                    "name": "logs",
+                    "mountPath": "/var/log",
+                    "readOnly": true
+                  },
+                  {
+                    "name": "positions",
+                    "mountPath": "/positions"
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "AWS_REGION",
+                    "value": "ap-south-1"
+                  },
+                  {
+                    "name": "AWS_STS_REGIONAL_ENDPOINTS",
+                    "value": "regional"
+                  },
+                  {
+                    "name": "AWS_EC2_METADATA_DISABLED",
+                    "value": "true"
+                  }
+                ]
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "telemetry"
+                }
+              },
+              {
+                "name": "logs",
+                "hostPath": {
+                  "path": "/var/log"
+                }
+              },
+              {
+                "name": "positions",
+                "emptyDir": {}
+              }
+            ],
+            "serviceAccountName": "fluent-bit"
+          }
+        }
+      }
+    }
+  ]
+}

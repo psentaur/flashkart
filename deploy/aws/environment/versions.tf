@@ -41,5 +41,14 @@ variable "operator_cidrs" {
     error_message = "Supply restricted EKS API CIDRs."
   }
 }
+variable "public_cidrs" {
+  description = "IPv4 CIDRs allowed to reach the public application load balancer."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+  validation {
+    condition     = length(var.public_cidrs) > 0 && alltrue([for cidr in var.public_cidrs : can(cidrhost(cidr, 0))])
+    error_message = "Supply at least one valid IPv4 CIDR."
+  }
+}
 variable "artifact_repository" { type = string }
 variable "image_tag" { type = string }

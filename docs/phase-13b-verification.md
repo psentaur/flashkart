@@ -25,4 +25,10 @@ Use an account with MSK access and sufficient EC2 capacity for the configured wo
 | Replica RDS recovery | Run `REPLICA=a CONFIRM_OUTAGE=flashkart-demo sh deploy/aws/replica-outage.sh`. Keep backend readiness, preferred owners, the fallback hint count before and during the outage, the post-recovery drain, and the catalog version before and after recovery. |
 | Teardown and recreation | Archive first-run reports and preserve bootstrap state and ECR. Run ordered teardown, recreate the environment from the recorded revision and images, publish freshly rendered GitOps configuration, and rerun smoke, purchase, analytics and replica recovery. Keep the second set of reports separately. |
 
+## CDN removal
+
+CloudFront still required account verification on the next attempt. A distribution probe was rejected with the same `AccessDenied` error, and nothing was created. The CDN is not a project requirement, so the environment no longer uses CloudFront. The Application Load Balancer is now internet-facing in the public subnets. It forwards to the `web` pods, which already served the React build and routed `/api/*` in the kind environment. The frontend S3 bucket and `publish-web.sh` were removed. `public_url` is now the ALB's HTTP DNS name, and `public_cidrs` controls which IPv4 ranges may reach it. The change passed `terraform fmt` and `terraform validate`.
+
+Traffic to the ALB is plain HTTP because the deployment has no custom domain or certificate. Demo bearer tokens therefore cross the network unencrypted. Set `public_cidrs` to the operators' and testers' addresses during acceptance.
+
 Live acceptance and recreation remain open.

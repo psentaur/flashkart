@@ -16,7 +16,7 @@ output "deployment" {
     target_group    = aws_lb_target_group.api.arn
     repository      = var.artifact_repository
     tag             = var.image_tag
-    public_url      = "https://${aws_cloudfront_distribution.site.domain_name}"
+    public_url      = "http://${aws_lb.api.dns_name}"
   }
 }
 output "database_passwords" {
