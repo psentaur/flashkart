@@ -101,6 +101,8 @@
         },
         "volumeClaimTemplates": [
           {
+            "apiVersion": "v1",
+            "kind": "PersistentVolumeClaim",
             "metadata": {
               "name": "data"
             },
@@ -108,6 +110,7 @@
               "accessModes": [
                 "ReadWriteOnce"
               ],
+              "volumeMode": "Filesystem",
               "resources": {
                 "requests": {
                   "storage": "1Gi"
@@ -203,6 +206,8 @@
         },
         "volumeClaimTemplates": [
           {
+            "apiVersion": "v1",
+            "kind": "PersistentVolumeClaim",
             "metadata": {
               "name": "data"
             },
@@ -210,6 +215,7 @@
               "accessModes": [
                 "ReadWriteOnce"
               ],
+              "volumeMode": "Filesystem",
               "resources": {
                 "requests": {
                   "storage": "1Gi"
@@ -305,6 +311,8 @@
         },
         "volumeClaimTemplates": [
           {
+            "apiVersion": "v1",
+            "kind": "PersistentVolumeClaim",
             "metadata": {
               "name": "data"
             },
@@ -312,6 +320,7 @@
               "accessModes": [
                 "ReadWriteOnce"
               ],
+              "volumeMode": "Filesystem",
               "resources": {
                 "requests": {
                   "storage": "1Gi"
@@ -407,6 +416,8 @@
         },
         "volumeClaimTemplates": [
           {
+            "apiVersion": "v1",
+            "kind": "PersistentVolumeClaim",
             "metadata": {
               "name": "data"
             },
@@ -414,6 +425,7 @@
               "accessModes": [
                 "ReadWriteOnce"
               ],
+              "volumeMode": "Filesystem",
               "resources": {
                 "requests": {
                   "storage": "1Gi"
@@ -509,6 +521,8 @@
         },
         "volumeClaimTemplates": [
           {
+            "apiVersion": "v1",
+            "kind": "PersistentVolumeClaim",
             "metadata": {
               "name": "data"
             },
@@ -516,6 +530,7 @@
               "accessModes": [
                 "ReadWriteOnce"
               ],
+              "volumeMode": "Filesystem",
               "resources": {
                 "requests": {
                   "storage": "1Gi"
@@ -720,6 +735,8 @@
         },
         "volumeClaimTemplates": [
           {
+            "apiVersion": "v1",
+            "kind": "PersistentVolumeClaim",
             "metadata": {
               "name": "kafka"
             },
@@ -727,6 +744,7 @@
               "accessModes": [
                 "ReadWriteOnce"
               ],
+              "volumeMode": "Filesystem",
               "resources": {
                 "requests": {
                   "storage": "2Gi"

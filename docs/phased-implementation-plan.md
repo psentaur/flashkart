@@ -2,9 +2,9 @@
 
 This roadmap turns the [technical architecture](implementation-plan.md) into executable implementation phases. That document remains the source of truth for system behavior; this document defines build order, dependencies, deliverables, and completion checks.
 
-**Current status:** Phases 1–10 are implemented. Phase 10 passed the local Chromium suite against the marketplace and analytics services. Phase 11 deployment and rehearsal tooling is in place, with full cluster validation pending. Phase 12 AWS infrastructure and deployment tooling is in place. Live acceptance and recreation remain pending. [Phase 10 development](phase-10-development.md)
+**Current status:** Phases 1–10 are implemented. Phase 10 passed the local Chromium suite against the marketplace and analytics services. Phase 11 passed local Kubernetes acceptance in Phase 13A. Phase 12 AWS infrastructure is implemented. Phase 13B tracks live AWS acceptance and redeployment. [Phase 13 checklist](#phase-13-deployment-verification-and-closeout)
 
-Develop and verify locally through Phase 11. Phase 12 covers AWS integration and reproducible deployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
+Phase 13 completes the local Kubernetes rehearsal before proceeding to live AWS acceptance and redeployment. Progress is based on passing technical checks, without calendar or team-size assumptions.
 
 ## Phase overview
 
@@ -22,6 +22,7 @@ Develop and verify locally through Phase 11. Phase 12 covers AWS integration and
 | 10 | Demo frontend | Customer, admin, analytics, and replication screens work together | 9 |
 | 11 | Local Kubernetes and GitOps | The application deploys through ArgoCD, is observable, and scales under load | 10 |
 | 12 | AWS integration and redeployment | The complete managed-cloud deployment passes its acceptance suite | 11 |
+| 13 | Deployment verification and closeout | Local and AWS acceptance evidence closes the outstanding Phase 11 and 12 checks | Phase 11 and 12 implementations |
 
 The default execution order is sequential. Keep intermediate states explicit: for example, Phase 6 proves reservation correctness before Phase 7 adds successful purchases. A phase is complete only when its checks pass against its real dependencies.
 
@@ -277,6 +278,30 @@ The default execution order is sequential. Keep intermediate states explicit: fo
 - Teardown and clean redeployment succeed without relying on undocumented manual setup. Repeat smoke tests and representative purchase, analytics, and replication-recovery scenarios after recreation.
 
 **Evidence:** cloud acceptance and redeployment reports. Proposed commands: `make cloud-smoke`, `make test-cloud`, `make demo`, `make teardown-demo`.
+
+## Phase 13: Deployment verification and closeout
+
+**Objective:** finish the Phase 11 and 12 acceptance checks, fix defects exposed by the rehearsals, and record repeatable evidence.
+
+### 13A. Local Kubernetes rehearsal
+
+- [x] Start a fresh kind cluster. Build and load immutable images, bootstrap Argo CD, and verify that migrations and topic setup succeed. Confirm five PostgreSQL backends have separate volumes and the application, Flink, and observability workloads are healthy.
+- [x] Commit a new immutable image reference to the watched Git branch and confirm that Argo CD deploys it. Introduce Service drift and verify that Argo CD repairs it.
+- [x] Run `make test-kubernetes` and `make test-load`. Verify replica-agent replacement preserves catalog state, retries preserve purchase idempotency, stock remains conserved, and both Catalog and Admission HPAs scale above two replicas under sustained traffic.
+- [x] Verify dashboards and centralized logs cover the application, Notification, and Flink. Capture separate telemetry for a replica backend outage and a peer partition.
+- [x] Record the Git revision, deployed image tags, and recovery and load reports from `build/kubernetes`.
+
+Phase 13A passed. See the [Phase 13A rehearsal report](phase-13a-verification.md) for the local evidence and the purchase backlog observed under load. [Phase 11 development guide](phase-11-development.md)
+
+### 13B. Live AWS acceptance and redeployment
+
+- [ ] With an active AWS session in the intended account, review and apply the disposable Terraform environment. Deploy the versioned manifests through Argo CD and run `make cloud-smoke` and `make test-cloud`. Verify public admin and purchase flows, finalized analytics, scoped IAM, CloudWatch logs, and EKS HPA scale-out.
+- [ ] Verify MSK IAM token refresh on a long-running client, Lambda partial-batch retries and DLQ handling, and Flink recovery from an S3 checkpoint.
+- [ ] Exercise an actual replica RDS outage. Confirm failed-backend visibility, quorum and fallback writes, and eventual hint drain and converged reads after recovery.
+- [ ] Archive reports with the infrastructure and GitOps revisions and image digests. Run ordered teardown, preserving bootstrap state and build artifacts. Recreate the disposable environment and rerun smoke, purchase, analytics, and replica recovery checks. Record the redeployment results.
+- [ ] Update the Phase 12 status once live AWS acceptance evidence is recorded.
+
+Record AWS results separately from local tests and emulator results. [Phase 12 development guide](phase-12-development.md)
 
 ## Completion and tracking rules
 

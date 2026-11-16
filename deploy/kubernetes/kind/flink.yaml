@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: flink
+  name: flashkart-flink
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -9,7 +9,7 @@ metadata:
   name: flink
 subjects:
   - kind: ServiceAccount
-    name: flink
+    name: flashkart-flink
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -25,7 +25,7 @@ spec:
   image: flashkart-flink:dev
   imagePullPolicy: IfNotPresent
   flinkVersion: v1_20
-  serviceAccount: flink
+  serviceAccount: flashkart-flink
   flinkConfiguration:
     taskmanager.numberOfTaskSlots: "1"
     high-availability.type: kubernetes
@@ -74,6 +74,8 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: flink-checkpoints
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   accessModes: [ReadWriteOnce]
   resources:

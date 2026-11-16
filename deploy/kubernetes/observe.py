@@ -1,4 +1,5 @@
 """Render local observability resources and the overview dashboard."""
+import hashlib
 import json
 from pathlib import Path
 
@@ -80,6 +81,7 @@ fluent = """[SERVICE]
     multiline.parser docker, cri
     DB /positions/tail.db
     Skip_Long_Lines On
+    Inotify_Watcher Off
 [OUTPUT]
     Name loki
     Match kube.*
@@ -112,9 +114,13 @@ def add(api, kind, name, **fields):
     objects.append(dict(apiVersion=api, kind=kind, metadata={"name": name}, **fields))
 
 
-add("v1", "ConfigMap", "telemetry", data={"prometheus.yml": prometheus, "loki.yml": loki,
+telemetry = {"prometheus.yml": prometheus, "loki.yml": loki,
     "fluent-bit.conf": fluent, "datasources.yaml": datasources, "provider.yaml": provider,
-    "flashkart.json": json.dumps(dashboard)})
+    "flashkart.json": json.dumps(dashboard)}
+add("v1", "ConfigMap", "telemetry", data=telemetry)
+# Mounted subPath files update when pods restart.
+annotations = {"flashkart.io/telemetry-config": hashlib.sha256(
+    json.dumps(telemetry, sort_keys=True).encode()).hexdigest()}
 add("v1", "ServiceAccount", "prometheus")
 add("rbac.authorization.k8s.io/v1", "Role", "prometheus",
     rules=[{"apiGroups": [""], "resources": ["pods"], "verbs": ["get", "list", "watch"]}])
@@ -147,7 +153,7 @@ for name, image, port, args, files in (
         mounts.extend([{"name": "logs", "mountPath": "/var/log", "readOnly": True},
                        {"name": "positions", "mountPath": "/positions"}])
     add("apps/v1", "Deployment" if port else "DaemonSet", name, spec={
-        "selector": {"matchLabels": selector}, "template": {"metadata": {"labels": selector}, "spec": spec},
+        "selector": {"matchLabels": selector}, "template": {"metadata": {"labels": selector, "annotations": annotations}, "spec": spec},
     })
 
 Path(__file__).with_name("kind").joinpath("observability.json").write_text(
