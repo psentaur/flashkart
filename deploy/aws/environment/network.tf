@@ -60,9 +60,20 @@ module "eks" {
     workers = {
       ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = ["m6i.xlarge"]
-      min_size       = 3
-      desired_size   = 3
-      max_size       = 3
+      # The EMR Flink runtime image is over 5 GB compressed; the 20 GB default disk triggers evictions.
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 60
+            volume_type           = "gp3"
+            delete_on_termination = true
+          }
+        }
+      }
+      min_size     = 3
+      desired_size = 3
+      max_size     = 3
     }
   }
 }

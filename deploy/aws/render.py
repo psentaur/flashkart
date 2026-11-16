@@ -119,6 +119,11 @@ add("flink.apache.org/v1beta1", "FlinkDeployment", "sales-analytics", spec={
     "emrReleaseLabel": "emr-7.13.0-flink-latest", "image": image("flink"), "flinkVersion": "v1_20", "serviceAccount": "flink",
     "flinkConfiguration": {
         "high-availability.type": "kubernetes", "high-availability.storageDir": checkpoint + "/ha",
+        # The EMR operator validates these labels; its mutating webhook, which would add them, is disabled.
+        "kubernetes.jobmanager.labels": "emr-containers.amazonaws.com/component:jobmanager,"
+                                        "emr-containers.amazonaws.com/resource.type:job.flink",
+        "kubernetes.taskmanager.labels": "emr-containers.amazonaws.com/component:taskmanager,"
+                                         "emr-containers.amazonaws.com/resource.type:job.flink",
         "state.checkpoints.dir": checkpoint + "/checkpoints", "taskmanager.numberOfTaskSlots": "1",
         "fs.s3a.endpoint.region": settings["region"],
         "metrics.reporter.prom.factory.class": "org.apache.flink.metrics.prometheus.PrometheusReporterFactory",
@@ -128,7 +133,7 @@ add("flink.apache.org/v1beta1", "FlinkDeployment", "sales-analytics", spec={
                     "spec": {"volumes": [{"name": "kafka", "configMap": {"name": "flink-kafka"}}],
                              "containers": [{"name": "flink-main-container", "volumeMounts": [
                                  {"name": "kafka", "mountPath": "/kafka", "readOnly": True}]}]}},
-    "jobManager": {"resource": {"memory": "1024m", "cpu": 0.5}},
+    "jobManager": {"storageDir": checkpoint + "/ha", "resource": {"memory": "1024m", "cpu": 0.5}},
     "taskManager": {"resource": {"memory": "1536m", "cpu": 0.5}},
     "job": {"jarURI": "local:///opt/flink/usrlib/analytics.jar", "parallelism": 1, "upgradeMode": "last-state",
             "args": ["--brokers", ",".join(settings["brokers"]), "--checkpoints", checkpoint + "/checkpoints",

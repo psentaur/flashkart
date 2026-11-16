@@ -178,7 +178,7 @@
             "containers": [
               {
                 "name": "migrate",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:migrations-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:migrations-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "command": [
                   "sh",
                   "/sql/migrate.sh"
@@ -262,7 +262,7 @@
             "containers": [
               {
                 "name": "topics",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "command": [
                   "kafka-topics"
                 ],
@@ -341,7 +341,7 @@
             "containers": [
               {
                 "name": "replica-a",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -499,7 +499,7 @@
             "containers": [
               {
                 "name": "replica-b",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -657,7 +657,7 @@
             "containers": [
               {
                 "name": "replica-c",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -815,7 +815,7 @@
             "containers": [
               {
                 "name": "replica-d",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -967,7 +967,7 @@
             "containers": [
               {
                 "name": "flash-sale-manager",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "flash-sale-manager"
@@ -1115,7 +1115,7 @@
             "containers": [
               {
                 "name": "inventory-reservation",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "inventory-reservation"
@@ -1273,7 +1273,7 @@
             "containers": [
               {
                 "name": "admission-controller",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "admission-controller"
@@ -1468,7 +1468,7 @@
             "containers": [
               {
                 "name": "order-service",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "order-service"
@@ -1633,7 +1633,7 @@
             "containers": [
               {
                 "name": "payment-service",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "payment-service"
@@ -1783,7 +1783,7 @@
             "containers": [
               {
                 "name": "product-catalog",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "product-catalog"
@@ -1945,7 +1945,7 @@
             "containers": [
               {
                 "name": "notification",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "notification"
@@ -2077,7 +2077,7 @@
             "containers": [
               {
                 "name": "analytics-api",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "analytics-api"
@@ -2200,7 +2200,7 @@
             "containers": [
               {
                 "name": "nginx",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:web-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:web-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
                 "imagePullPolicy": "IfNotPresent",
                 "readinessProbe": {
                   "httpGet": {
@@ -2263,12 +2263,14 @@
       },
       "spec": {
         "emrReleaseLabel": "emr-7.13.0-flink-latest",
-        "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:flink-ee7760eb6ffa6a63cef4aaba299936696e4e7048",
+        "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:flink-c791cdc2a8c89c0cca2347a85e13f2bfa4b939f8",
         "flinkVersion": "v1_20",
         "serviceAccount": "flink",
         "flinkConfiguration": {
           "high-availability.type": "kubernetes",
           "high-availability.storageDir": "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/ha",
+          "kubernetes.jobmanager.labels": "emr-containers.amazonaws.com/component:jobmanager,emr-containers.amazonaws.com/resource.type:job.flink",
+          "kubernetes.taskmanager.labels": "emr-containers.amazonaws.com/component:taskmanager,emr-containers.amazonaws.com/resource.type:job.flink",
           "state.checkpoints.dir": "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/checkpoints",
           "taskmanager.numberOfTaskSlots": "1",
           "fs.s3a.endpoint.region": "ap-south-1",
@@ -2306,6 +2308,7 @@
           }
         },
         "jobManager": {
+          "storageDir": "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/ha",
           "resource": {
             "memory": "1024m",
             "cpu": 0.5
