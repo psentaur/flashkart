@@ -14,6 +14,8 @@ Use an AWS operator identity authorized for the intended account, Terraform 1.10
 
 The notification Lambda owns the outcomes queue in AWS. The EKS notification deployment serves reads from DynamoDB. MSK uses per-service IAM roles, including scoped topic, group, and transaction permissions. Flink uses the EMR 7.13.0 runtime, AWS MSK IAM authentication, and S3 checkpoint storage. [EMR Flink release](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-7.13.0-flink-20260410.html) · [CloudFront VPC origins](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html)
 
+Use the same deployment identity through apply and teardown. When Terraform runs under the account root identity, it creates a disposable IAM role for the EKS access entry. The deployment scripts use that role for Kubernetes authentication. [EKS access entries](https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html)
+
 ## Acceptance and recreation
 
 Run `make test-cloud` to exercise public admin and checkout APIs, verify finalized analytics, sample HPA scale-out during k6 load, and export workload, GitOps, and CloudWatch evidence to `build/cloud`. Record separate evidence for MSK token renewal, SQS partial-batch retries and DLQ redrive, a Flink restore from S3, and an outage and recovery of one replica RDS instance. Run `REPLICA=a CONFIRM_OUTAGE=flashkart-demo sh deploy/aws/replica-outage.sh` against the disposable stack to stop that RDS backend, write through the surviving peers, and restart the backend. Capture replica SQL failures and hint metrics during the outage and confirm hint drain after recovery.
@@ -22,4 +24,4 @@ Archive the reports with the infrastructure revision, GitOps commit, image tags 
 
 ## Verification status
 
-Terraform configuration validation and local tests are separate from a live AWS rehearsal. The AWS session was expired when checked, so no cloud apply, acceptance, teardown, or recreation was performed. Phase 12 remains open until live evidence is recorded.
+Both Terraform roots validated during Phase 13B. See the [Phase 13B verification report](phase-13b-verification.md) for the AWS preflight results and remaining live checks.

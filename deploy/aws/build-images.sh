@@ -6,7 +6,9 @@ set -eu
 engine=${CONTAINER_ENGINE:-docker}
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-aws ecr get-login-password --region "$AWS_REGION" | "$engine" login --username AWS --password-stdin "${ARTIFACT_REPOSITORY%%/*}"
+if [ "${ECR_PREAUTHENTICATED:-0}" != 1 ]; then
+    aws ecr get-login-password --region "$AWS_REGION" | "$engine" login --username AWS --password-stdin "${ARTIFACT_REPOSITORY%%/*}"
+fi
 app="$ARTIFACT_REPOSITORY:app-$IMAGE_TAG"
 "$engine" build --platform linux/amd64 -f deploy/kubernetes/app.Dockerfile -t "$app" .
 mkdir "$work/notification" "$work/flink"
