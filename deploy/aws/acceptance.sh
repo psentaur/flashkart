@@ -19,7 +19,6 @@ test "$mode" = acceptance
 work=$(mktemp -d)
 sampler=
 trap 'if [ -n "$sampler" ]; then kill "$sampler" 2>/dev/null || true; fi; rm -rf "$work"' EXIT
-export KUBECONFIG="$work/kubeconfig"
 name=$(printf '%s' "$settings" | jq -er .name)
 region=$(printf '%s' "$settings" | jq -er .region)
 repository=$(printf '%s' "$settings" | jq -er .repository)
@@ -30,10 +29,8 @@ aws ecr describe-images --region "$region" --repository-name "${repository#*/}" 
     "imageTag=app-$image_tag" "imageTag=notification-$image_tag" "imageTag=flink-$image_tag" \
     "imageTag=web-$image_tag" "imageTag=migrations-$image_tag" >"$reports/image-digests.json"
 jq -e 'length == 5 and all(.[]; .digest | startswith("sha256:"))' "$reports/image-digests.json" >/dev/null
-operator_role=$(printf '%s' "$settings" | jq -r '.operator_role // empty')
-set --
-if [ -n "$operator_role" ]; then set -- --role-arn "$operator_role"; fi
-aws eks update-kubeconfig --name "$name" --region "$region" "$@" >/dev/null
+. deploy/aws/kubeconfig.sh
+cloud_kubeconfig "$name" "$region" "$work/kubeconfig"
 kubectl -n flashkart get deployments,pods,hpa,flinkdeployments,targetgroupbindings -o wide >"$reports/workloads.txt"
 kubectl -n argocd get applications -o wide >"$reports/gitops.txt"
 kubectl -n argocd get application flashkart-cloud -o json |

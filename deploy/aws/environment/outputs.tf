@@ -1,10 +1,9 @@
 output "deployment" {
   value = {
-    name          = var.name
-    region        = var.region
-    operator_role = one(aws_iam_role.cluster_operator[*].arn)
-    vpc           = module.vpc.vpc_id
-    brokers       = split(",", data.aws_msk_bootstrap_brokers.events.bootstrap_brokers_sasl_iam)
+    name    = var.name
+    region  = var.region
+    vpc     = module.vpc.vpc_id
+    brokers = split(",", data.aws_msk_bootstrap_brokers.events.bootstrap_brokers_sasl_iam)
     databases = { for key, db in aws_db_instance.postgres : key => {
       host = db.address, admin_secret = db.master_user_secret[0].secret_arn
     } }

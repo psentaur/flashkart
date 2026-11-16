@@ -4,7 +4,13 @@ The 16 November 2026 preflight authenticated successfully. AWS reported an activ
 
 After the account upgrade, AWS reported an active Paid plan and a 16-vCPU EC2 Standard On-Demand quota in `ap-south-1`. MSK still returned `SubscriptionRequiredException` in both regions. No infrastructure was provisioned during the retry.
 
-A subsequent preflight confirmed that the MSK Serverless API worked in `ap-south-1` and listed no existing clusters. Terraform created the retained state bucket and ECR repository, and validated the disposable environment plan with 141 additions.
+A subsequent preflight confirmed that the MSK Serverless API worked in `ap-south-1`. Terraform created the retained state bucket and ECR repository. The first disposable apply brought MSK Serverless, EKS, the managed node group, and the notification Lambda online. It failed when CloudFront required AWS Support to verify the account before creating a distribution. An RDS waiter also returned an expired-token error. The database was present in Terraform state.
+
+The first EKS access configuration relied on account root assuming a role, which STS rejected. The Terraform configuration now accepts an explicit IAM user or role for Kubernetes access. The deployment scripts validate that a supplied kubeconfig points to the intended EKS endpoint. Terraform validation and the kubeconfig checks passed locally.
+
+The live notification Lambda returned only the invalid message ID from a mixed invocation. Repeating that invocation preserved one notification for the valid fixture. A malformed fixture sent through the actual outcomes queue appeared in the outcomes dead-letter queue. Evidence is in `build/cloud/13b/first/lambda`.
+
+AWS Support can use the failed CloudFront `CreateDistributionWithTags` request ID `ea7500e3-2651-4232-9e6a-1a63fe1760c7` to investigate the account verification requirement. The five immutable ECR digests are recorded in `build/cloud/13b/first/ecr-images.json`.
 
 Use an account with MSK access and sufficient EC2 capacity for the configured worker group. Run the [Phase 12 deployment procedure](phase-12-development.md) and retain separate report directories for the first deployment and the recreation. Keep Terraform plans and state in restricted storage because they can contain credentials.
 

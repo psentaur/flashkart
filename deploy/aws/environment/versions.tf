@@ -26,6 +26,14 @@ variable "name" {
   }
 }
 variable "eks_version" { type = string }
+variable "eks_operator_principal_arn" {
+  type    = string
+  default = null
+  validation {
+    condition     = var.eks_operator_principal_arn == null || can(regex("^arn:aws:iam::[0-9]{12}:(user|role)/.+$", var.eks_operator_principal_arn))
+    error_message = "Supply an IAM user or role ARN for Kubernetes access."
+  }
+}
 variable "operator_cidrs" {
   type = list(string)
   validation {

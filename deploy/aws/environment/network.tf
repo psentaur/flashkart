@@ -6,24 +6,13 @@ data "aws_availability_zones" "available" {
   }
 }
 
-data "aws_caller_identity" "operator" {}
-
-locals {
-  operator_is_root = endswith(data.aws_caller_identity.operator.arn, ":root")
-}
-
-resource "aws_iam_role" "cluster_operator" {
-  count = local.operator_is_root ? 1 : 0
-  name  = "${var.name}-cluster-operator"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect    = "Allow"
-      Action    = "sts:AssumeRole"
-      Principal = { AWS = data.aws_caller_identity.operator.arn }
-      Condition = { ArnEquals = { "aws:PrincipalArn" = data.aws_caller_identity.operator.arn } }
-    }]
-  })
+data "aws_caller_identity" "operator" {
+  lifecycle {
+    postcondition {
+      condition     = !endswith(self.arn, ":root") || var.eks_operator_principal_arn != null
+      error_message = "When Terraform runs as account root, supply an IAM user or role ARN for Kubernetes access."
+    }
+  }
 }
 
 module "vpc" {
@@ -47,10 +36,10 @@ module "eks" {
   endpoint_public_access                   = true
   endpoint_public_access_cidrs             = var.operator_cidrs
   endpoint_private_access                  = true
-  enable_cluster_creator_admin_permissions = !local.operator_is_root
-  access_entries = local.operator_is_root ? {
+  enable_cluster_creator_admin_permissions = var.eks_operator_principal_arn == null
+  access_entries = var.eks_operator_principal_arn != null ? {
     operator = {
-      principal_arn = aws_iam_role.cluster_operator[0].arn
+      principal_arn = var.eks_operator_principal_arn
       policy_associations = {
         admin = {
           policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"

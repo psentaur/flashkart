@@ -25,11 +25,8 @@ tf output -json deployment >"$work/settings.json"
 tf output -json database_passwords >"$work/passwords.json"
 name=$(jq -er .name "$work/settings.json")
 region=$(jq -er .region "$work/settings.json")
-export KUBECONFIG="$work/kubeconfig"
-operator_role=$(jq -r '.operator_role // empty' "$work/settings.json")
-set --
-if [ -n "$operator_role" ]; then set -- --role-arn "$operator_role"; fi
-aws eks update-kubeconfig --name "$name" --region "$region" "$@" >/dev/null
+. deploy/aws/kubeconfig.sh
+cloud_kubeconfig "$name" "$region" "$work/kubeconfig"
 ns() { kubectl create namespace "$1" --dry-run=client -o yaml | kubectl apply -f -; }
 ns argocd
 ns flashkart

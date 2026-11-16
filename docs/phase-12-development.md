@@ -14,7 +14,7 @@ Use an AWS operator identity authorized for the intended account, Terraform 1.10
 
 The notification Lambda owns the outcomes queue in AWS. The EKS notification deployment serves reads from DynamoDB. MSK uses per-service IAM roles, including scoped topic, group, and transaction permissions. Flink uses the EMR 7.13.0 runtime, AWS MSK IAM authentication, and S3 checkpoint storage. [EMR Flink release](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-7.13.0-flink-20260410.html) · [CloudFront VPC origins](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html)
 
-Use the same deployment identity through apply and teardown. When Terraform runs under the account root identity, it creates a disposable IAM role for the EKS access entry. The deployment scripts use that role for Kubernetes authentication. [EKS access entries](https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html)
+When Terraform runs as account root, set `eks_operator_principal_arn` to the IAM user or role that will access this EKS cluster. Set `FLASHKART_KUBECONFIG` to that identity's kubeconfig for the disposable cluster, and use it throughout deployment and teardown. [EKS access entries](https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html)
 
 ## Acceptance and recreation
 
