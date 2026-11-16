@@ -12,6 +12,8 @@ The live notification Lambda returned only the invalid message ID from a mixed i
 
 AWS Support can use the failed CloudFront `CreateDistributionWithTags` request ID `ea7500e3-2651-4232-9e6a-1a63fe1760c7` to investigate the account verification requirement. The five immutable ECR digests are recorded in `build/cloud/13b/first/ecr-images.json`.
 
+Terraform removed 117 disposable resources and the environment state is empty. The bootstrap state bucket, ECR repository, and rehearsal evidence were retained. See `build/cloud/13b/environment-destroy.txt` for the teardown log.
+
 Use an account with MSK access and sufficient EC2 capacity for the configured worker group. Run the [Phase 12 deployment procedure](phase-12-development.md) and retain separate report directories for the first deployment and the recreation. Keep Terraform plans and state in restricted storage because they can contain credentials.
 
 | Check | Live evidence to keep |
