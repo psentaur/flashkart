@@ -24,4 +24,4 @@ Archive the reports with the infrastructure revision, GitOps commit, image tags 
 
 ## Verification status
 
-Both Terraform roots validated during Phase 13B. See the [Phase 13B verification report](phase-13b-verification.md) for the AWS preflight results and remaining live checks.
+Live AWS acceptance passed on 16 November 2026 against GitOps revision `a8d9f16`. Six deployment defects were found and fixed during the run. See the [Phase 13B verification report](phase-13b-verification.md). Teardown and recreation from the recorded revision remain open.

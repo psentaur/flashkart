@@ -31,4 +31,41 @@ CloudFront still required account verification on the next attempt. A distributi
 
 Traffic to the ALB is plain HTTP because the deployment has no custom domain or certificate. Demo bearer tokens therefore cross the network unencrypted. Set `public_cidrs` to the operators' and testers' addresses during acceptance.
 
-Live acceptance and recreation remain open.
+## Live acceptance on 16 November 2026
+
+The disposable environment was applied from the CDN-free configuration in `ap-south-1`. Argo CD deployed GitOps revision `a8d9f16daa30f6956295a48d4eb3afb7232731ee` and reported it Synced and Healthy. Images are tagged `0d0e433ac2640280fd80edad347cde46db29fcdc`; their digests are in `image-digests.json`. Reports are in `build/cloud/13b/first`.
+
+### Defects found and fixed
+
+| Defect | Symptom in AWS | Fix |
+| --- | --- | --- |
+| The application image had no CA bundle | The `kafka-topics` hook failed with `x509: certificate signed by unknown authority`. MSK, SQS, DynamoDB and STS clients were affected. | Copy the CA bundle from the Go build stage. |
+| The EMR Flink CRD requires `emrReleaseLabel` | Argo CD could not apply the `FlinkDeployment`. | Set `emr-7.13.0-flink-latest`. |
+| EMR mandatory labels were missing | The operator reported `Missing EMR on EKS mandatory labels`. The webhook that adds them is disabled. | Add the EMR component and resource-type labels to JobManager and TaskManager pods. |
+| The HA storage directory was missing | Validation required `spec.jobManager.storageDir`. | Set it to the checkpoint bucket's `ha` prefix. |
+| Node disks were too small | The JobManager was evicted for low ephemeral storage. The EMR image is over 5 GB compressed. | Use 60 GB gp3 node volumes. |
+| The MSK IAM jar was on the parent classloader | The job failed with `ClassNotFoundException` for Kafka's `AuthenticateCallbackHandler`. | Install the jar in `usrlib` with the job jar. |
+
+The node-volume rollout stalled because the EC2 quota is 16 vCPUs. The managed node group tried to surge three 4-vCPU nodes. The old nodes were drained and terminated one at a time to finish it. A cluster that changes node configuration needs either a higher quota or a smaller surge. Flink's first job, evicted with its node, left a terminal record in the S3 HA store. That stale HA state was cleared before the redeployment.
+
+### Results
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Public deployment | Pass. An admin published a sale through the public ALB. The customer purchase reached `CONFIRMED`, and analytics finalized one confirmed purchase. | `purchase.json`, `analytics.json`, `index.html` |
+| HPA scale-out | Pass. A 3-minute k6 run sent 341,371 requests at about 1,896 per second, with 0 failures and p95 of 54 ms. Catalog and Admission each peaked at 5 replicas. | `k6.log`, `hpa.jsonstream`, `hpa-peaks.json` |
+| CloudWatch logs | Pass. Application, platform and Lambda log streams are present. | `log-streams.json`, `lambda-streams.json` |
+| Scoped IAM | Pass. Each workload role trusts only its own service account and grants no wildcard resources. Only the AWS Load Balancer Controller role, which uses AWS's published policy, contains wildcards. | `iam-trust-*.json`, `iam-policy-*.json` |
+| Lambda partial batch | Pass. Two invocations of a mixed batch each reported only `malformed-msg-1` as failed. DynamoDB holds exactly one notification for the valid fixture. | `lambda/` |
+| Outcomes DLQ | Pass. Message `00076fa4-1c82-41f4-a58e-cd66365e4a11` reached `flashkart-demo-outcomes-dlq` after five receives. | `lambda/dlq-*.json` |
+| Flink S3 recovery | Pass. The leading JobManager was deleted after checkpoint 70 completed. The standby restored the job from checkpoint 71 in the Terraform bucket and finalized a later purchase. | `flink/` |
+| MSK IAM token refresh | Pass on behavioural evidence. The same producer and TaskManager processes, with no restarts, published and consumed purchases 21 to 40 minutes after they started. That exceeds the 15-minute token lifetime. Neither client logs reauthentication at INFO level. | `msk/`, `analytics.json`, `flink/analytics.json` |
+| Replica RDS outage | Pass. With `flashkart-demo-a` stopped, replica `a` reported its backend unready, and fallback `d` held one hint. After restart the hint drained, and the fixture's version matched the version written during the outage. The first write after the stop returned 503, and an immediate retry succeeded. | `replica/` |
+
+The public ALB occasionally refused connections from the operator network during the run, while both ALB addresses answered other probes normally. The first smoke attempt timed out for that reason and passed when rerun. The `cloud-flink-operator` Argo application reports OutOfSync and Healthy because of chart drift; the operator itself worked.
+
+### Teardown
+
+Argo CD applications were deleted first, so their controllers removed the workloads and load-balancer targets. Four resources were removed outside Terraform because their delete calls carry ARNs in the request path: the Lambda event source mapping, the operator access entry and its policy association, and the MSK Serverless cluster. They were deleted with the AWS CLI and removed from state, and the MSK deletion finished before Terraform destroyed the remaining 130 resources. A sweep afterwards found no EKS clusters, EC2 instances, EBS volumes, RDS instances or snapshots, MSK clusters, NAT gateways, load balancers, Elastic IPs, VPCs, Lambda functions, SQS queues or DynamoDB tables. The state bucket, the ECR repository and the `flashkart-operator` IAM user were retained. The log is `build/cloud/13b/first/environment-destroy.txt`.
+
+Recreation from the recorded revision remains open. The environment will be recreated before the presentation, and the smoke, purchase, analytics and replica recovery checks will run again then. The node group needs a larger EC2 vCPU quota than 16, or a smaller update surge, before any later node configuration change.

@@ -295,11 +295,11 @@ Phase 13A passed. See the [Phase 13A rehearsal report](phase-13a-verification.md
 
 ### 13B. Live AWS acceptance and redeployment
 
-- [ ] With an active AWS session in the intended account, review and apply the disposable Terraform environment. Deploy the versioned manifests through Argo CD and run `make cloud-smoke` and `make test-cloud`. Verify public admin and purchase flows, finalized analytics, scoped IAM, CloudWatch logs, and EKS HPA scale-out.
-- [ ] Verify MSK IAM token refresh on a long-running client, Lambda partial-batch retries and DLQ handling, and Flink recovery from an S3 checkpoint.
-- [ ] Exercise an actual replica RDS outage. Confirm failed-backend visibility, quorum and fallback writes, and eventual hint drain and converged reads after recovery.
+- [x] With an active AWS session in the intended account, review and apply the disposable Terraform environment. Deploy the versioned manifests through Argo CD and run `make cloud-smoke` and `make test-cloud`. Verify public admin and purchase flows, finalized analytics, scoped IAM, CloudWatch logs, and EKS HPA scale-out.
+- [x] Verify MSK IAM token refresh on a long-running client, Lambda partial-batch retries and DLQ handling, and Flink recovery from an S3 checkpoint.
+- [x] Exercise an actual replica RDS outage. Confirm failed-backend visibility, quorum and fallback writes, and eventual hint drain and converged reads after recovery.
 - [ ] Archive reports with the infrastructure and GitOps revisions and image digests. Run ordered teardown, preserving bootstrap state and build artifacts. Recreate the disposable environment and rerun smoke, purchase, analytics, and replica recovery checks. Record the redeployment results.
-- [ ] Update the Phase 12 status once live AWS acceptance evidence is recorded.
+- [x] Update the Phase 12 status once live AWS acceptance evidence is recorded.
 
 Record AWS results separately from local tests and emulator results. [Phase 12 development guide](phase-12-development.md)
 
