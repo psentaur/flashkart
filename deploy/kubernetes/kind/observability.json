@@ -9,12 +9,12 @@
         "name": "telemetry"
       },
       "data": {
-        "prometheus.yml": "global:\n  scrape_interval: 10s\nscrape_configs:\n- job_name: flashkart\n  kubernetes_sd_configs:\n  - role: pod\n    namespaces:\n      names: [flashkart]\n  relabel_configs:\n  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]\n    regex: \"true\"\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);(\\d+)'\n    replacement: '$1:$2'\n    target_label: __address__\n  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);'\n    replacement: '$1'\n    target_label: __address__\n  - source_labels: [__meta_kubernetes_pod_container_port_name, __meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_container_name]\n    regex: 'http;;.*|.*;9249;flink-main-container'\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_label_app]\n    target_label: app\n",
+        "prometheus.yml": "global:\n  scrape_interval: 10s\nscrape_configs:\n- job_name: flashkart\n  kubernetes_sd_configs:\n  - role: pod\n    namespaces:\n      names: [flashkart]\n  relabel_configs:\n  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]\n    regex: \"true\"\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);(\\d+)'\n    replacement: '$1:$2'\n    target_label: __address__\n  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);'\n    replacement: '$1'\n    target_label: __address__\n  - source_labels: [__meta_kubernetes_pod_container_port_name, __meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_container_name]\n    regex: 'http;;.*|.*;9249;flink-main-container'\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_label_app]\n    target_label: app\n- job_name: kube-state-metrics\n  static_configs:\n  - targets: [kube-state-metrics:8080]\n",
         "loki.yml": "auth_enabled: false\nserver:\n  http_listen_port: 3100\ncommon:\n  instance_addr: 127.0.0.1\n  path_prefix: /tmp/loki\n  replication_factor: 1\n  ring:\n    kvstore:\n      store: inmemory\n  storage:\n    filesystem:\n      chunks_directory: /tmp/loki/chunks\n      rules_directory: /tmp/loki/rules\nschema_config:\n  configs:\n  - from: 2024-01-01\n    store: tsdb\n    object_store: filesystem\n    schema: v13\n    index:\n      prefix: index_\n      period: 24h\n",
         "fluent-bit.conf": "[SERVICE]\n    Flush 1\n    Parsers_File /fluent-bit/etc/parsers.conf\n[INPUT]\n    Name tail\n    Path /var/log/containers/*_flashkart_*.log\n    Tag kube.*\n    multiline.parser docker, cri\n    DB /positions/tail.db\n    Skip_Long_Lines On\n    Inotify_Watcher Off\n[OUTPUT]\n    Name loki\n    Match kube.*\n    Host loki\n    Port 3100\n    Labels job=flashkart\n",
         "datasources.yaml": "apiVersion: 1\ndatasources:\n- name: Prometheus\n  uid: prometheus\n  type: prometheus\n  url: http://prometheus:9090\n  isDefault: true\n- name: Loki\n  uid: loki\n  type: loki\n  url: http://loki:3100\n",
         "provider.yaml": "apiVersion: 1\nproviders:\n- name: Flashkart\n  options:\n    path: /dashboards\n",
-        "flashkart.json": "{\"uid\": \"flashkart\", \"title\": \"Flashkart\", \"schemaVersion\": 39, \"refresh\": \"10s\", \"panels\": [{\"id\": 1, \"type\": \"timeseries\", \"title\": \"Application health\", \"gridPos\": {\"x\": 0, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (up{job=\\\"flashkart\\\"})\"}]}, {\"id\": 2, \"type\": \"timeseries\", \"title\": \"HTTP requests per second\", \"gridPos\": {\"x\": 12, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_http_requests_total[1m]))\"}]}, {\"id\": 3, \"type\": \"timeseries\", \"title\": \"Available stock by sale\", \"gridPos\": {\"x\": 0, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"flashkart_inventory_available_stock\"}]}, {\"id\": 4, \"type\": \"timeseries\", \"title\": \"Work waiting for delivery\", \"gridPos\": {\"x\": 12, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (source) (flashkart_outbox_pending) or max by (service) (flashkart_workflow_pending)\"}]}, {\"id\": 5, \"type\": \"timeseries\", \"title\": \"Replica backend failures\", \"gridPos\": {\"x\": 0, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_sql_failures_total[1m]))\"}]}, {\"id\": 6, \"type\": \"timeseries\", \"title\": \"Replica peer failures\", \"gridPos\": {\"x\": 12, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_peer_requests_total{result=\\\"error\\\"}[1m]))\"}]}, {\"id\": 7, \"type\": \"timeseries\", \"title\": \"Analytics event-time progress\", \"gridPos\": {\"x\": 0, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*currentOutputWatermark\\\"}\"}]}, {\"id\": 8, \"type\": \"timeseries\", \"title\": \"Analytics late events\", \"gridPos\": {\"x\": 12, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*lateEventsDropped\\\"}\"}]}]}"
+        "flashkart.json": "{\"uid\": \"flashkart\", \"title\": \"Flashkart\", \"schemaVersion\": 39, \"refresh\": \"10s\", \"panels\": [{\"id\": 1, \"type\": \"timeseries\", \"title\": \"Application health\", \"gridPos\": {\"x\": 0, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (up{job=\\\"flashkart\\\"})\"}]}, {\"id\": 2, \"type\": \"timeseries\", \"title\": \"HTTP requests per second\", \"gridPos\": {\"x\": 12, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_http_requests_total[1m]))\"}]}, {\"id\": 3, \"type\": \"timeseries\", \"title\": \"HTTP 5xx error rate (%)\", \"gridPos\": {\"x\": 0, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"100 * sum by (app) (rate(flashkart_http_requests_total{code=\\\"5xx\\\"}[1m])) / clamp_min(sum by (app) (rate(flashkart_http_requests_total[1m])), 1e-9)\"}]}, {\"id\": 4, \"type\": \"timeseries\", \"title\": \"HTTP latency p95 (seconds)\", \"gridPos\": {\"x\": 12, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"histogram_quantile(0.95, sum by (app, le) (rate(flashkart_http_request_duration_seconds_bucket[1m])))\"}]}, {\"id\": 5, \"type\": \"timeseries\", \"title\": \"Kubernetes nodes ready\", \"gridPos\": {\"x\": 0, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum(kube_node_status_condition{condition=\\\"Ready\\\", status=\\\"true\\\"})\"}]}, {\"id\": 6, \"type\": \"timeseries\", \"title\": \"Kubernetes pods not ready\", \"gridPos\": {\"x\": 12, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (namespace) (kube_pod_status_ready{condition=\\\"false\\\"})\"}]}, {\"id\": 7, \"type\": \"timeseries\", \"title\": \"Container restarts (15m)\", \"gridPos\": {\"x\": 0, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (pod) (increase(kube_pod_container_status_restarts_total[15m])) > 0\"}]}, {\"id\": 8, \"type\": \"timeseries\", \"title\": \"HPA current replicas\", \"gridPos\": {\"x\": 12, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"kube_horizontalpodautoscaler_status_current_replicas\"}]}, {\"id\": 9, \"type\": \"timeseries\", \"title\": \"Available stock by sale\", \"gridPos\": {\"x\": 0, \"y\": 32, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"flashkart_inventory_available_stock\"}]}, {\"id\": 10, \"type\": \"timeseries\", \"title\": \"Work waiting for delivery\", \"gridPos\": {\"x\": 12, \"y\": 32, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (source) (flashkart_outbox_pending) or max by (service) (flashkart_workflow_pending)\"}]}, {\"id\": 11, \"type\": \"timeseries\", \"title\": \"Replica backend failures\", \"gridPos\": {\"x\": 0, \"y\": 40, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_sql_failures_total[1m]))\"}]}, {\"id\": 12, \"type\": \"timeseries\", \"title\": \"Replica peer failures\", \"gridPos\": {\"x\": 12, \"y\": 40, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_peer_requests_total{result=\\\"error\\\"}[1m]))\"}]}, {\"id\": 13, \"type\": \"timeseries\", \"title\": \"Analytics event-time progress\", \"gridPos\": {\"x\": 0, \"y\": 48, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*currentOutputWatermark\\\"}\"}]}, {\"id\": 14, \"type\": \"timeseries\", \"title\": \"Analytics late events\", \"gridPos\": {\"x\": 12, \"y\": 48, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*lateEventsDropped\\\"}\"}]}]}"
       }
     },
     {
@@ -99,7 +99,7 @@
               "app": "prometheus"
             },
             "annotations": {
-              "flashkart.io/telemetry-config": "908400d0e29b088ae8c356b349936de584f0baf91a67c8e98189784b2db18377"
+              "flashkart.io/telemetry-config": "febadf612ac9a1118a0572604ed4cdf4b9eaf4f3547ebef0e21437c28556d30d"
             }
           },
           "spec": {
@@ -173,7 +173,7 @@
               "app": "grafana"
             },
             "annotations": {
-              "flashkart.io/telemetry-config": "908400d0e29b088ae8c356b349936de584f0baf91a67c8e98189784b2db18377"
+              "flashkart.io/telemetry-config": "febadf612ac9a1118a0572604ed4cdf4b9eaf4f3547ebef0e21437c28556d30d"
             }
           },
           "spec": {
@@ -253,7 +253,7 @@
               "app": "loki"
             },
             "annotations": {
-              "flashkart.io/telemetry-config": "908400d0e29b088ae8c356b349936de584f0baf91a67c8e98189784b2db18377"
+              "flashkart.io/telemetry-config": "febadf612ac9a1118a0572604ed4cdf4b9eaf4f3547ebef0e21437c28556d30d"
             }
           },
           "spec": {
@@ -308,7 +308,7 @@
               "app": "fluent-bit"
             },
             "annotations": {
-              "flashkart.io/telemetry-config": "908400d0e29b088ae8c356b349936de584f0baf91a67c8e98189784b2db18377"
+              "flashkart.io/telemetry-config": "febadf612ac9a1118a0572604ed4cdf4b9eaf4f3547ebef0e21437c28556d30d"
             }
           },
           "spec": {
@@ -354,6 +354,151 @@
               {
                 "name": "positions",
                 "emptyDir": {}
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "kube-state-metrics"
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRole",
+      "metadata": {
+        "name": "flashkart-kube-state-metrics"
+      },
+      "rules": [
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "nodes",
+            "pods",
+            "namespaces"
+          ],
+          "verbs": [
+            "list",
+            "watch"
+          ]
+        },
+        {
+          "apiGroups": [
+            "apps"
+          ],
+          "resources": [
+            "deployments",
+            "daemonsets",
+            "replicasets",
+            "statefulsets"
+          ],
+          "verbs": [
+            "list",
+            "watch"
+          ]
+        },
+        {
+          "apiGroups": [
+            "autoscaling"
+          ],
+          "resources": [
+            "horizontalpodautoscalers"
+          ],
+          "verbs": [
+            "list",
+            "watch"
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRoleBinding",
+      "metadata": {
+        "name": "flashkart-kube-state-metrics"
+      },
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "ClusterRole",
+        "name": "flashkart-kube-state-metrics"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "kube-state-metrics",
+          "namespace": "flashkart"
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "kube-state-metrics"
+      },
+      "spec": {
+        "selector": {
+          "app": "kube-state-metrics"
+        },
+        "ports": [
+          {
+            "port": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "kube-state-metrics"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "kube-state-metrics"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "kube-state-metrics"
+            }
+          },
+          "spec": {
+            "serviceAccountName": "kube-state-metrics",
+            "containers": [
+              {
+                "name": "kube-state-metrics",
+                "image": "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.18.0",
+                "args": [
+                  "--port=8080",
+                  "--telemetry-port=8081",
+                  "--resources=nodes,pods,namespaces,deployments,daemonsets,replicasets,statefulsets,horizontalpodautoscalers"
+                ],
+                "ports": [
+                  {
+                    "containerPort": 8080
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8081
+                  }
+                },
+                "securityContext": {
+                  "runAsNonRoot": true,
+                  "runAsUser": 65534,
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true
+                }
               }
             ]
           }

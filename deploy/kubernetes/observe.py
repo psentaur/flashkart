@@ -6,6 +6,14 @@ from pathlib import Path
 panels = {
     "Application health": 'sum by (app) (up{job="flashkart"})',
     "HTTP requests per second": "sum by (app) (rate(flashkart_http_requests_total[1m]))",
+    "HTTP 5xx error rate (%)": '100 * sum by (app) (rate(flashkart_http_requests_total{code="5xx"}[1m]))'
+                               " / clamp_min(sum by (app) (rate(flashkart_http_requests_total[1m])), 1e-9)",
+    "HTTP latency p95 (seconds)": "histogram_quantile(0.95, sum by (app, le) "
+                                  "(rate(flashkart_http_request_duration_seconds_bucket[1m])))",
+    "Kubernetes nodes ready": 'sum(kube_node_status_condition{condition="Ready", status="true"})',
+    "Kubernetes pods not ready": 'sum by (namespace) (kube_pod_status_ready{condition="false"})',
+    "Container restarts (15m)": "sum by (pod) (increase(kube_pod_container_status_restarts_total[15m])) > 0",
+    "HPA current replicas": "kube_horizontalpodautoscaler_status_current_replicas",
     "Available stock by sale": "flashkart_inventory_available_stock",
     "Work waiting for delivery": "sum by (source) (flashkart_outbox_pending) or max by (service) (flashkart_workflow_pending)",
     "Replica backend failures": "sum by (app) (rate(flashkart_replica_sql_failures_total[1m]))",
@@ -46,6 +54,9 @@ scrape_configs:
     action: keep
   - source_labels: [__meta_kubernetes_pod_label_app]
     target_label: app
+- job_name: kube-state-metrics
+  static_configs:
+  - targets: [kube-state-metrics:8080]
 """
 loki = """auth_enabled: false
 server:
@@ -155,6 +166,29 @@ for name, image, port, args, files in (
     add("apps/v1", "Deployment" if port else "DaemonSet", name, spec={
         "selector": {"matchLabels": selector}, "template": {"metadata": {"labels": selector, "annotations": annotations}, "spec": spec},
     })
+
+# kube-state-metrics exposes node, pod and HPA health for the cluster dashboard panels.
+ksm_resources = {"": ["nodes", "pods", "namespaces"], "apps": ["deployments", "daemonsets", "replicasets", "statefulsets"],
+                 "autoscaling": ["horizontalpodautoscalers"]}
+add("v1", "ServiceAccount", "kube-state-metrics")
+add("rbac.authorization.k8s.io/v1", "ClusterRole", "flashkart-kube-state-metrics",
+    rules=[{"apiGroups": [group], "resources": names, "verbs": ["list", "watch"]} for group, names in ksm_resources.items()])
+add("rbac.authorization.k8s.io/v1", "ClusterRoleBinding", "flashkart-kube-state-metrics",
+    roleRef={"apiGroup": "rbac.authorization.k8s.io", "kind": "ClusterRole", "name": "flashkart-kube-state-metrics"},
+    subjects=[{"kind": "ServiceAccount", "name": "kube-state-metrics", "namespace": "flashkart"}])
+add("v1", "Service", "kube-state-metrics", spec={"selector": {"app": "kube-state-metrics"}, "ports": [{"port": 8080}]})
+add("apps/v1", "Deployment", "kube-state-metrics", spec={
+    "selector": {"matchLabels": {"app": "kube-state-metrics"}},
+    "template": {"metadata": {"labels": {"app": "kube-state-metrics"}}, "spec": {
+        "serviceAccountName": "kube-state-metrics",
+        "containers": [{"name": "kube-state-metrics", "image": "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.18.0",
+                        "args": ["--port=8080", "--telemetry-port=8081",
+                                 "--resources=" + ",".join(name for names in ksm_resources.values() for name in names)],
+                        "ports": [{"containerPort": 8080}],
+                        "readinessProbe": {"httpGet": {"path": "/readyz", "port": 8081}},
+                        "securityContext": {"runAsNonRoot": True, "runAsUser": 65534, "allowPrivilegeEscalation": False,
+                                            "readOnlyRootFilesystem": True}}]}},
+})
 
 Path(__file__).with_name("kind").joinpath("observability.json").write_text(
     json.dumps({"apiVersion": "v1", "kind": "List", "items": objects}, indent=2) + "\n")
