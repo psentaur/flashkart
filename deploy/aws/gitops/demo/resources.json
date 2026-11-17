@@ -129,11 +129,11 @@
         "name": "service-config"
       },
       "data": {
-        "market.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"a\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
-        "a.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"a\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
-        "b.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"b\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
-        "c.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"c\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
-        "d.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"d\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}"
+        "market.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"a\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-yiduv24p.c2.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "a.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"a\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-yiduv24p.c2.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "b.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"b\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-yiduv24p.c2.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "c.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"c\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-yiduv24p.c2.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "d.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"d\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-yiduv24p.c2.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}"
       }
     },
     {
@@ -152,7 +152,7 @@
         "transactional-004_order_workflows.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nSET LOCAL ROLE inventory_app;\nALTER TABLE inventory.order_work ADD COLUMN IF NOT EXISTS delivered_at timestamptz;\nALTER TABLE inventory.order_work ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp();\nCREATE INDEX IF NOT EXISTS order_work_pending ON inventory.order_work(next_attempt_at,reservation_id) WHERE delivered_at IS NULL;\nCREATE INDEX IF NOT EXISTS reservations_expiring ON inventory.reservations(expires_at,reservation_id) WHERE state='HELD';\nCREATE TABLE IF NOT EXISTS inventory.outcomes (event_id text PRIMARY KEY, body jsonb NOT NULL);\nRESET ROLE;\nSET LOCAL ROLE orders_app;\nCREATE TABLE IF NOT EXISTS orders.purchases (\n    order_id text PRIMARY KEY,\n    customer_id text NOT NULL,\n    request bytea NOT NULL,\n    state text NOT NULL DEFAULT 'PENDING' CHECK (state IN ('PENDING','CONFIRMED','CANCELLED')),\n    created_at timestamptz NOT NULL DEFAULT clock_timestamp(),\n    next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp()\n);\nCREATE INDEX IF NOT EXISTS purchases_pending ON orders.purchases(next_attempt_at,order_id) WHERE state='PENDING';\nCREATE TABLE IF NOT EXISTS orders.events (event_id text PRIMARY KEY, body jsonb NOT NULL);\nCREATE TABLE IF NOT EXISTS orders.outcomes (event_id text PRIMARY KEY, body jsonb NOT NULL);\nRESET ROLE;\nSET LOCAL ROLE payment_app;\nCREATE TABLE IF NOT EXISTS payment.transactions (\n    payment_id text PRIMARY KEY,\n    request bytea NOT NULL,\n    state text NOT NULL CHECK (state IN ('PENDING','SUCCEEDED','DECLINED','REFUNDED')),\n    decision text NOT NULL CHECK (decision IN ('SUCCEEDED','DECLINED')),\n    due_at timestamptz NOT NULL,\n    lose_reply boolean NOT NULL\n);\nCREATE TABLE IF NOT EXISTS payment.events (event_id text PRIMARY KEY, body jsonb NOT NULL);\nCOMMIT;\n",
         "transactional-005_event_delivery.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nDO $$\nDECLARE source text;\nBEGIN\n    FOREACH source IN ARRAY ARRAY['admission.events','inventory.events','inventory.outcomes','orders.events','orders.outcomes','payment.events'] LOOP\n        EXECUTE format('ALTER TABLE %s ADD COLUMN IF NOT EXISTS delivered_at timestamptz,\n            ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp(),\n            ADD COLUMN IF NOT EXISTS delivery_attempts integer NOT NULL DEFAULT 0,\n            ADD COLUMN IF NOT EXISTS dead_at timestamptz', source);\n        EXECUTE format('CREATE INDEX IF NOT EXISTS %I ON %s (next_attempt_at,event_id) WHERE delivered_at IS NULL AND dead_at IS NULL',\n            split_part(source,'.',2)||'_delivery_pending', source);\n    END LOOP;\nEND $$;\nCOMMIT;\n",
         "migrate.sh": "#!/bin/sh\nset -eu\nexport PGUSER=flashkart_admin PGDATABASE=flashkart PGSSLMODE=verify-full PGSSLROOTCERT=/rds/ca.pem\nfor backend in a b c d transactional; do\n    export PGHOST=$(jq -er --arg key \"$backend\" '.[$key].host' /sql/databases.json)\n    secret=$(jq -er --arg key \"$backend\" '.[$key].admin_secret' /sql/databases.json)\n    PGPASSWORD=$(aws secretsmanager get-secret-value --secret-id \"$secret\" --query SecretString --output text | jq -er .password)\n    export PGPASSWORD\n    if [ \"$backend\" = transactional ]; then\n        group=transactional\n        roles='flash_sale_app inventory_app admission_app orders_app payment_app'\n    else\n        group=replica\n        roles=replica_app\n    fi\n    for role in $roles; do\n        key=$role\n        if [ \"$group\" = replica ]; then key=$backend; fi\n        password=$(cat \"/database/$key\")\n        psql -X -v ON_ERROR_STOP=1 -v role=\"$role\" -v password=\"$password\" <<'SQL'\nBEGIN;\nSELECT pg_advisory_xact_lock(1);\nSELECT format('CREATE ROLE %I LOGIN PASSWORD %L', :'role', :'password')\nWHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'role') \\gexec\nSELECT format('GRANT %I TO flashkart_admin', :'role') \\gexec\nSELECT format('ALTER ROLE %I PASSWORD %L', :'role', :'password') \\gexec\nCOMMIT;\nSQL\n    done\n    for file in /sql/\"$group\"-*.sql; do psql -X -v ON_ERROR_STOP=1 -f \"$file\"; done\ndone\n",
-        "databases.json": "{\"a\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-a1e2415f-709b-4c24-9ba4-cf420909d567-R6aL47\", \"host\": \"flashkart-demo-a.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"b\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-7fe9be44-db8e-43af-80f0-0c558cf7355b-Qlb9F7\", \"host\": \"flashkart-demo-b.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"c\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-dd531aeb-d1fd-4a11-8736-02d85a45608a-Hku3Wf\", \"host\": \"flashkart-demo-c.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"d\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-959d5e1d-450a-4645-b25c-b18e031d0625-yQqC6B\", \"host\": \"flashkart-demo-d.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"transactional\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-f163061d-426c-4417-8525-98281dc134d3-OHNwYX\", \"host\": \"flashkart-demo-transactional.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}}"
+        "databases.json": "{\"a\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-30767f55-3a50-4d8d-9c1a-01cc99618d58-V641a3\", \"host\": \"flashkart-demo-a.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"b\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-bef08b96-ff56-4d48-a8ad-c01ece29062f-7o7BRq\", \"host\": \"flashkart-demo-b.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"c\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-0e6b0102-e34c-455e-80de-af1e60446f7a-Uciv7W\", \"host\": \"flashkart-demo-c.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"d\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-98bb1f14-3c69-4a74-9408-0cfa39a01b86-7HD7ty\", \"host\": \"flashkart-demo-d.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"transactional\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-7e276166-dd2d-4ecb-a3b3-dcc9a1841f5b-6dz4VT\", \"host\": \"flashkart-demo-transactional.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}}"
       }
     },
     {
@@ -178,7 +178,7 @@
             "containers": [
               {
                 "name": "migrate",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:migrations-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:migrations-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "command": [
                   "sh",
                   "/sql/migrate.sh"
@@ -262,7 +262,7 @@
             "containers": [
               {
                 "name": "topics",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "command": [
                   "kafka-topics"
                 ],
@@ -277,7 +277,7 @@
                   },
                   {
                     "name": "KAFKA_BROKERS",
-                    "value": "boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098"
+                    "value": "boot-yiduv24p.c2.kafka-serverless.ap-south-1.amazonaws.com:9098"
                   }
                 ]
               }
@@ -341,7 +341,7 @@
             "containers": [
               {
                 "name": "replica-a",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -499,7 +499,7 @@
             "containers": [
               {
                 "name": "replica-b",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -657,7 +657,7 @@
             "containers": [
               {
                 "name": "replica-c",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -815,7 +815,7 @@
             "containers": [
               {
                 "name": "replica-d",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -967,7 +967,7 @@
             "containers": [
               {
                 "name": "flash-sale-manager",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "flash-sale-manager"
@@ -1115,7 +1115,7 @@
             "containers": [
               {
                 "name": "inventory-reservation",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "inventory-reservation"
@@ -1165,7 +1165,13 @@
                     "containerPort": 7001
                   }
                 ],
-                "envFrom": [],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
                 "volumeMounts": [
                   {
                     "name": "config",
@@ -1273,7 +1279,7 @@
             "containers": [
               {
                 "name": "admission-controller",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "admission-controller"
@@ -1468,7 +1474,7 @@
             "containers": [
               {
                 "name": "order-service",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "order-service"
@@ -1633,7 +1639,7 @@
             "containers": [
               {
                 "name": "payment-service",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "payment-service"
@@ -1675,7 +1681,13 @@
                     "containerPort": 7001
                   }
                 ],
-                "envFrom": [],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
                 "volumeMounts": [
                   {
                     "name": "config",
@@ -1783,7 +1795,7 @@
             "containers": [
               {
                 "name": "product-catalog",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "product-catalog"
@@ -1945,7 +1957,7 @@
             "containers": [
               {
                 "name": "notification",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "notification"
@@ -2077,7 +2089,7 @@
             "containers": [
               {
                 "name": "analytics-api",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "analytics-api"
@@ -2200,7 +2212,7 @@
             "containers": [
               {
                 "name": "nginx",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:web-d801fb8efcb792574598ea5ce69e2643e6301930",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:web-233bc2493f45e961133b5cc4eb1f61366c0eefea",
                 "imagePullPolicy": "IfNotPresent",
                 "readinessProbe": {
                   "httpGet": {
@@ -2230,7 +2242,7 @@
           "name": "web",
           "port": 8080
         },
-        "targetGroupARN": "arn:aws:elasticloadbalancing:ap-south-1:224033508410:targetgroup/flashkart-demo-api/8eba5cbe14e7ff95",
+        "targetGroupARN": "arn:aws:elasticloadbalancing:ap-south-1:224033508410:targetgroup/flashkart-demo-api/8a1fd07f12d35c4a",
         "targetType": "ip"
       }
     },
@@ -2263,7 +2275,7 @@
       },
       "spec": {
         "emrReleaseLabel": "emr-7.13.0-flink-latest",
-        "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:flink-d801fb8efcb792574598ea5ce69e2643e6301930",
+        "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:flink-233bc2493f45e961133b5cc4eb1f61366c0eefea",
         "flinkVersion": "v1_20",
         "serviceAccount": "flink",
         "flinkConfiguration": {
@@ -2326,7 +2338,7 @@
           "upgradeMode": "last-state",
           "args": [
             "--brokers",
-            "boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098",
+            "boot-yiduv24p.c2.kafka-serverless.ap-south-1.amazonaws.com:9098",
             "--checkpoints",
             "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/checkpoints",
             "--transactional-id-prefix",
