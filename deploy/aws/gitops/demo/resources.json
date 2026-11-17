@@ -129,11 +129,11 @@
         "name": "service-config"
       },
       "data": {
-        "market.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"a\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
-        "a.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"a\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
-        "b.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"b\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
-        "c.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"c\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
-        "d.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"d\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}"
+        "market.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"a\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "a.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"a\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "b.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"b\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "c.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"c\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}",
+        "d.json": "{\"environment\": \"aws\", \"http_address\": \"0.0.0.0:8080\", \"grpc_address\": \"0.0.0.0:7001\", \"database_env\": {\"transactional\": \"FLASHKART_TRANSACTIONAL_DSN\", \"a\": \"FLASHKART_REPLICA_A_DSN\", \"b\": \"FLASHKART_REPLICA_B_DSN\", \"c\": \"FLASHKART_REPLICA_C_DSN\", \"d\": \"FLASHKART_REPLICA_D_DSN\"}, \"replica_id\": \"d\", \"peers\": {\"a\": \"replica-a:7001\", \"b\": \"replica-b:7001\", \"c\": \"replica-c:7001\", \"d\": \"replica-d:7001\"}, \"aws\": {\"region\": \"ap-south-1\", \"endpoints\": {}}, \"kafka\": {\"brokers\": [\"boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098\"], \"auth\": \"iam\"}, \"inventory_grpc_address\": \"inventory-reservation:7001\", \"order_grpc_address\": \"order-service:7001\", \"payment_grpc_address\": \"payment-service:7001\"}"
       }
     },
     {
@@ -152,7 +152,7 @@
         "transactional-004_order_workflows.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nSET LOCAL ROLE inventory_app;\nALTER TABLE inventory.order_work ADD COLUMN IF NOT EXISTS delivered_at timestamptz;\nALTER TABLE inventory.order_work ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp();\nCREATE INDEX IF NOT EXISTS order_work_pending ON inventory.order_work(next_attempt_at,reservation_id) WHERE delivered_at IS NULL;\nCREATE INDEX IF NOT EXISTS reservations_expiring ON inventory.reservations(expires_at,reservation_id) WHERE state='HELD';\nCREATE TABLE IF NOT EXISTS inventory.outcomes (event_id text PRIMARY KEY, body jsonb NOT NULL);\nRESET ROLE;\nSET LOCAL ROLE orders_app;\nCREATE TABLE IF NOT EXISTS orders.purchases (\n    order_id text PRIMARY KEY,\n    customer_id text NOT NULL,\n    request bytea NOT NULL,\n    state text NOT NULL DEFAULT 'PENDING' CHECK (state IN ('PENDING','CONFIRMED','CANCELLED')),\n    created_at timestamptz NOT NULL DEFAULT clock_timestamp(),\n    next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp()\n);\nCREATE INDEX IF NOT EXISTS purchases_pending ON orders.purchases(next_attempt_at,order_id) WHERE state='PENDING';\nCREATE TABLE IF NOT EXISTS orders.events (event_id text PRIMARY KEY, body jsonb NOT NULL);\nCREATE TABLE IF NOT EXISTS orders.outcomes (event_id text PRIMARY KEY, body jsonb NOT NULL);\nRESET ROLE;\nSET LOCAL ROLE payment_app;\nCREATE TABLE IF NOT EXISTS payment.transactions (\n    payment_id text PRIMARY KEY,\n    request bytea NOT NULL,\n    state text NOT NULL CHECK (state IN ('PENDING','SUCCEEDED','DECLINED','REFUNDED')),\n    decision text NOT NULL CHECK (decision IN ('SUCCEEDED','DECLINED')),\n    due_at timestamptz NOT NULL,\n    lose_reply boolean NOT NULL\n);\nCREATE TABLE IF NOT EXISTS payment.events (event_id text PRIMARY KEY, body jsonb NOT NULL);\nCOMMIT;\n",
         "transactional-005_event_delivery.sql": "BEGIN;\nSELECT pg_advisory_xact_lock(1);\nDO $$\nDECLARE source text;\nBEGIN\n    FOREACH source IN ARRAY ARRAY['admission.events','inventory.events','inventory.outcomes','orders.events','orders.outcomes','payment.events'] LOOP\n        EXECUTE format('ALTER TABLE %s ADD COLUMN IF NOT EXISTS delivered_at timestamptz,\n            ADD COLUMN IF NOT EXISTS next_attempt_at timestamptz NOT NULL DEFAULT clock_timestamp(),\n            ADD COLUMN IF NOT EXISTS delivery_attempts integer NOT NULL DEFAULT 0,\n            ADD COLUMN IF NOT EXISTS dead_at timestamptz', source);\n        EXECUTE format('CREATE INDEX IF NOT EXISTS %I ON %s (next_attempt_at,event_id) WHERE delivered_at IS NULL AND dead_at IS NULL',\n            split_part(source,'.',2)||'_delivery_pending', source);\n    END LOOP;\nEND $$;\nCOMMIT;\n",
         "migrate.sh": "#!/bin/sh\nset -eu\nexport PGUSER=flashkart_admin PGDATABASE=flashkart PGSSLMODE=verify-full PGSSLROOTCERT=/rds/ca.pem\nfor backend in a b c d transactional; do\n    export PGHOST=$(jq -er --arg key \"$backend\" '.[$key].host' /sql/databases.json)\n    secret=$(jq -er --arg key \"$backend\" '.[$key].admin_secret' /sql/databases.json)\n    PGPASSWORD=$(aws secretsmanager get-secret-value --secret-id \"$secret\" --query SecretString --output text | jq -er .password)\n    export PGPASSWORD\n    if [ \"$backend\" = transactional ]; then\n        group=transactional\n        roles='flash_sale_app inventory_app admission_app orders_app payment_app'\n    else\n        group=replica\n        roles=replica_app\n    fi\n    for role in $roles; do\n        key=$role\n        if [ \"$group\" = replica ]; then key=$backend; fi\n        password=$(cat \"/database/$key\")\n        psql -X -v ON_ERROR_STOP=1 -v role=\"$role\" -v password=\"$password\" <<'SQL'\nBEGIN;\nSELECT pg_advisory_xact_lock(1);\nSELECT format('CREATE ROLE %I LOGIN PASSWORD %L', :'role', :'password')\nWHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'role') \\gexec\nSELECT format('GRANT %I TO flashkart_admin', :'role') \\gexec\nSELECT format('ALTER ROLE %I PASSWORD %L', :'role', :'password') \\gexec\nCOMMIT;\nSQL\n    done\n    for file in /sql/\"$group\"-*.sql; do psql -X -v ON_ERROR_STOP=1 -f \"$file\"; done\ndone\n",
-        "databases.json": "{\"a\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-ad17f4a5-0a5a-43a3-b0e4-d986d07ede67-rdh2wM\", \"host\": \"flashkart-demo-a.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"b\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-6c5e2abd-3e54-42b9-a61a-d61bd04dbdae-8TBIlc\", \"host\": \"flashkart-demo-b.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"c\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-8451ce95-4373-41b2-afb2-4aa629d15ab6-RELFxe\", \"host\": \"flashkart-demo-c.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"d\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-76505acf-fb85-48ee-81e7-2861392ec1bd-NCsOgb\", \"host\": \"flashkart-demo-d.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"transactional\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-1d0e023b-91ec-418d-a74a-f69aa04cd62a-IvE1Gu\", \"host\": \"flashkart-demo-transactional.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}}"
+        "databases.json": "{\"a\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-a1e2415f-709b-4c24-9ba4-cf420909d567-R6aL47\", \"host\": \"flashkart-demo-a.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"b\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-7fe9be44-db8e-43af-80f0-0c558cf7355b-Qlb9F7\", \"host\": \"flashkart-demo-b.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"c\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-dd531aeb-d1fd-4a11-8736-02d85a45608a-Hku3Wf\", \"host\": \"flashkart-demo-c.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"d\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-959d5e1d-450a-4645-b25c-b18e031d0625-yQqC6B\", \"host\": \"flashkart-demo-d.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}, \"transactional\": {\"admin_secret\": \"arn:aws:secretsmanager:ap-south-1:224033508410:secret:rds!db-f163061d-426c-4417-8525-98281dc134d3-OHNwYX\", \"host\": \"flashkart-demo-transactional.ctyamauyk0it.ap-south-1.rds.amazonaws.com\"}}"
       }
     },
     {
@@ -178,7 +178,7 @@
             "containers": [
               {
                 "name": "migrate",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:migrations-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:migrations-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "command": [
                   "sh",
                   "/sql/migrate.sh"
@@ -262,7 +262,7 @@
             "containers": [
               {
                 "name": "topics",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "command": [
                   "kafka-topics"
                 ],
@@ -277,7 +277,7 @@
                   },
                   {
                     "name": "KAFKA_BROKERS",
-                    "value": "boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098"
+                    "value": "boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098"
                   }
                 ]
               }
@@ -341,7 +341,7 @@
             "containers": [
               {
                 "name": "replica-a",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -499,7 +499,7 @@
             "containers": [
               {
                 "name": "replica-b",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -657,7 +657,7 @@
             "containers": [
               {
                 "name": "replica-c",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -815,7 +815,7 @@
             "containers": [
               {
                 "name": "replica-d",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -967,7 +967,7 @@
             "containers": [
               {
                 "name": "flash-sale-manager",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "flash-sale-manager"
@@ -1115,7 +1115,7 @@
             "containers": [
               {
                 "name": "inventory-reservation",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "inventory-reservation"
@@ -1273,7 +1273,7 @@
             "containers": [
               {
                 "name": "admission-controller",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "admission-controller"
@@ -1468,7 +1468,7 @@
             "containers": [
               {
                 "name": "order-service",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "order-service"
@@ -1633,7 +1633,7 @@
             "containers": [
               {
                 "name": "payment-service",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "payment-service"
@@ -1783,7 +1783,7 @@
             "containers": [
               {
                 "name": "product-catalog",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "product-catalog"
@@ -1945,7 +1945,7 @@
             "containers": [
               {
                 "name": "notification",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "notification"
@@ -2077,7 +2077,7 @@
             "containers": [
               {
                 "name": "analytics-api",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:app-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "analytics-api"
@@ -2200,7 +2200,7 @@
             "containers": [
               {
                 "name": "nginx",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:web-0d0e433ac2640280fd80edad347cde46db29fcdc",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:web-d801fb8efcb792574598ea5ce69e2643e6301930",
                 "imagePullPolicy": "IfNotPresent",
                 "readinessProbe": {
                   "httpGet": {
@@ -2230,7 +2230,7 @@
           "name": "web",
           "port": 8080
         },
-        "targetGroupARN": "arn:aws:elasticloadbalancing:ap-south-1:224033508410:targetgroup/flashkart-demo-api/e4e15a5a939f62bb",
+        "targetGroupARN": "arn:aws:elasticloadbalancing:ap-south-1:224033508410:targetgroup/flashkart-demo-api/8eba5cbe14e7ff95",
         "targetType": "ip"
       }
     },
@@ -2263,7 +2263,7 @@
       },
       "spec": {
         "emrReleaseLabel": "emr-7.13.0-flink-latest",
-        "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:flink-0d0e433ac2640280fd80edad347cde46db29fcdc",
+        "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart:flink-d801fb8efcb792574598ea5ce69e2643e6301930",
         "flinkVersion": "v1_20",
         "serviceAccount": "flink",
         "flinkConfiguration": {
@@ -2326,7 +2326,7 @@
           "upgradeMode": "last-state",
           "args": [
             "--brokers",
-            "boot-jdebedkg.c3.kafka-serverless.ap-south-1.amazonaws.com:9098",
+            "boot-nmzlu7id.c3.kafka-serverless.ap-south-1.amazonaws.com:9098",
             "--checkpoints",
             "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/checkpoints",
             "--transactional-id-prefix",
@@ -2344,11 +2344,11 @@
         "name": "telemetry"
       },
       "data": {
-        "prometheus.yml": "global:\n  scrape_interval: 10s\nscrape_configs:\n- job_name: flashkart\n  kubernetes_sd_configs:\n  - role: pod\n    namespaces:\n      names: [flashkart]\n  relabel_configs:\n  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]\n    regex: \"true\"\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);(\\d+)'\n    replacement: '$1:$2'\n    target_label: __address__\n  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);'\n    replacement: '$1'\n    target_label: __address__\n  - source_labels: [__meta_kubernetes_pod_container_port_name, __meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_container_name]\n    regex: 'http;;.*|.*;9249;flink-main-container'\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_label_app]\n    target_label: app\n",
+        "prometheus.yml": "global:\n  scrape_interval: 10s\nscrape_configs:\n- job_name: flashkart\n  kubernetes_sd_configs:\n  - role: pod\n    namespaces:\n      names: [flashkart]\n  relabel_configs:\n  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]\n    regex: \"true\"\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);(\\d+)'\n    replacement: '$1:$2'\n    target_label: __address__\n  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);'\n    replacement: '$1'\n    target_label: __address__\n  - source_labels: [__meta_kubernetes_pod_container_port_name, __meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_container_name]\n    regex: 'http;;.*|.*;9249;flink-main-container'\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_label_app]\n    target_label: app\n- job_name: kube-state-metrics\n  static_configs:\n  - targets: [kube-state-metrics:8080]\n",
         "fluent-bit.conf": "[SERVICE]\n    Flush 1\n    Parsers_File /fluent-bit/etc/parsers.conf\n[INPUT]\n    Name tail\n    Path /var/log/containers/*_flashkart_*.log\n    Tag kube.*\n    multiline.parser docker, cri\n    DB /positions/tail.db\n    Skip_Long_Lines On\n    Inotify_Watcher Off\n[OUTPUT]\n    Name cloudwatch_logs\n    Match kube.*\n    region ap-south-1\n    log_group_name /flashkart/flashkart-demo/application\n    log_stream_prefix pod-\n    auto_create_group false\n",
         "datasources.yaml": "apiVersion: 1\ndatasources:\n- name: Prometheus\n  uid: prometheus\n  type: prometheus\n  url: http://prometheus:9090\n  isDefault: true\n",
         "provider.yaml": "apiVersion: 1\nproviders:\n- name: Flashkart\n  options:\n    path: /dashboards\n",
-        "flashkart.json": "{\"uid\": \"flashkart\", \"title\": \"Flashkart\", \"schemaVersion\": 39, \"refresh\": \"10s\", \"panels\": [{\"id\": 1, \"type\": \"timeseries\", \"title\": \"Application health\", \"gridPos\": {\"x\": 0, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (up{job=\\\"flashkart\\\"})\"}]}, {\"id\": 2, \"type\": \"timeseries\", \"title\": \"HTTP requests per second\", \"gridPos\": {\"x\": 12, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_http_requests_total[1m]))\"}]}, {\"id\": 3, \"type\": \"timeseries\", \"title\": \"Available stock by sale\", \"gridPos\": {\"x\": 0, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"flashkart_inventory_available_stock\"}]}, {\"id\": 4, \"type\": \"timeseries\", \"title\": \"Work waiting for delivery\", \"gridPos\": {\"x\": 12, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (source) (flashkart_outbox_pending) or max by (service) (flashkart_workflow_pending)\"}]}, {\"id\": 5, \"type\": \"timeseries\", \"title\": \"Replica backend failures\", \"gridPos\": {\"x\": 0, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_sql_failures_total[1m]))\"}]}, {\"id\": 6, \"type\": \"timeseries\", \"title\": \"Replica peer failures\", \"gridPos\": {\"x\": 12, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_peer_requests_total{result=\\\"error\\\"}[1m]))\"}]}, {\"id\": 7, \"type\": \"timeseries\", \"title\": \"Analytics event-time progress\", \"gridPos\": {\"x\": 0, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*currentOutputWatermark\\\"}\"}]}, {\"id\": 8, \"type\": \"timeseries\", \"title\": \"Analytics late events\", \"gridPos\": {\"x\": 12, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*lateEventsDropped\\\"}\"}]}]}"
+        "flashkart.json": "{\"uid\": \"flashkart\", \"title\": \"Flashkart\", \"schemaVersion\": 39, \"refresh\": \"10s\", \"panels\": [{\"id\": 1, \"type\": \"timeseries\", \"title\": \"Application health\", \"gridPos\": {\"x\": 0, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (up{job=\\\"flashkart\\\"})\"}]}, {\"id\": 2, \"type\": \"timeseries\", \"title\": \"HTTP requests per second\", \"gridPos\": {\"x\": 12, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_http_requests_total[1m]))\"}]}, {\"id\": 3, \"type\": \"timeseries\", \"title\": \"HTTP 5xx error rate (%)\", \"gridPos\": {\"x\": 0, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"100 * sum by (app) (rate(flashkart_http_requests_total{code=\\\"5xx\\\"}[1m])) / clamp_min(sum by (app) (rate(flashkart_http_requests_total[1m])), 1e-9)\"}]}, {\"id\": 4, \"type\": \"timeseries\", \"title\": \"HTTP latency p95 (seconds)\", \"gridPos\": {\"x\": 12, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"histogram_quantile(0.95, sum by (app, le) (rate(flashkart_http_request_duration_seconds_bucket[1m])))\"}]}, {\"id\": 5, \"type\": \"timeseries\", \"title\": \"Kubernetes nodes ready\", \"gridPos\": {\"x\": 0, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum(kube_node_status_condition{condition=\\\"Ready\\\", status=\\\"true\\\"})\"}]}, {\"id\": 6, \"type\": \"timeseries\", \"title\": \"Kubernetes pods not ready\", \"gridPos\": {\"x\": 12, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (namespace) (kube_pod_status_ready{condition=\\\"false\\\"})\"}]}, {\"id\": 7, \"type\": \"timeseries\", \"title\": \"Container restarts (15m)\", \"gridPos\": {\"x\": 0, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (pod) (increase(kube_pod_container_status_restarts_total[15m])) > 0\"}]}, {\"id\": 8, \"type\": \"timeseries\", \"title\": \"HPA current replicas\", \"gridPos\": {\"x\": 12, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"kube_horizontalpodautoscaler_status_current_replicas\"}]}, {\"id\": 9, \"type\": \"timeseries\", \"title\": \"Available stock by sale\", \"gridPos\": {\"x\": 0, \"y\": 32, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"flashkart_inventory_available_stock\"}]}, {\"id\": 10, \"type\": \"timeseries\", \"title\": \"Work waiting for delivery\", \"gridPos\": {\"x\": 12, \"y\": 32, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (source) (flashkart_outbox_pending) or max by (service) (flashkart_workflow_pending)\"}]}, {\"id\": 11, \"type\": \"timeseries\", \"title\": \"Replica backend failures\", \"gridPos\": {\"x\": 0, \"y\": 40, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_sql_failures_total[1m]))\"}]}, {\"id\": 12, \"type\": \"timeseries\", \"title\": \"Replica peer failures\", \"gridPos\": {\"x\": 12, \"y\": 40, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_peer_requests_total{result=\\\"error\\\"}[1m]))\"}]}, {\"id\": 13, \"type\": \"timeseries\", \"title\": \"Analytics event-time progress\", \"gridPos\": {\"x\": 0, \"y\": 48, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*currentOutputWatermark\\\"}\"}]}, {\"id\": 14, \"type\": \"timeseries\", \"title\": \"Analytics late events\", \"gridPos\": {\"x\": 12, \"y\": 48, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*lateEventsDropped\\\"}\"}]}]}"
       }
     },
     {
@@ -2433,7 +2433,7 @@
               "app": "prometheus"
             },
             "annotations": {
-              "flashkart.io/telemetry-config": "3556ab8bd3538d0a12459d863511941e27f1c98aca0479fd156d7e74fc788018"
+              "flashkart.io/telemetry-config": "aa0c49d5d27344291008f2edbc84b284fe831f55fab318f784a2532cfab40f77"
             }
           },
           "spec": {
@@ -2507,7 +2507,7 @@
               "app": "grafana"
             },
             "annotations": {
-              "flashkart.io/telemetry-config": "3556ab8bd3538d0a12459d863511941e27f1c98aca0479fd156d7e74fc788018"
+              "flashkart.io/telemetry-config": "aa0c49d5d27344291008f2edbc84b284fe831f55fab318f784a2532cfab40f77"
             }
           },
           "spec": {
@@ -2570,7 +2570,7 @@
               "app": "fluent-bit"
             },
             "annotations": {
-              "flashkart.io/telemetry-config": "3556ab8bd3538d0a12459d863511941e27f1c98aca0479fd156d7e74fc788018"
+              "flashkart.io/telemetry-config": "aa0c49d5d27344291008f2edbc84b284fe831f55fab318f784a2532cfab40f77"
             }
           },
           "spec": {
@@ -2633,6 +2633,151 @@
               }
             ],
             "serviceAccountName": "fluent-bit"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "kube-state-metrics"
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRole",
+      "metadata": {
+        "name": "flashkart-kube-state-metrics"
+      },
+      "rules": [
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "nodes",
+            "pods",
+            "namespaces"
+          ],
+          "verbs": [
+            "list",
+            "watch"
+          ]
+        },
+        {
+          "apiGroups": [
+            "apps"
+          ],
+          "resources": [
+            "deployments",
+            "daemonsets",
+            "replicasets",
+            "statefulsets"
+          ],
+          "verbs": [
+            "list",
+            "watch"
+          ]
+        },
+        {
+          "apiGroups": [
+            "autoscaling"
+          ],
+          "resources": [
+            "horizontalpodautoscalers"
+          ],
+          "verbs": [
+            "list",
+            "watch"
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRoleBinding",
+      "metadata": {
+        "name": "flashkart-kube-state-metrics"
+      },
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "ClusterRole",
+        "name": "flashkart-kube-state-metrics"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "kube-state-metrics",
+          "namespace": "flashkart"
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "kube-state-metrics"
+      },
+      "spec": {
+        "selector": {
+          "app": "kube-state-metrics"
+        },
+        "ports": [
+          {
+            "port": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "kube-state-metrics"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "kube-state-metrics"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "kube-state-metrics"
+            }
+          },
+          "spec": {
+            "serviceAccountName": "kube-state-metrics",
+            "containers": [
+              {
+                "name": "kube-state-metrics",
+                "image": "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.18.0",
+                "args": [
+                  "--port=8080",
+                  "--telemetry-port=8081",
+                  "--resources=nodes,pods,namespaces,deployments,daemonsets,replicasets,statefulsets,horizontalpodautoscalers"
+                ],
+                "ports": [
+                  {
+                    "containerPort": 8080
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8081
+                  }
+                },
+                "securityContext": {
+                  "runAsNonRoot": true,
+                  "runAsUser": 65534,
+                  "allowPrivilegeEscalation": false,
+                  "readOnlyRootFilesystem": true
+                }
+              }
+            ]
           }
         }
       }
