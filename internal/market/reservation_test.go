@@ -284,3 +284,74 @@ func TestPurchaseQueue(t *testing.T) {
 		t.Fatalf("duplicate SQS delivery changed reservations: %d %v", held, err)
 	}
 }
+
+func TestEndSale(t *testing.T) {
+	if os.Getenv("FLASHKART_TEST_PURCHASE") != "1" {
+		t.Skip("run make test-reservations")
+	}
+	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+	defer cancel()
+	inventory := Inventory{DB: purchasePool(t, "FLASHKART_INVENTORY_DSN"), HoldDuration: time.Minute, AdminToken: "admin-token"}
+	handler := inventory.Handler(http.NotFoundHandler())
+	call := func(method, path, token string) (int, []byte) {
+		r := httptest.NewRequest(method, path, nil).WithContext(ctx)
+		if token != "" {
+			r.Header.Set("Authorization", "Bearer "+token)
+		}
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, r)
+		return w.Code, w.Body.Bytes()
+	}
+	reserve := func(sale string) string {
+		attempt := rand.Text()
+		if err := inventory.Reserve(ctx, PurchaseWork{1, "end-test", time.Now().UTC(), sale, attempt, "buyer"}); err != nil {
+			t.Fatal(err)
+		}
+		var reason *string
+		if err := inventory.DB.QueryRow(ctx, "SELECT rejection FROM inventory.attempts WHERE attempt_id=$1", attempt).Scan(&reason); err != nil {
+			t.Fatal(err)
+		}
+		if reason == nil {
+			return ""
+		}
+		return *reason
+	}
+
+	sale := purchaseSale(t, inventory, 5, false)
+	if got := reserve(sale); got != "" {
+		t.Fatalf("live sale rejected a purchase: %s", got)
+	}
+	path := "/api/inventory/sales/" + sale + "/end"
+	if code, _ := call("POST", path, ""); code != 401 {
+		t.Fatalf("ending without a token returned %d", code)
+	}
+	if code, _ := call("POST", path, "customer-token"); code != 403 {
+		t.Fatalf("ending with a non-admin token returned %d", code)
+	}
+	if code, _ := call("POST", "/api/inventory/sales/missing-"+sale+"/end", "admin-token"); code != 404 {
+		t.Fatalf("ending an unknown sale returned %d", code)
+	}
+	code, body := call("POST", path, "admin-token")
+	if code != 200 || !bytes.Contains(body, []byte(`"active":false`)) || !bytes.Contains(body, []byte(`"held":1`)) {
+		t.Fatalf("ending a live sale returned %d %s", code, body)
+	}
+	if code, _ := call("POST", path, "admin-token"); code != 409 {
+		t.Fatalf("ending an ended sale returned %d", code)
+	}
+	if got := reserve(sale); got != "INACTIVE" {
+		t.Fatalf("ended sale accepted or misreported a purchase: %q", got)
+	}
+	if _, body := call("GET", "/api/inventory/sales/"+sale, ""); !bytes.Contains(body, []byte(`"available":4`)) {
+		t.Fatalf("ending changed stock unexpectedly: %s", body)
+	}
+
+	// Without an administrator token configured, nobody can end a sale.
+	locked := Inventory{DB: inventory.DB}
+	r := httptest.NewRequest("POST", "/api/inventory/sales/"+purchaseSale(t, inventory, 1, false)+"/end", nil).WithContext(ctx)
+	r.Header.Set("Authorization", "Bearer anything")
+	w := httptest.NewRecorder()
+	locked.Handler(http.NotFoundHandler()).ServeHTTP(w, r)
+	if w.Code != 403 {
+		t.Fatalf("ending without a configured token returned %d", w.Code)
+	}
+}

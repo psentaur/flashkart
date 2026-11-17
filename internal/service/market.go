@@ -140,7 +140,7 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 			if err != nil {
 				return err
 			}
-			inventory := market.Inventory{DB: db, HoldDuration: hold}
+			inventory := market.Inventory{DB: db, HoldDuration: hold, AdminToken: token}
 			orderConn, err := checkoutClient(cfg.OrderGRPC)
 			if err != nil {
 				return err
@@ -151,6 +151,7 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 			workers.Go(func() { inventory.SweepExpired(workerCtx, log, sweep) })
 			defer func() { stop(); workers.Wait() }()
 			app.register = func(server *grpc.Server) { pb.RegisterInventoryServer(server, inventory) }
+			app.wrap = inventory.Handler
 			worker = func() { inventory.Consume(workerCtx, queue, log) }
 		}
 		if queue != nil {

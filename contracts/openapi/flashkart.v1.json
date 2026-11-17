@@ -1102,6 +1102,327 @@
           }
         ]
       }
+    },
+    "/api/products/{product_id}/image": {
+      "get": {
+        "operationId": "getProductImage",
+        "summary": "Product image bytes served from S3 by the catalog.",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "X-Correlation-ID",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Image",
+            "content": {
+              "image/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Redirect to an external HTTPS image"
+          },
+          "default": {
+            "description": "Request error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/products/{product_id}/image": {
+      "post": {
+        "operationId": "uploadProductImage",
+        "summary": "Upload a JPEG, PNG, WebP or GIF image of at most 5 MB.",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "X-Correlation-ID",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/jpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/webp": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "image/gif": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Stored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageReference"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminToken": []
+          }
+        ]
+      }
+    },
+    "/api/inventory/sales": {
+      "get": {
+        "operationId": "listStockLevels",
+        "parameters": [
+          {
+            "name": "X-Correlation-ID",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StockLevel"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/inventory/sales/{sale_id}": {
+      "get": {
+        "operationId": "getStockLevel",
+        "parameters": [
+          {
+            "name": "sale_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "X-Correlation-ID",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockLevel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payments/{payment_id}": {
+      "get": {
+        "operationId": "getPayment",
+        "parameters": [
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "X-Correlation-ID",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Payment"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customerToken": []
+          }
+        ]
+      }
+    },
+    "/api/inventory/sales/{sale_id}/end": {
+      "post": {
+        "operationId": "endSale",
+        "summary": "Stop a published sale early. New purchases are rejected as INACTIVE; held reservations finish normally. Returns 409 SALE_NOT_ACTIVE when the sale has already ended or is still being published.",
+        "parameters": [
+          {
+            "name": "sale_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "X-Correlation-ID",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ended",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockLevel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminToken": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1193,6 +1514,10 @@
           "image_url": {
             "type": "string",
             "format": "uri"
+          },
+          "regular_price": {
+            "$ref": "#/components/schemas/Price",
+            "description": "Optional everyday price that flash-sale prices are compared with."
           }
         },
         "additionalProperties": false,
@@ -1445,6 +1770,10 @@
             "type": "string",
             "minLength": 1
           },
+          "sale_id": {
+            "type": "string",
+            "minLength": 1
+          },
           "state": {
             "type": "string",
             "enum": [
@@ -1452,13 +1781,33 @@
               "CONFIRMED",
               "CANCELLED"
             ]
+          },
+          "amount_minor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why the order was cancelled, for example PAYMENT_DECLINED."
           }
         },
         "additionalProperties": false,
         "required": [
           "order_id",
           "attempt_id",
-          "state"
+          "state",
+          "sale_id",
+          "amount_minor",
+          "currency",
+          "created_at"
         ]
       },
       "Notification": {
@@ -1559,6 +1908,124 @@
           "replica_id",
           "backend_ready",
           "pending_hints"
+        ]
+      },
+      "Payment": {
+        "type": "object",
+        "description": "Simulated payment. The payment ID equals the order and attempt ID.",
+        "properties": {
+          "payment_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "order_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUCCEEDED",
+              "DECLINED",
+              "REFUNDED"
+            ]
+          },
+          "amount_minor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          },
+          "simulated_decline": {
+            "type": "boolean",
+            "description": "True when the attempt ID starts with \"decline-\", the storefront's declining test card."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "payment_id",
+          "order_id",
+          "state",
+          "amount_minor",
+          "currency",
+          "simulated_decline"
+        ]
+      },
+      "StockLevel": {
+        "type": "object",
+        "description": "Authoritative stock for one published sale.",
+        "properties": {
+          "sale_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "stock": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Published stock limit."
+          },
+          "available": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "held": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Reserved units awaiting payment."
+          },
+          "sold": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Committed units."
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "sale_id",
+          "stock",
+          "available",
+          "held",
+          "sold",
+          "active"
+        ]
+      },
+      "ImageReference": {
+        "type": "object",
+        "properties": {
+          "image_url": {
+            "type": "string",
+            "pattern": "^s3://",
+            "description": "Store this value in the product's image_url."
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "image_url"
+        ]
+      },
+      "Price": {
+        "type": "object",
+        "description": "An amount in the currency's minor unit, such as paise for INR.",
+        "properties": {
+          "amount_minor": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "currency": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "amount_minor",
+          "currency"
         ]
       }
     },

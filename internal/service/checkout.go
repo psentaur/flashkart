@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	pb "flashkart/gen/flashkart/v1"
@@ -50,14 +49,18 @@ func runCheckout(ctx context.Context, name string, cfg config, log *slog.Logger,
 		if err != nil {
 			return err
 		}
-		app.register = func(s *grpc.Server) {
-			pb.RegisterPaymentServer(s, market.Payment{DB: db, Fixture: fixture, Delay: delay})
+		token, customer, err := customerConfig()
+		if err != nil {
+			return err
 		}
+		payment := market.Payment{DB: db, Fixture: fixture, Delay: delay}
+		app.register = func(s *grpc.Server) { pb.RegisterPaymentServer(s, payment) }
+		app.wrap = func(fallback http.Handler) http.Handler { return payment.Handler(token, customer, fallback) }
 		return serve(ctx, name, cfg, log, nil, nil, app)
 	}
-	token, customer := os.Getenv("FLASHKART_CUSTOMER_TOKEN"), os.Getenv("FLASHKART_CUSTOMER_ID")
-	if strings.TrimSpace(token) == "" || strings.TrimSpace(customer) == "" || token == os.Getenv("FLASHKART_ADMIN_TOKEN") {
-		return errors.New("a distinct customer token and customer ID are required")
+	token, customer, err := customerConfig()
+	if err != nil {
+		return err
 	}
 	inventory, err := checkoutClient(cfg.InventoryGRPC)
 	if err != nil {

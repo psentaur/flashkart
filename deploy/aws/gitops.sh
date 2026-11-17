@@ -90,7 +90,7 @@ for crd in flinkdeployments.flink.apache.org targetgroupbindings.elbv2.k8s.aws; 
     kubectl wait --for=condition=Established "crd/$crd" --timeout=120s
 done
 kubectl -n kube-system rollout status deployment/aws-load-balancer-controller --timeout=300s
-consumers="admission-controller flash-sale-manager notification order-service product-catalog"
+consumers="admission-controller flash-sale-manager inventory-reservation notification order-service payment-service product-catalog"
 export FLASHKART_TOKEN_CONSUMERS="$consumers"
 python3 - <<'PY' | kubectl apply -f -
 import json, os

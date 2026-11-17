@@ -69,8 +69,8 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
                 services += (("analytics-api", 8208, "", None),)
             for name, port, grpc, dsn in services:
                 settings = dict(config, http_address=f"127.0.0.1:{port}", grpc_address=grpc)
-                variables = {"FLASHKART_ADMIN_TOKEN": token} if name != "inventory-reservation" else {}
-                if name in ("admission-controller", "order-service", "notification"):
+                variables = {"FLASHKART_ADMIN_TOKEN": token}
+                if name in ("admission-controller", "order-service", "payment-service", "notification"):
                     variables.update({key: os.environ[key] for key in customer_vars})
                 if name in ("admission-controller", "inventory-reservation") and os.environ.get(queue_vars[0]):
                     variables.update({key: os.environ[key] for key in queue_vars})

@@ -145,14 +145,21 @@ func TestCatalogAndPublication(t *testing.T) {
 		return w.Body.Bytes()
 	}
 
-	product := Product{ID: productID, Name: "Original product"}
+	product := Product{ID: productID, Name: "Original product", RegularPrice: &Price{AmountMinor: 99900, Currency: "INR"}}
 	edit := map[string]any{"operation_id": operation, "product": product, "context": causalContext{}}
 	path := "/api/admin/products/" + productID
+	for _, bad := range []*Price{{AmountMinor: 0, Currency: "INR"}, {AmountMinor: 100, Currency: "inr"}} {
+		invalid := product
+		invalid.RegularPrice = bad
+		request(catalog, "PUT", path, map[string]any{"operation_id": rand.Text(), "product": invalid, "context": causalContext{}}, "admin-token", 400)
+	}
 	request(catalog, "PUT", path, edit, "", 401)
 	request(catalog, "GET", "/api/admin/replicas", nil, "customer-token", 403)
 	request(catalog, "PUT", path, edit, "admin-token", 200)
 	request(catalog, "PUT", path, edit, "admin-token", 200)
-	request(catalog, "GET", "/api/products/"+productID, nil, "", 200)
+	if got := request(catalog, "GET", "/api/products/"+productID, nil, "", 200); !bytes.Contains(got, []byte(`"regular_price":{"amount_minor":99900,"currency":"INR"}`)) {
+		t.Fatalf("regular price was not stored: %s", got)
+	}
 
 	product.Name = "Concurrent product"
 	body, err := json.Marshal(product)
@@ -189,6 +196,11 @@ func TestCatalogAndPublication(t *testing.T) {
 	price := int64(9500)
 	terms := Terms{ProductID: productID, PriceMinor: &price, Currency: "INR", Stock: 20,
 		StartsAt: "2027-01-02T10:00:00Z", EndsAt: "2027-01-02T12:00:00Z"}
+	missing := terms
+	missing.ProductID = "missing-" + productID
+	if body := request(managerHTTP, "POST", "/api/admin/sale-drafts", missing, "admin-token", 400); !bytes.Contains(body, []byte("PRODUCT_NOT_FOUND")) {
+		t.Fatalf("draft for an unknown product was not rejected: %s", body)
+	}
 	created := request(managerHTTP, "POST", "/api/admin/sale-drafts", terms, "admin-token", 201)
 	var saleDraft draft
 	if err := json.Unmarshal(created, &saleDraft); err != nil || saleDraft.State != "DRAFT" {
