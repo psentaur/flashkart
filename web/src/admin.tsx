@@ -233,6 +233,9 @@ export function Sales({ token }: { token: string }) {
   const [ended, setEnded] = useState<Sale>();
   const [endError, setEndError] = useState<unknown>();
   const top = useRef<HTMLDivElement>(null);
+  const notice = useRef<HTMLDivElement>(null);
+  // The End button disappears once the sale ends, so move focus to the confirmation instead of losing it.
+  useEffect(() => { if (ended) notice.current?.focus(); }, [ended]);
 
   async function end(sale: Sale) {
     if (ending) return;
@@ -262,7 +265,7 @@ export function Sales({ token }: { token: string }) {
       onPublished={() => { sales.reload(); stock.reload(); products.reload(); }} onReset={() => { setPrefill(undefined); setForm(Date.now()); }}
       onProductChanged={() => products.reload()} />
     <section className="panel table-wrap"><h2>Published</h2><Feedback query={sales} />
-      {ended && <div className="notice" role="status"><strong>{catalog.get(ended.terms.product_id)?.name || "The sale"} has ended.</strong> New orders are refused;
+      {ended && <div className="notice" role="status" tabIndex={-1} ref={notice}><strong>{catalog.get(ended.terms.product_id)?.name || "The sale"} has ended.</strong> New orders are refused;
         orders already in progress finish normally. To change its price or stock, publish a replacement.
         <div className="catalog-list"><button onClick={() => replace(ended)}>Publish a replacement</button>
           <button className="secondary" onClick={() => setEnded(undefined)}>Done</button></div></div>}
@@ -278,7 +281,9 @@ export function Sales({ token }: { token: string }) {
             <td>{isFlash(sale.terms, product) ? <span className="pill flash">⚡ Flash sale</span> : <span className="pill">Regular</span>}</td>
             <td>{money(sale.terms)}</td><td>{date(sale.terms.starts_at)} – {date(sale.terms.ends_at)}</td>
             <td><span className={`pill ${status === "Live" ? "live" : ""}`}>{status}</span></td>
-            <td className="stock-cell"><StockBar stock={levels.get(sale.sale_id)} limit={sale.terms.stock} /></td>
+            <td className="stock-cell">{status === "Ended" && levels.get(sale.sale_id)
+              ? <span className="small">{levels.get(sale.sale_id)!.sold} sold · {Math.max(0, levels.get(sale.sale_id)!.available)} unsold</span>
+              : <StockBar stock={levels.get(sale.sale_id)} limit={sale.terms.stock} />}</td>
             <td className="actions">{status !== "Ended" && levels.get(sale.sale_id)?.active && (confirming === sale.sale_id
               ? <span className="confirm"><span className="small">End now?</span>
                 <button className="danger" disabled={!!ending} onClick={() => void end(sale)}>{ending === sale.sale_id ? "Ending…" : "End"}</button>

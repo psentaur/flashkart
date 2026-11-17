@@ -360,3 +360,4 @@ button.danger:hover { background: #b82b39; }
 .table-wrap { position: relative; }
 .sr-only { margin: -1px; padding: 0; border: 0; }
 .section-head > button { white-space: nowrap; }
+.notice:focus { outline: 3px solid #f2dc9b; outline-offset: 2px; }
