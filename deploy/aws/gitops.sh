@@ -27,8 +27,8 @@ tf output -json deployment >"$work/settings.json"
 tf output -json database_passwords >"$work/passwords.json"
 name=$(jq -er .name "$work/settings.json")
 region=$(jq -er .region "$work/settings.json")
-export KUBECONFIG="$work/kubeconfig"
-aws eks update-kubeconfig --name "$name" --region "$region" >/dev/null
+. deploy/aws/kubeconfig.sh
+cloud_kubeconfig "$name" "$region" "$work/kubeconfig"
 ns() { kubectl create namespace "$1" --dry-run=client -o yaml | kubectl apply -f -; }
 ns argocd
 ns flashkart
@@ -100,7 +100,7 @@ for crd in flinkdeployments.flink.apache.org targetgroupbindings.elbv2.k8s.aws; 
     kubectl wait --for=condition=Established "crd/$crd" --timeout=120s
 done
 kubectl -n kube-system rollout status deployment/aws-load-balancer-controller --timeout=300s
-consumers="admission-controller flash-sale-manager notification order-service product-catalog analytics-api identity-api"
+consumers="admission-controller analytics-api flash-sale-manager identity-api inventory-reservation notification order-service payment-service product-catalog"
 export FLASHKART_TOKEN_CONSUMERS="$consumers"
 python3 - <<'PY' | kubectl apply -f -
 import json, os

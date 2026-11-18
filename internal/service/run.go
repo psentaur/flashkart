@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
-	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -149,7 +148,7 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 		log.Info("gRPC listening", "address", peerListener.Addr().String())
 	}
 
-	var requests atomic.Uint64
+	var requests httpMetrics
 	var ready atomic.Bool
 	ready.Store(true)
 	mux := http.NewServeMux()
@@ -167,7 +166,7 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 	})
 	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
-		fmt.Fprintf(w, "# TYPE flashkart_http_requests_total counter\nflashkart_http_requests_total %d\n", requests.Load())
+		requests.write(w)
 		if coordinator != nil {
 			coordinator.WriteMetrics(w)
 		}
@@ -201,10 +200,7 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 	server := &http.Server{
 		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       30 * time.Second,
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			requests.Add(1)
-			handler.ServeHTTP(w, r)
-		}),
+		Handler:           requests.wrap(handler),
 	}
 	go func() { failures <- server.Serve(listener) }()
 	log.Info("HTTP listening", "address", listener.Addr().String())

@@ -6,6 +6,15 @@ data "aws_availability_zones" "available" {
   }
 }
 
+data "aws_caller_identity" "operator" {
+  lifecycle {
+    postcondition {
+      condition     = !endswith(self.arn, ":root") || var.eks_operator_principal_arn != null
+      error_message = "When Terraform runs as account root, supply an IAM user or role ARN for Kubernetes access."
+    }
+  }
+}
+
 module "vpc" {
   source                 = "terraform-aws-modules/vpc/aws"
   version                = "6.5.0"
@@ -27,10 +36,21 @@ module "eks" {
   endpoint_public_access                   = true
   endpoint_public_access_cidrs             = var.operator_cidrs
   endpoint_private_access                  = true
-  enable_cluster_creator_admin_permissions = true
-  enable_irsa                              = true
-  vpc_id                                   = module.vpc.vpc_id
-  subnet_ids                               = module.vpc.private_subnets
+  enable_cluster_creator_admin_permissions = var.eks_operator_principal_arn == null
+  access_entries = var.eks_operator_principal_arn != null ? {
+    operator = {
+      principal_arn = var.eks_operator_principal_arn
+      policy_associations = {
+        admin = {
+          policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = { type = "cluster" }
+        }
+      }
+    }
+  } : {}
+  enable_irsa = true
+  vpc_id      = module.vpc.vpc_id
+  subnet_ids  = module.vpc.private_subnets
   addons = {
     coredns    = {}
     kube-proxy = {}
@@ -40,9 +60,20 @@ module "eks" {
     workers = {
       ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = ["m6i.xlarge"]
-      min_size       = 3
-      desired_size   = 3
-      max_size       = 3
+      # The EMR Flink runtime image is over 5 GB compressed; the 20 GB default disk triggers evictions.
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 60
+            volume_type           = "gp3"
+            delete_on_termination = true
+          }
+        }
+      }
+      min_size     = 3
+      desired_size = 3
+      max_size     = 3
     }
   }
 }

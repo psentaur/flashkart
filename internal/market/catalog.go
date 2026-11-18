@@ -3,9 +3,13 @@ package market
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -22,6 +26,18 @@ type Product struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
 	ImageURL    string `json:"image_url,omitempty"`
+	// RegularPrice is the everyday price that flash-sale prices are compared with. It is optional.
+	RegularPrice *Price `json:"regular_price,omitempty"`
+}
+
+// Price is an amount in the currency's minor unit, such as paise for INR.
+type Price struct {
+	AmountMinor int64  `json:"amount_minor"`
+	Currency    string `json:"currency"`
+}
+
+func (p *Price) valid() bool {
+	return p == nil || p.AmountMinor > 0 && validCurrency(p.Currency)
 }
 
 type interval struct {
@@ -71,6 +87,8 @@ type Catalog struct {
 func (c Catalog) Handler(token string, fallback http.Handler) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/products", c.list(productKind))
+	mux.HandleFunc("POST /api/admin/products/{product_id}/image", admin(token, c.uploadImage))
+	mux.HandleFunc("GET /api/products/{product_id}/image", c.image)
 	mux.HandleFunc("GET /api/products/{product_id}", c.get(productKind, "product_id"))
 	mux.HandleFunc("GET /api/sales", c.list(saleKind))
 	mux.HandleFunc("GET /api/sales/{sale_id}", c.get(saleKind, "sale_id"))
@@ -83,14 +101,87 @@ func (c Catalog) Handler(token string, fallback http.Handler) http.Handler {
 	return serveAPI(mux, fallback)
 }
 
+// uploadImage stores the request body as the product's image and returns the reference
+// to save in the product document, plus a short-lived URL for previewing it.
+func (c Catalog) uploadImage(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("product_id")
+	if !validID(id) {
+		writeError(w, r, 400, "INVALID_ARGUMENT", "invalid product ID")
+		return
+	}
+	data, err := io.ReadAll(http.MaxBytesReader(w, r.Body, MaxImageBytes+1))
+	if err != nil || len(data) > MaxImageBytes {
+		writeError(w, r, 413, "IMAGE_TOO_LARGE", errInvalidImage.Error())
+		return
+	}
+	ref, err := c.Images.Upload(r.Context(), id, data)
+	switch {
+	case errors.Is(err, errInvalidImage):
+		writeError(w, r, 400, "INVALID_IMAGE", err.Error())
+		return
+	case errors.Is(err, errImagesDisabled):
+		writeError(w, r, 501, "IMAGES_DISABLED", err.Error())
+		return
+	case err != nil:
+		writeError(w, r, 503, "UNAVAILABLE", "image upload failed")
+		return
+	}
+	send(w, 201, map[string]string{"image_url": ref})
+}
+
+// image serves a product's uploaded image from S3 through the catalog, so browsers need no
+// bucket access and links never expire. The ?v= parameter in published URLs busts caches.
+func (c Catalog) image(w http.ResponseWriter, r *http.Request) {
+	versions, err := readDocument(r.Context(), c.Replicas, productKind, r.PathValue("product_id"), r.Header.Get("X-Correlation-ID"))
+	if err != nil {
+		serviceError(w, r, err)
+		return
+	}
+	ref := ""
+	for _, sibling := range versions.GetSiblings() {
+		var p Product
+		if json.Unmarshal(sibling.DocumentJson, &p) == nil && p.ImageURL != "" {
+			ref = p.ImageURL
+			break
+		}
+	}
+	if ref == "" {
+		writeError(w, r, 404, "NOT_FOUND", "product has no image")
+		return
+	}
+	if !strings.HasPrefix(ref, "s3://") {
+		http.Redirect(w, r, ref, http.StatusFound)
+		return
+	}
+	body, kind, err := c.Images.Open(r.Context(), ref)
+	if err != nil {
+		writeError(w, r, 503, "UNAVAILABLE", "product image is unavailable")
+		return
+	}
+	defer body.Close()
+	if kind == "" {
+		kind = "application/octet-stream"
+	}
+	w.Header().Set("Content-Type", kind)
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	io.Copy(w, body)
+}
+
 func (c Catalog) product(ctx context.Context, data []byte) (Product, error) {
 	var p Product
 	if err := json.Unmarshal(data, &p); err != nil {
 		return Product{}, err
 	}
-	url, err := c.Images.Resolve(ctx, p.ImageURL)
-	p.ImageURL = url
-	return p, err
+	if err := c.Images.Validate(p.ImageURL); err != nil {
+		return p, err
+	}
+	if strings.HasPrefix(p.ImageURL, "s3://") {
+		// Publish a stable catalog URL; the version parameter changes whenever the stored object does.
+		sum := sha256.Sum256([]byte(p.ImageURL))
+		p.ImageURL = "/api/products/" + url.PathEscape(p.ID) + "/image?v=" + hex.EncodeToString(sum[:6])
+	}
+	return p, ctx.Err()
 }
 
 func (c Catalog) get(kind pb.DocumentKind, param string) http.HandlerFunc {
@@ -228,8 +319,9 @@ func (c Catalog) write(resolve bool) http.HandlerFunc {
 			return
 		}
 		if !validID(input.Operation) || !validID(input.Product.ID) || input.Product.ID != r.PathValue("product_id") ||
-			!validID(input.Product.Name) || input.Context == nil || c.Images.Validate(input.Product.ImageURL) != nil {
-			writeError(w, r, 400, "INVALID_ARGUMENT", "invalid operation, product, image, or context")
+			!validID(input.Product.Name) || input.Context == nil || c.Images.Validate(input.Product.ImageURL) != nil ||
+			!input.Product.RegularPrice.valid() {
+			writeError(w, r, 400, "INVALID_ARGUMENT", "invalid operation, product, image, regular price, or context")
 			return
 		}
 		observed, err := input.Context.protobuf()

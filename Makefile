@@ -154,7 +154,6 @@ test-cloud:
 	sh deploy/aws/acceptance.sh acceptance
 
 demo: cloud-gitops
-	sh deploy/aws/publish-web.sh
 	$(MAKE) cloud-smoke
 
 teardown-demo:

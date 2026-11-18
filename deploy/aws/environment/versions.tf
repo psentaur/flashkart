@@ -26,11 +26,28 @@ variable "name" {
   }
 }
 variable "eks_version" { type = string }
+variable "eks_operator_principal_arn" {
+  type    = string
+  default = null
+  validation {
+    condition     = var.eks_operator_principal_arn == null || can(regex("^arn:aws:iam::[0-9]{12}:(user|role)/.+$", var.eks_operator_principal_arn))
+    error_message = "Supply an IAM user or role ARN for Kubernetes access."
+  }
+}
 variable "operator_cidrs" {
   type = list(string)
   validation {
     condition     = length(var.operator_cidrs) > 0 && alltrue([for cidr in var.operator_cidrs : can(cidrhost(cidr, 0)) && !endswith(cidr, "/0")])
     error_message = "Supply restricted EKS API CIDRs."
+  }
+}
+variable "public_cidrs" {
+  description = "IPv4 CIDRs allowed to reach the public application load balancer."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+  validation {
+    condition     = length(var.public_cidrs) > 0 && alltrue([for cidr in var.public_cidrs : can(cidrhost(cidr, 0))])
+    error_message = "Supply at least one valid IPv4 CIDR."
   }
 }
 variable "artifact_repository" { type = string }

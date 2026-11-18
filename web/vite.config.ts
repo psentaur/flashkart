@@ -5,9 +5,11 @@ export default defineConfig(({ mode }) => {
   const routes: [string, string, number][] = [
     ["^/api/(auth|admin/team)(?:/|$)", "IDENTITY", 8209],
     ["^/api/(products|sales|admin/(products|replicas))(?:/|$)", "CATALOG", 8201],
-    ["^/api/admin/(sale-drafts|publications)(?:/|$)", "PUBLICATION", 8202],
+    ["^/api/admin/(sale-drafts|publications|load-bursts)(?:/|$)", "PUBLICATION", 8202],
     ["^/api/attempts(?:/|$)", "ADMISSION", 8204],
+    ["^/api/inventory(?:/|$)", "INVENTORY", 8203],
     ["^/api/orders(?:/|$)", "ORDERS", 8205],
+    ["^/api/payments(?:/|$)", "PAYMENTS", 8206],
     ["^/api/notifications(?:/|$)", "NOTIFICATION", 8207],
     ["^/api/analytics(?:/|$)", "ANALYTICS", 8208],
   ];

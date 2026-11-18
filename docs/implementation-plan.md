@@ -197,7 +197,7 @@ Verify AWS Emulator coverage for the SQS, DynamoDB, S3, and Lambda operations us
 - DynamoDB on-demand tables, S3, SQS queues with dead-letter queues, and Go Notification Lambda.
 - MSK Serverless with private networking and IAM authentication. Go uses AWS's IAM signer; Java uses the MSK IAM authentication library.
 - EMR on EKS 7.13.0, Java 17, Flink 1.20, and Kafka connector `3.4.0-1.20`; checkpoint and recovery metadata go to S3.
-- React assets in private S3 behind CloudFront's default HTTPS hostname. API requests use a CloudFront VPC origin and internal ALB.
+- A public Application Load Balancer is the only entry point and serves plain HTTP on its AWS DNS name. It forwards to the `web` pods, which serve the React build and route `/api/*` to the services. The design uses no CDN.
 - Prometheus/Grafana for metrics; Fluent Bit and CloudWatch for application, replica-agent, and Flink logs. Lambda logs also go to CloudWatch.
 
 Terraform owns cloud resources, including the five RDS instances, networking, IAM, ALB target groups, and initial ArgoCD installation. ArgoCD owns subsequent Kubernetes resources, including replica-agent Deployments, TargetGroupBindings, operators, migration Jobs, and application updates. Schema migrations are explicit versioned application operations. There are no replica-agent data volumes to provision in AWS.

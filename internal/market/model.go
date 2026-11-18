@@ -22,13 +22,18 @@ type Sale struct {
 	Terms Terms  `json:"terms"`
 }
 
+// validCurrency accepts a three-letter upper-case ISO 4217 code.
+func validCurrency(code string) bool {
+	return len(code) == 3 && strings.IndexFunc(code, func(r rune) bool { return r < 'A' || r > 'Z' }) < 0
+}
+
 func validID(id string) bool {
 	return strings.TrimSpace(id) != "" && !strings.ContainsRune(id, 0) && len(id) <= 200
 }
 
 func (t *Terms) Normalize() error {
 	if !validID(t.ProductID) || t.PriceMinor == nil || *t.PriceMinor < 0 || t.Stock == 0 ||
-		len(t.Currency) != 3 || strings.IndexFunc(t.Currency, func(r rune) bool { return r < 'A' || r > 'Z' }) >= 0 {
+		!validCurrency(t.Currency) {
 		return errors.New("product, price, currency, and stock are required")
 	}
 	start, err1 := time.Parse(time.RFC3339Nano, t.StartsAt)

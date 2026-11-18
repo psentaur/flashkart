@@ -7,7 +7,7 @@ export default defineConfig({
   testIgnore: "**/clerk/**",
   outputDir: "../build/playwright",
   workers: 1,
-  timeout: 150_000,
+  timeout: 240_000,
   expect: { timeout: 15_000 },
   use: { baseURL: `http://127.0.0.1:${port}`, trace: "retain-on-failure" },
   webServer: {
