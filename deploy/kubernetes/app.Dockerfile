@@ -8,5 +8,6 @@ COPY gen gen
 RUN CGO_ENABLED=0 go build -trimpath -buildvcs=false -o /out/ ./cmd/...
 
 FROM debian:bookworm-slim
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=build /out/ /usr/local/bin/
 USER 65532:65532
