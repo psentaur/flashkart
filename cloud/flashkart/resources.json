@@ -178,7 +178,7 @@
             "containers": [
               {
                 "name": "migrate",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:migrations-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:migrations-cloud-demo-ca2",
                 "command": [
                   "sh",
                   "/sql/migrate.sh"
@@ -262,7 +262,7 @@
             "containers": [
               {
                 "name": "topics",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "command": [
                   "kafka-topics"
                 ],
@@ -341,7 +341,7 @@
             "containers": [
               {
                 "name": "replica-a",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -499,7 +499,7 @@
             "containers": [
               {
                 "name": "replica-b",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -657,7 +657,7 @@
             "containers": [
               {
                 "name": "replica-c",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -815,7 +815,7 @@
             "containers": [
               {
                 "name": "replica-d",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -967,7 +967,7 @@
             "containers": [
               {
                 "name": "flash-sale-manager",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "flash-sale-manager"
@@ -1115,7 +1115,7 @@
             "containers": [
               {
                 "name": "inventory-reservation",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "inventory-reservation"
@@ -1273,7 +1273,7 @@
             "containers": [
               {
                 "name": "admission-controller",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "admission-controller"
@@ -1468,7 +1468,7 @@
             "containers": [
               {
                 "name": "order-service",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "order-service"
@@ -1633,7 +1633,7 @@
             "containers": [
               {
                 "name": "payment-service",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "payment-service"
@@ -1783,7 +1783,7 @@
             "containers": [
               {
                 "name": "product-catalog",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "product-catalog"
@@ -1945,7 +1945,7 @@
             "containers": [
               {
                 "name": "notification",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "notification"
@@ -2077,7 +2077,7 @@
             "containers": [
               {
                 "name": "analytics-api",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "analytics-api"
@@ -2209,7 +2209,7 @@
             "containers": [
               {
                 "name": "identity-api",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:app-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "identity-api"
@@ -2330,7 +2330,7 @@
             "containers": [
               {
                 "name": "nginx",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:web-cloud-demo-ca1",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:web-cloud-demo-ca2",
                 "imagePullPolicy": "IfNotPresent",
                 "readinessProbe": {
                   "httpGet": {
@@ -2392,7 +2392,7 @@
         }
       },
       "spec": {
-        "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:flink-cloud-demo-ca1",
+        "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:flink-cloud-demo-ca2",
         "flinkVersion": "v1_20",
         "serviceAccount": "flink",
         "emrReleaseLabel": "emr-7.13.0-flink-latest",
@@ -2449,7 +2449,7 @@
           }
         },
         "job": {
-          "jarURI": "local:///opt/flink/usrlib/analytics.jar",
+          "jarURI": "local:///usr/lib/flink/usrlib/analytics.jar",
           "parallelism": 1,
           "upgradeMode": "last-state",
           "args": [

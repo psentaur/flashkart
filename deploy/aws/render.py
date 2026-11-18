@@ -136,7 +136,7 @@ add("flink.apache.org/v1beta1", "FlinkDeployment", "sales-analytics", spec={
                                  {"name": "kafka", "mountPath": "/kafka", "readOnly": True}]}]}},
     "jobManager": {"storageDir": checkpoint + "/ha", "resource": {"memory": "1024m", "cpu": 0.5}},
     "taskManager": {"resource": {"memory": "1536m", "cpu": 0.5}},
-    "job": {"jarURI": "local:///opt/flink/usrlib/analytics.jar", "parallelism": 1, "upgradeMode": "last-state",
+    "job": {"jarURI": "local:///usr/lib/flink/usrlib/analytics.jar", "parallelism": 1, "upgradeMode": "last-state",
             "args": ["--brokers", ",".join(settings["brokers"]), "--checkpoints", checkpoint + "/checkpoints",
                      "--transactional-id-prefix", settings["name"] + "-sales", "--kafka-properties", "/kafka/client.properties"]},
 })

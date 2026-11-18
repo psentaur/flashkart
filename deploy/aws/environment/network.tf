@@ -21,7 +21,7 @@ module "vpc" {
 
 module "eks" {
   source                                   = "terraform-aws-modules/eks/aws"
-  version                                  = "21.10.1"
+  version                                  = "21.30.2"
   name                                     = var.name
   kubernetes_version                       = var.eks_version
   endpoint_public_access                   = true
@@ -43,6 +43,10 @@ module "eks" {
       min_size       = 3
       desired_size   = 3
       max_size       = 3
+      update_config = {
+        max_unavailable = 1
+        update_strategy = "MINIMAL"
+      }
       block_device_mappings = {
         root = {
           device_name = "/dev/xvda"
