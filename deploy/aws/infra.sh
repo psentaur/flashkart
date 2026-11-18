@@ -3,6 +3,7 @@
 set -Eeuo pipefail
 umask 077
 ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
+source "$ROOT/deploy/aws/tools.sh"
 usage() {
     cat <<'HELP'
 Usage: bash deploy/aws/infra.sh <bootstrap|images|plan|create|destroy> [--config FILE] [--yes]
@@ -150,7 +151,7 @@ case "$action" in
         approve_destroy
         clusters=$(aws eks list-clusters --region "$AWS_REGION" --output json)
         if jq -e --arg name "$FLASHKART_CLOUD_NAME" '.clusters | index($name) != null' <<<"$clusters" >/dev/null; then
-            command -v kubectl >/dev/null || fail 'Install kubectl to clean up the deployed controllers before destruction.'
+            ensure_kubectl
             CONFIRM_TEARDOWN=flashkart sh deploy/aws/teardown.sh -input=false -auto-approve
         else
             # Also handles a partially applied environment that never created EKS.

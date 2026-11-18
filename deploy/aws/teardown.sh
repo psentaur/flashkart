@@ -1,9 +1,13 @@
 #!/bin/sh
 set -eu
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+. "$ROOT/deploy/aws/tools.sh"
+cd "$ROOT"
 test "${CONFIRM_TEARDOWN:-}" = flashkart || {
     echo 'Set CONFIRM_TEARDOWN=flashkart to destroy the disposable stack selected by Terraform state.' >&2
     exit 2
 }
+ensure_kubectl
 tf() { terraform -chdir=deploy/aws/environment "$@"; }
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
