@@ -3,8 +3,10 @@ set -eu
 : "${GITOPS_REPO:?Set the URL of the cloud manifest repository}"
 : "${GITOPS_REVISION:?Set the deployment revision}"
 : "${GITOPS_PATH:?Set the path to the rendered overlay}"
-: "${FLASHKART_ADMIN_TOKEN:?Set the administrator token}"
-: "${FLASHKART_CUSTOMER_TOKEN:?Set the customer token}"
+: "${CLERK_SECRET_KEY:?Set the production Clerk secret key}"
+: "${CLERK_ISSUER_URL:?Set the production Clerk issuer origin}"
+: "${FLASHKART_ALLOWED_ORIGINS:?Set the HTTPS frontend origins}"
+: "${FLASHKART_OWNER_USER_ID:?Set the owner Clerk user ID}"
 # Pin symbolic refs to the commit requested by this invocation.
 if printf '%s\n' "$GITOPS_REVISION" | grep -Eq '^[[:xdigit:]]{40}$'; then
     revision=$(printf '%s' "$GITOPS_REVISION" | tr 'A-F' 'a-f')
@@ -35,10 +37,18 @@ kubectl wait --for=condition=Established crd/applications.argoproj.io --timeout=
 
 curl -fsSL https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o "$work/ca.pem"
 kubectl -n flashkart create configmap rds-ca --from-file="$work/ca.pem" --dry-run=client -o yaml | kubectl apply -f -
-kubectl -n flashkart create secret generic demo-tokens \
-    --from-literal=FLASHKART_ADMIN_TOKEN="$FLASHKART_ADMIN_TOKEN" \
-    --from-literal=FLASHKART_CUSTOMER_TOKEN="$FLASHKART_CUSTOMER_TOKEN" \
-    --from-literal=FLASHKART_CUSTOMER_ID=cloud-buyer --dry-run=client -o yaml | kubectl apply -f -
+# Feed secret values over stdin, rather than exposing them in process arguments.
+python3 - <<'PYCONFIG' | kubectl apply -f -
+import json, os
+config = {key: os.environ[key] for key in ("CLERK_ISSUER_URL", "FLASHKART_ALLOWED_ORIGINS", "FLASHKART_OWNER_USER_ID")}
+config["FLASHKART_AUTH_MODE"] = "clerk"
+if os.environ.get("FLASHKART_FRONTEND_URL"):
+    config["FLASHKART_FRONTEND_URL"] = os.environ["FLASHKART_FRONTEND_URL"]
+print(json.dumps({"apiVersion":"v1","kind":"List","items":[
+    {"apiVersion":"v1","kind":"Secret","metadata":{"name":"clerk-config","namespace":"flashkart"},"stringData":config},
+    {"apiVersion":"v1","kind":"Secret","metadata":{"name":"clerk-secret","namespace":"flashkart"},"stringData":{"CLERK_SECRET_KEY":os.environ["CLERK_SECRET_KEY"]}}
+]}))
+PYCONFIG
 
 python3 - "$work" <<'PY' | kubectl apply -f -
 import json, pathlib, sys
@@ -90,7 +100,7 @@ for crd in flinkdeployments.flink.apache.org targetgroupbindings.elbv2.k8s.aws; 
     kubectl wait --for=condition=Established "crd/$crd" --timeout=120s
 done
 kubectl -n kube-system rollout status deployment/aws-load-balancer-controller --timeout=300s
-consumers="admission-controller flash-sale-manager notification order-service product-catalog"
+consumers="admission-controller flash-sale-manager notification order-service product-catalog analytics-api identity-api"
 export FLASHKART_TOKEN_CONSUMERS="$consumers"
 python3 - <<'PY' | kubectl apply -f -
 import json, os
@@ -99,7 +109,7 @@ print(json.dumps({"apiVersion":"argoproj.io/v1alpha1","kind":"Application",
  "spec":{"project":"default","source":{"repoURL":os.environ["GITOPS_REPO"],"targetRevision":os.environ["FLASHKART_GITOPS_COMMIT"],"path":os.environ["GITOPS_PATH"]},
  "destination":{"server":"https://kubernetes.default.svc","namespace":"flashkart"},
  "ignoreDifferences":[{"group":"apps","kind":"Deployment","name":name,
-    "jsonPointers":["/spec/template/metadata/annotations/flashkart.io~1demo-tokens-version"]}
+    "jsonPointers":["/spec/template/metadata/annotations/flashkart.io~1clerk-config-version"]}
     for name in os.environ["FLASHKART_TOKEN_CONSUMERS"].split()],
  "syncPolicy":{"automated":{"prune":True,"selfHeal":True},
                "syncOptions":["ServerSideApply=true","RespectIgnoreDifferences=true"]}}}))
@@ -126,13 +136,14 @@ wait_for_application() {
 wait_for_application ""
 
 # Keep a non-secret resource version on the pod template so retries also finish interrupted rollouts.
-token_version=$(kubectl -n flashkart get secret demo-tokens -o jsonpath='{.metadata.resourceVersion}')
+secret_version=$(kubectl -n flashkart get secret clerk-secret -o jsonpath='{.metadata.resourceVersion}')
+token_version=$(kubectl -n flashkart get secret clerk-config -o jsonpath='{.metadata.resourceVersion}')
 for deployment in $consumers; do
     kubectl -n flashkart patch deployment "$deployment" --type=merge \
-        -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"flashkart.io/demo-tokens-version\":\"$token_version\"}}}}}"
+        -p "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"flashkart.io/clerk-config-version\":\"$token_version-$secret_version\"}}}}}"
 done
 for deployment in $consumers; do
     kubectl -n flashkart rollout status "deployment/$deployment" --timeout=10m
 done
 wait_for_application Healthy
-printf 'Flashkart revision %s is healthy and token consumers are ready.\n' "$revision"
+printf 'Flashkart revision %s is healthy and authentication consumers are ready.\n' "$revision"

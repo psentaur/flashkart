@@ -1,5 +1,7 @@
 # Phase 6 admission and inventory reservations
 
+For the shared-token fixtures in this guide, explicitly set `FLASHKART_AUTH_MODE=demo` (and `VITE_AUTH_MODE=demo` for the web client). For Clerk login and real per-user access, follow the [authentication guide](authentication.md).
+
 Apply the transactional migrations with `make dev-up migrate`. Run `make test-reservations` to check admission and reservations against PostgreSQL.
 
 To run the purchase flow, create a standard purchase queue in the signed local AWS Emulator. Set these environment variables before `make run-market`.

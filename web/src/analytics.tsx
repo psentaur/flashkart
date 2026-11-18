@@ -1,3 +1,4 @@
+import type { Credential } from "./api";
 import { useState } from "react";
 import { date, segment } from "./api";
 import type { Sale, Window } from "./api";
@@ -9,10 +10,10 @@ const series = [
   ["reservations", "Reservations"], ["confirmed_purchases", "Confirmed purchases"], ["average_latency_ms", "Average latency (ms)"],
 ] as const;
 
-export function Analytics() {
+export function Analytics({ token }: { token: Credential }) {
   const sales = useQuery<Sale[]>("/api/sales");
   const [selection, setSelection] = useState("");
-  const windows = useQuery<Window[]>(selection ? "/api/analytics/sales/" + segment(selection) : null, undefined, 5000);
+  const windows = useQuery<Window[]>(selection ? "/api/analytics/sales/" + segment(selection) : null, token, 5000);
   const data = windows.data || [];
   const recent = data.slice(-12);
   const last = data.at(-1);

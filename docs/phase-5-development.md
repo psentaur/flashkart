@@ -1,5 +1,7 @@
 # Phase 5 catalog and sale publication
 
+For the shared-token fixtures in this guide, explicitly set `FLASHKART_AUTH_MODE=demo` (and `VITE_AUTH_MODE=demo` for the web client). For Clerk login and real per-user access, follow the [authentication guide](authentication.md).
+
 Apply the transactional publication migration and start the four replicas and three Phase 5 services.
 
 ```sh

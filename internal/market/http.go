@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"flashkart/internal/identity"
+
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -36,6 +38,14 @@ func serveAPI(mux *http.ServeMux, fallback http.Handler) http.Handler {
 
 func admin(token string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if p, ok := identity.FromContext(r.Context()); ok {
+			if p.Role != "admin" && p.Role != "owner" {
+				writeError(w, r, 403, "FORBIDDEN", "Administrator access required.")
+				return
+			}
+			handler(w, r)
+			return
+		}
 		scheme, provided, ok := strings.Cut(r.Header.Get("Authorization"), " ")
 		if !ok || !strings.EqualFold(scheme, "Bearer") || provided == "" {
 			w.Header().Set("WWW-Authenticate", "Bearer")
@@ -96,6 +106,9 @@ func matchesToken(expected, provided string) bool {
 }
 
 func customerAuthorized(w http.ResponseWriter, r *http.Request, token string) bool {
+	if _, ok := identity.FromContext(r.Context()); ok {
+		return true
+	}
 	scheme, provided, ok := strings.Cut(r.Header.Get("Authorization"), " ")
 	if ok && strings.EqualFold(scheme, "Bearer") && matchesToken(token, provided) {
 		return true

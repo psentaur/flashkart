@@ -7,10 +7,11 @@ import sys
 import time
 from urllib.request import Request, urlopen
 from uuid import uuid4
+from credentials import credential
 
 
 def api(path, method="GET", body=None, customer=False):
-    token = os.environ["FLASHKART_CUSTOMER_TOKEN" if customer else "FLASHKART_ADMIN_TOKEN"]
+    token = credential(customer)
     headers = {"Authorization": "Bearer " + token, "Content-Type": "application/json"}
     if body and "attempt_id" in body:
         headers["Idempotency-Key"] = body["attempt_id"]
@@ -46,6 +47,8 @@ if action == "hpa":
         data = data[end:].lstrip()
     print(json.dumps(peaks))
     assert all(peaks.get(name, 0) > 2 for name in ("product-catalog", "admission-controller")), peaks
+elif action == "analytics":
+    print(json.dumps(api("/api/analytics/sales/" + value)))
 elif action == "product":
     product(value)
 elif action == "read":

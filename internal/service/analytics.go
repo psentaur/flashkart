@@ -35,7 +35,7 @@ func runAnalytics(ctx context.Context, cfg config, log *slog.Logger) error {
 		stop()
 	}()
 	err = serve(work, "analytics-api", cfg, log, nil, nil, serviceApp{wrap: func(fallback http.Handler) http.Handler {
-		return projection.Handler(fallback)
+		return projection.Handler(demoAdminToken(), fallback)
 	}})
 	stop()
 	if workerErr := <-done; err == nil {

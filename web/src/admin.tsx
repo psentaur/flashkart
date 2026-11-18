@@ -1,3 +1,4 @@
+import type { Credential } from "./api";
 import { useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { ApiError, api, message, operationID, segment } from "./api";
@@ -6,12 +7,12 @@ import { SaleTerms } from "./customer";
 import { useQuery } from "./hooks";
 import { Feedback } from "./ui";
 
-export function Admin({ token }: { token: string }) {
-  if (!token) return <section><h1>Administration</h1><p className="empty">Add your administrator token to manage the catalog and sales.</p></section>;
+export function Admin({ token }: { token: Credential }) {
+  if (!token) return <section><h1>Administration</h1><p className="empty">Sign in with an administrator account to manage products and sales.</p></section>;
   return <div className="stack"><h1>Administration</h1><ProductEditor token={token} /><SaleEditor token={token} /></div>;
 }
 
-function ProductEditor({ token }: { token: string }) {
+function ProductEditor({ token }: { token: Credential }) {
   const [id, setID] = useState("");
   const [product, setProduct] = useState<Product>();
   const [context, setContext] = useState<Context>({});
@@ -104,7 +105,7 @@ const localTime = (time: number) => {
   return new Date(time - value.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 };
 
-function SaleEditor({ token }: { token: string }) {
+function SaleEditor({ token }: { token: Credential }) {
   const [draft, setDraft] = useState<Draft>();
   const [terms, setTerms] = useState<Terms>(() => ({
     product_id: "", price_minor: 0, currency: "USD", stock: 1,
@@ -179,7 +180,7 @@ function SaleEditor({ token }: { token: string }) {
   </section>;
 }
 
-export function Diagnostics({ token }: { token: string }) {
+export function Diagnostics({ token }: { token: Credential }) {
   const [input, setInput] = useState("");
   const [id, setID] = useState("");
   const replicas = useQuery<Replica[]>(token ? "/api/admin/replicas" : null, token, 4000);
@@ -187,7 +188,7 @@ export function Diagnostics({ token }: { token: string }) {
   const versions = useQuery<Version[]>(path, token, 4000);
   const owners = useQuery<string[]>(path ? path + "/owners" : null, token);
   return <section className="stack"><h1>Replica diagnostics</h1>
-    {!token ? <p className="empty">Add your administrator token to inspect replica health.</p> : <>
+    {!token ? <p className="empty">Administrator access is required to inspect replicas.</p> : <>
       <div className="panel"><h2>Replica health</h2><Feedback query={replicas} />
         <div className="replicas">{replicas.data?.map(r => <article key={r.replica_id}>
           <h3>Replica {r.replica_id.toUpperCase()}</h3><span className={`pill ${r.backend_ready ? "live" : ""}`}>{r.backend_ready ? "Ready" : "Unavailable"}</span>

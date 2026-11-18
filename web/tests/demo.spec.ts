@@ -17,7 +17,7 @@ test("publishes a sale and follows real purchase outcomes", async ({ page, reque
   await page.getByRole("button", { name: "Access tokens" }).click();
   await page.getByLabel("Customer token", { exact: true }).fill(customer);
   await page.getByLabel("Administrator token").fill(admin);
-  await page.getByRole("button", { name: "Access tokens" }).click();
+  await page.getByRole("button", { name: "Sign in", exact: true }).last().click();
   await page.getByRole("button", { name: "Administration", exact: true }).click();
   await page.getByLabel("Product ID", { exact: true }).fill(id);
   await page.getByRole("button", { name: "Load product" }).click();
@@ -118,6 +118,7 @@ test("explicitly resolves persisted catalog siblings", async ({ page, request })
   await page.goto("/");
   await page.getByRole("button", { name: "Access tokens" }).click();
   await page.getByLabel("Administrator token").fill(admin);
+  await page.getByRole("button", { name: "Sign in", exact: true }).last().click();
   await page.getByRole("button", { name: "Administration", exact: true }).click();
   await page.getByLabel("Product ID", { exact: true }).fill(id);
   await page.getByRole("button", { name: "Load product" }).click();

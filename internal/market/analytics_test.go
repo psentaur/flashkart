@@ -80,9 +80,11 @@ func TestAnalyticsProjection(t *testing.T) {
 	if err := restarted.project(ctx, []byte(sale), conflict); !errors.As(err, &conditional) {
 		t.Fatalf("conflicting final snapshot was not rejected: %v", err)
 	}
-	handler := restarted.Handler(http.NotFoundHandler())
+	handler := restarted.Handler("analytics-admin", http.NotFoundHandler())
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/analytics/sales/"+sale, nil).WithContext(ctx))
+	request := httptest.NewRequest(http.MethodGet, "/api/analytics/sales/"+sale, nil).WithContext(ctx)
+	request.Header.Set("Authorization", "Bearer analytics-admin")
+	handler.ServeHTTP(response, request)
 	var windows []SaleWindow
 	if err := json.Unmarshal(response.Body.Bytes(), &windows); err != nil {
 		t.Fatal(err)

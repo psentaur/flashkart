@@ -8,6 +8,10 @@ import sys
 import tempfile
 import time
 
+from dev import load_env
+
+load_env()
+
 binary = Path(sys.argv[1]).resolve()
 config = json.loads(Path("deploy/config/local.example.json").read_text())
 agents = []
@@ -24,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
     try:
         excluded = set(config["database_env"].values()) | {
             "FLASHKART_FLASH_SALE_DSN", "FLASHKART_INVENTORY_DSN", "FLASHKART_ADMIN_TOKEN",
-            "FLASHKART_S3_CREDENTIALS_FILE", "FLASHKART_PRODUCT_IMAGES_BUCKET",
+            "FLASHKART_S3_CREDENTIALS_FILE", "FLASHKART_PRODUCT_IMAGES_BUCKET", "CLERK_SECRET_KEY",
         }
         queue_vars = ("FLASHKART_PURCHASE_QUEUE_URL", "FLASHKART_SQS_CREDENTIALS_FILE", "FLASHKART_SQS_CA_FILE")
         event_vars = ("FLASHKART_OUTCOME_QUEUE_URL", "FLASHKART_NOTIFICATION_TABLE", "FLASHKART_DYNAMODB_CREDENTIALS_FILE", "FLASHKART_DYNAMODB_CA_FILE")
@@ -50,9 +54,10 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
 
         if "--market" in sys.argv[2:]:
             token = os.environ.get("FLASHKART_ADMIN_TOKEN")
-            if not token:
+            if os.environ.get("FLASHKART_AUTH_MODE") == "demo" and not token:
                 raise SystemExit("Missing FLASHKART_ADMIN_TOKEN")
             services = (
+                ("identity-api", 8209, "", None),
                 ("inventory-reservation", 8203, "127.0.0.1:7101", "FLASHKART_INVENTORY_DSN"),
                 ("flash-sale-manager", 8202, "", "FLASHKART_FLASH_SALE_DSN"),
                 ("product-catalog", 8201, "", None),
@@ -69,8 +74,10 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
                 services += (("analytics-api", 8208, "", None),)
             for name, port, grpc, dsn in services:
                 settings = dict(config, http_address=f"127.0.0.1:{port}", grpc_address=grpc)
-                variables = {"FLASHKART_ADMIN_TOKEN": token} if name != "inventory-reservation" else {}
-                if name in ("admission-controller", "order-service", "notification"):
+                variables = {"FLASHKART_ADMIN_TOKEN": token} if token and name != "inventory-reservation" else {}
+                if name == "identity-api" and os.environ.get("CLERK_SECRET_KEY"):
+                    variables["CLERK_SECRET_KEY"] = os.environ["CLERK_SECRET_KEY"]
+                if os.environ.get("FLASHKART_AUTH_MODE") == "demo":
                     variables.update({key: os.environ[key] for key in customer_vars})
                 if name in ("admission-controller", "inventory-reservation") and os.environ.get(queue_vars[0]):
                     variables.update({key: os.environ[key] for key in queue_vars})

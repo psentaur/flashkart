@@ -9,9 +9,12 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+
+	"flashkart/internal/identity"
 )
 
 type config struct {
+	auth          *identity.Auth
 	InventoryGRPC string `json:"inventory_grpc_address"`
 	OrderGRPC     string `json:"order_grpc_address"`
 	PaymentGRPC   string `json:"payment_grpc_address"`

@@ -129,12 +129,12 @@ roles = {"flash-sale-manager": "flash_sale", "inventory-reservation": "inventory
          "admission-controller": "admission", "order-service": "orders", "payment-service": "payment"}
 grpc_services = {"inventory-reservation", "order-service", "payment-service"}
 emulated = {"inventory-reservation", "admission-controller", "order-service", "notification", "analytics-api"}
-for name in (*[f"replica-{key}" for key in replicas], *roles, "product-catalog", "notification", "analytics-api"):
+for name in (*[f"replica-{key}" for key in replicas], *roles, "product-catalog", "notification", "analytics-api", "identity-api"):
     replica = name.removeprefix("replica-") if name.startswith("replica-") else None
     executable = "catalog-replica" if replica else name
     port_map = dict(http=8080, grpc=7001) if replica or name in grpc_services else dict(http=8080)
     service(name, **port_map)
-    values = {"FLASHKART_CONFIG": f"/config/{replica or 'market'}.json"}
+    values = {"FLASHKART_AUTH_MODE": "demo", "FLASHKART_CONFIG": f"/config/{replica or 'market'}.json"}
     if name in roles:
         values["FLASHKART_PUBLISH_EVENTS"] = "1"
     if replica:

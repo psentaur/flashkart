@@ -9,7 +9,9 @@ test("locks draft terms during save and retries a lost publication response", as
 
   await page.route("**/api/**", async route => {
     const path = new URL(route.request().url()).pathname;
-    if (path === "/api/admin/sale-drafts") {
+    if (path === "/api/auth/me") {
+      await route.fulfill({ json: { user_id: "test-admin", role: "admin" } });
+    } else if (path === "/api/admin/sale-drafts") {
       saved = route.request().postDataJSON();
       await allowSave;
       await route.fulfill({ status: 201, json: { sale_id: "sale", terms: saved, state: "DRAFT" } });
@@ -29,7 +31,7 @@ test("locks draft terms during save and retries a lost publication response", as
   await page.goto("/");
   await page.getByRole("button", { name: "Access tokens" }).click();
   await page.getByLabel("Administrator token").fill("test-admin");
-  await page.getByRole("button", { name: "Access tokens" }).click();
+  await page.getByRole("button", { name: "Sign in", exact: true }).last().click();
   await page.getByRole("button", { name: "Administration", exact: true }).click();
   await page.getByLabel("Sale product ID").fill("product");
   const stock = page.getByLabel("Stock limit");

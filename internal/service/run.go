@@ -17,6 +17,7 @@ import (
 	"time"
 
 	pb "flashkart/gen/flashkart/v1"
+	"flashkart/internal/identity"
 	"flashkart/internal/replica"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -40,7 +41,22 @@ func Main(name string) {
 }
 
 func runService(ctx context.Context, name string, cfg config, log *slog.Logger) error {
+	if os.Getenv("FLASHKART_AUTH_MODE") == "demo" && cfg.Environment != "local" {
+		return errors.New("demo authentication is allowed only locally")
+	}
 	switch name {
+	case "identity-api", "analytics-api", "notification", "product-catalog", "flash-sale-manager", "admission-controller", "order-service":
+		if name != "notification" || os.Getenv("AWS_LAMBDA_RUNTIME_API") == "" {
+			a, err := identity.New(cfg.Environment)
+			if err != nil {
+				return err
+			}
+			cfg.auth = a
+		}
+	}
+	switch name {
+	case "identity-api":
+		return runIdentity(ctx, cfg, log)
 	case "analytics-api":
 		if os.Getenv("FLASHKART_ANALYTICS_TABLE") != "" || cfg.Environment == "aws" {
 			return runAnalytics(ctx, cfg, log)
@@ -178,6 +194,9 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 	var handler http.Handler = mux
 	if app.wrap != nil {
 		handler = app.wrap(mux)
+	}
+	if cfg.auth != nil {
+		handler = cfg.auth.Middleware(handler)
 	}
 	server := &http.Server{
 		ReadHeaderTimeout: 5 * time.Second,
