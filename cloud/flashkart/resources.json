@@ -2401,6 +2401,8 @@
           "high-availability.storageDir": "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/ha",
           "state.checkpoints.dir": "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/checkpoints",
           "taskmanager.numberOfTaskSlots": "1",
+          "kubernetes.jobmanager.labels": "emr-containers.amazonaws.com/component:flink.jobmanager,emr-containers.amazonaws.com/resource.type:flink.operator",
+          "kubernetes.taskmanager.labels": "emr-containers.amazonaws.com/component:flink.taskmanager,emr-containers.amazonaws.com/resource.type:flink.operator",
           "fs.s3a.endpoint.region": "ap-south-1",
           "metrics.reporter.prom.factory.class": "org.apache.flink.metrics.prometheus.PrometheusReporterFactory",
           "metrics.reporter.prom.port": "9249"

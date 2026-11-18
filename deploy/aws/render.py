@@ -126,6 +126,8 @@ add("flink.apache.org/v1beta1", "FlinkDeployment", "sales-analytics", spec={
     "flinkConfiguration": {
         "high-availability.type": "kubernetes", "high-availability.storageDir": checkpoint + "/ha",
         "state.checkpoints.dir": checkpoint + "/checkpoints", "taskmanager.numberOfTaskSlots": "1",
+        "kubernetes.jobmanager.labels": "emr-containers.amazonaws.com/component:flink.jobmanager,emr-containers.amazonaws.com/resource.type:flink.operator",
+        "kubernetes.taskmanager.labels": "emr-containers.amazonaws.com/component:flink.taskmanager,emr-containers.amazonaws.com/resource.type:flink.operator",
         "fs.s3a.endpoint.region": settings["region"],
         "metrics.reporter.prom.factory.class": "org.apache.flink.metrics.prometheus.PrometheusReporterFactory",
         "metrics.reporter.prom.port": "9249",

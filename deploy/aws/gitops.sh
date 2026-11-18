@@ -80,6 +80,10 @@ def app(name, namespace, source):
        "metadata":{"name":name,"namespace":"argocd","finalizers":["resources-finalizer.argocd.argoproj.io"]},
        "spec":{"project":"default","source":source,"destination":{"server":"https://kubernetes.default.svc","namespace":namespace},
                "syncPolicy":{"automated":{"prune":True,"selfHeal":True},"syncOptions":["CreateNamespace=true","ServerSideApply=true"]}}})
+    if name == "cloud-flink-operator":
+        apps[-1]["spec"]["ignoreDifferences"] = [{"group":"admissionregistration.k8s.io", "kind":"MutatingWebhookConfiguration",
+            "name":"flink-operator-flink-operator-webhook-configuration", "jsonPointers":["/webhooks/0/rules/0/operations"]}]
+        apps[-1]["spec"]["syncPolicy"]["syncOptions"].append("RespectIgnoreDifferences=true")
 def chart(repo, name, rev, values):
     return {"repoURL":repo,"chart":name,"targetRevision":rev,"helm":{"valuesObject":values}}
 app("cloud-lb-controller","kube-system",chart("https://aws.github.io/eks-charts","aws-load-balancer-controller","1.13.4",{
@@ -102,6 +106,11 @@ for crd in flinkdeployments.flink.apache.org targetgroupbindings.elbv2.k8s.aws; 
     kubectl wait --for=condition=Established "crd/$crd" --timeout=120s
 done
 kubectl -n kube-system rollout status deployment/aws-load-balancer-controller --timeout=300s
+kubectl -n flink-operator rollout status deployment/flink-kubernetes-operator --timeout=300s
+# EMR's update mutator appends affinity rules repeatedly, triggering job restarts.
+# Keep defaulting on creation and retain the separate validation webhook on updates.
+kubectl patch mutatingwebhookconfiguration flink-operator-flink-operator-webhook-configuration --type=json \
+    -p '[{"op":"replace","path":"/webhooks/0/rules/0/operations","value":["CREATE"]}]'
 consumers="admission-controller flash-sale-manager notification order-service product-catalog analytics-api identity-api"
 export FLASHKART_TOKEN_CONSUMERS="$consumers"
 python3 - <<'PY' | kubectl apply -f -
