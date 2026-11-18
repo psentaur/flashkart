@@ -82,7 +82,9 @@ def app(name, namespace, source):
                "syncPolicy":{"automated":{"prune":True,"selfHeal":True},"syncOptions":["CreateNamespace=true","ServerSideApply=true"]}}})
     if name == "cloud-flink-operator":
         apps[-1]["spec"]["ignoreDifferences"] = [{"group":"admissionregistration.k8s.io", "kind":"MutatingWebhookConfiguration",
-            "name":"flink-operator-flink-operator-webhook-configuration", "jsonPointers":["/webhooks/0/rules/0/operations"]}]
+            "name":"flink-operator-flink-operator-webhook-configuration", "jsonPointers":["/webhooks/0/rules/0/operations"]},
+            {"group":"apiextensions.k8s.io", "kind":"CustomResourceDefinition",
+             "jqPathExpressions":[".spec.versions[].additionalPrinterColumns[].priority"]}]
         apps[-1]["spec"]["syncPolicy"]["syncOptions"].append("RespectIgnoreDifferences=true")
 def chart(repo, name, rev, values):
     return {"repoURL":repo,"chart":name,"targetRevision":rev,"helm":{"valuesObject":values}}
