@@ -1,5 +1,7 @@
 # Phase 11 local Kubernetes
 
+For the shared-token fixtures in this guide, explicitly set `FLASHKART_AUTH_MODE=demo` (and `VITE_AUTH_MODE=demo` for the web client). For Clerk login and real per-user access, follow the [authentication guide](authentication.md).
+
 Use a kind host with capacity for both HPAs to reach five replicas while Kafka, Flink, five PostgreSQL instances, and the observability stack are running. Allow at least 8 available CPUs and 12 GiB of available memory for the rehearsal. The single-node overlay uses a shared ReadWriteOnce volume for Flink checkpoints. Install kind, kubectl, a supported container engine, Maven with Java 17, AWS CLI, k6, and the signed AWS Emulator binary.
 
 Build once per immutable tag. In the Git branch Argo CD will watch, update the image tags in both `deploy/kubernetes/kind/kustomization.yaml` and `deploy/kubernetes/platform/kustomization.yaml` to the same tag. Publish the manifest commit to a Git repository accessible from the cluster. Use a new tag and load its images before publishing a later rollout commit.

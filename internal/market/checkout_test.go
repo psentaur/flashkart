@@ -19,6 +19,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
+
+	"flashkart/internal/identity"
 )
 
 func checkoutRPC(t *testing.T, register func(*grpc.Server)) *grpc.ClientConn {
@@ -152,7 +154,8 @@ func TestCheckoutWorkflow(t *testing.T) {
 				t.Fatalf("payment events: %d %v", paymentEvents, err)
 			}
 			for customer, want := range map[string]int{"buyer": 200, "other": 404} {
-				handler := orders.Handler("customer-token", customer, http.NotFoundHandler())
+				auth := &identity.Auth{Mode: "demo", DemoCustomer: "customer-token", DemoCustomerID: customer}
+				handler := auth.Middleware(orders.Handler("", "must-not-be-used", http.NotFoundHandler()))
 				request := httptest.NewRequest("GET", "/api/orders/"+id, nil).WithContext(ctx)
 				request.Header.Set("Authorization", "Bearer customer-token")
 				response := httptest.NewRecorder()

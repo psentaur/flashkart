@@ -1,64 +1,63 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { createRoot } from "react-dom/client";
-import { Products, Sales } from "./admin";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import type { ReactNode } from "react";
+import { Admin, Diagnostics } from "./admin";
 import { Analytics } from "./analytics";
-import { Bell } from "./bell";
-import { Cart } from "./cart";
-import { Login } from "./login";
-import { Orders } from "./orders";
-import { Replicas } from "./replicas";
-import { Rush } from "./rush";
-import { cartCount, loadCart, loadPurchases, loadSession, saveCart, savePurchases, saveSession } from "./session";
-import type { CartLine, Purchase, Session } from "./session";
-import { Shop } from "./shop";
+import { Activity, Store, newIntents } from "./customer";
+import { AccountControls, Authentication, Login, demoMode, useSession } from "./auth";
+import { Team } from "./team";
+import { message } from "./api";
 import "./style.css";
 
-const customerPages = ["Shop", "Cart", "My orders"] as const;
-const adminPages = ["Products", "Sales", "Rush test", "Analytics", "Replicas"] as const;
-type Page = (typeof customerPages)[number] | (typeof adminPages)[number];
+const pages = [
+  ["Storefront", "/", "public"], ["Activity", "/activity", "customer"],
+  ["Analytics", "/analytics", "admin"], ["Administration", "/admin", "admin"],
+  ["Replicas", "/replicas", "admin"], ["Team", "/team", "owner"],
+] as const;
+
+function Guard({ role = "customer", children }: { role?: "customer" | "admin" | "owner"; children: ReactNode }) {
+  const auth = useSession();
+  const location = useLocation();
+  if (auth.loading) return <p role="status">Checking your session…</p>;
+  if (auth.error !== undefined) return <p role="alert">{message(auth.error)}</p>;
+  if (!auth.principal) return <Navigate to={"/login?returnTo=" + encodeURIComponent(location.pathname + location.search)} replace />;
+  const allowed = role === "customer" || auth.principal.role === "owner" || (role === "admin" && auth.principal.role === "admin");
+  if (!allowed) return <section><h1>Access restricted</h1><p>Your account does not have access to this page.</p></section>;
+  return children;
+}
 
 function App() {
-  const [session, setSession] = useState<Session | undefined>(loadSession);
-  const [page, setPage] = useState<Page>(() => session?.role === "admin" ? "Products" : "Shop");
-  const [cart, setCart] = useState<CartLine[]>(loadCart);
-  const [purchases, setPurchases] = useState<Purchase[]>(loadPurchases);
-  const [focus, setFocus] = useState<string>();
-  useEffect(() => saveCart(cart), [cart]);
-  useEffect(() => savePurchases(purchases), [purchases]);
-
-  if (!session) return <main className="shell main" id="main">
-    <Login onLogin={value => { saveSession(value); setSession(value); setPage(value.role === "admin" ? "Products" : "Shop"); }} />
-  </main>;
-
-  const pages: readonly Page[] = session.role === "admin" ? adminPages : customerPages;
-  const signOut = () => { saveSession(undefined); setSession(undefined); setCart([]); setPurchases([]); };
-  const token = session.token;
+  const auth = useSession();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const intents = useMemo(newIntents, [auth.principal?.user_id]);
+  const staff = auth.principal?.role === "admin" || auth.principal?.role === "owner";
+  const visible = pages.filter(([, , role]) => role === "public" || (!auth.loading &&
+    (role === "customer" ? !!auth.principal : role === "admin" ? staff : auth.principal?.role === "owner")));
   return <>
     <a className="skip" href="#main">Skip to content</a>
     <header className="header"><div className="shell navigation">
-      <button className="brand" onClick={() => setPage(pages[0])}><span aria-hidden="true">⚡</span> Flashkart</button>
-      <nav aria-label="Main navigation">{pages.map(item => <button key={item}
-        aria-current={page === item ? "page" : undefined} onClick={() => setPage(item)}>
-        {item}{item === "Cart" && cartCount(cart) > 0 && <span className="count">{cartCount(cart)}</span>}
-      </button>)}</nav>
-      <div className="account">{session.role === "customer" && <Bell token={token} purchases={purchases} onOpenOrder={id => { setFocus(id); setPage("My orders"); }} />}
-        <span className="pill role-pill">{session.role === "admin" ? "Administrator" : "Customer"}</span>
-        <button className="secondary" onClick={signOut}>Sign out</button></div>
+      <button className="brand" onClick={() => navigate("/")}><span aria-hidden="true">↯</span> Flashkart</button>
+      <nav aria-label="Main navigation">{visible.map(([label, path]) => <button key={path}
+        aria-current={location.pathname === path ? "page" : undefined} onClick={() => navigate(path)}>{label}</button>)}</nav>
+      {auth.principal ? <AccountControls /> : <button className="secondary" onClick={() => navigate("/login")}>Sign in</button>}
+      {demoMode && <button className="secondary" onClick={() => navigate("/login")}>Access tokens</button>}
     </div></header>
-    <main className="shell main" id="main">
-      {page === "Shop" && <Shop cart={cart} setCart={setCart} onCart={() => setPage("Cart")} />}
-      {page === "Cart" && <Cart token={token} cart={cart} setCart={setCart}
-        onPurchased={added => { setPurchases(previous => [...added, ...previous]); setPage("My orders"); }} onShop={() => setPage("Shop")} />}
-      {page === "My orders" && <Orders token={token} purchases={purchases} focus={focus} onShop={() => setPage("Shop")} />}
-      {page === "Products" && <Products token={token} />}
-      {page === "Sales" && <Sales token={token} />}
-      {page === "Rush test" && <Rush token={token} />}
-      {page === "Analytics" && <Analytics />}
-      {page === "Replicas" && <Replicas token={token} />}
-    </main>
+    <main className="shell main" id="main"><Routes>
+      <Route path="/" element={<Store key={auth.principal?.user_id || "guest"} token={auth.customer} intents={intents} />} />
+      <Route path="/login/*" element={<Login />} />
+      <Route path="/sign-up/*" element={<Login signUp />} />
+      <Route path="/activity" element={<Guard><Activity key={auth.principal?.user_id} token={auth.customer} /></Guard>} />
+      <Route path="/analytics" element={<Guard role="admin"><Analytics token={auth.admin} /></Guard>} />
+      <Route path="/admin" element={<Guard role="admin"><Admin token={auth.admin} /></Guard>} />
+      <Route path="/replicas" element={<Guard role="admin"><Diagnostics token={auth.admin} /></Guard>} />
+      <Route path="/team" element={<Guard role="owner"><Team token={auth.admin} /></Guard>} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes></main>
   </>;
 }
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing Flashkart root element");
-createRoot(root).render(<App />);
+createRoot(root).render(<BrowserRouter><Authentication><App /></Authentication></BrowserRouter>);

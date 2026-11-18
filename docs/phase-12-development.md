@@ -1,20 +1,18 @@
 # Phase 12 AWS deployment
 
-Phase 12 separates reusable Terraform state storage and immutable ECR artifacts from the disposable application environment. The environment uses private EKS workers in two availability zones, five Single-AZ RDS instances, MSK Serverless, SQS and DLQs, DynamoDB, Lambda, and a public Application Load Balancer in front of the `web` pods. The design uses no CDN. The ALB serves HTTP on its AWS DNS name. Restrict `public_cidrs` to limit who can reach it. All EKS workloads use the same binaries and migrations as the kind environment.
+Phase 12 separates reusable Terraform state storage and immutable ECR artifacts from the disposable application environment. The environment uses private EKS workers in two availability zones, five Single-AZ RDS instances, MSK Serverless, SQS and DLQs, DynamoDB, Lambda, and CloudFront with private S3 and ALB origins. All EKS workloads use the same binaries and migrations as the kind environment.
 
 ## Build and deploy
 
 Use an AWS operator identity authorized for the intended account, Terraform 1.10 or later, AWS CLI, kubectl, a container engine, Java 17 and Maven, Node, jq, and k6. Set the account ID explicitly in both Terraform roots. Restrict the EKS API to the operator CIDRs. Review the plan before creating the disposable stack.
 
 1. Initialize and apply `deploy/aws/bootstrap` with `account_id`, `region`, and `artifact_name`. Retain its state securely and record its state bucket and artifact repository outputs.
-2. Set `ARTIFACT_REPOSITORY`, `AWS_REGION`, and `IMAGE_TAG` to the ECR repository, its region, and the source revision. Run `make cloud-images`. The Lambda image must exist before environment apply.
+2. Set `ARTIFACT_REPOSITORY`, `AWS_REGION`, and `IMAGE_TAG` to the ECR repository, its region, and the source revision. Run `make cloud-images build-web`. The Lambda image must exist before environment apply.
 3. Initialize the environment backend with `terraform -chdir=deploy/aws/environment init -backend-config="bucket=$STATE_BUCKET" -backend-config="region=$AWS_REGION" -backend-config="key=flashkart/demo.tfstate" -backend-config="use_lockfile=true"`. Supply `account_id`, `region`, `name`, `eks_version`, `operator_cidrs`, `artifact_repository`, and `image_tag` through a local variable file or `TF_VAR_*`. Apply the reviewed plan. The backend contains generated SQL passwords and must be restricted to deployment operators.
-4. Run `make cloud-render`. Put the non-secret files from `build/cloud/manifests` on the GitOps branch reachable by Argo CD. Set `GITOPS_REPO`, `GITOPS_REVISION`, `GITOPS_PATH`, and distinct `FLASHKART_ADMIN_TOKEN` and `FLASHKART_CUSTOMER_TOKEN` values.
-5. Run `make demo`. The bootstrap resolves the requested Git revision to a commit and pins Argo CD to it. Rerun the bootstrap with the next revision to deploy an update. Bootstrap installs Argo CD, creates database and demo secrets, and registers the controller and application Git sources. Argo CD applies migrations and provisions Kafka topics before services start. The frontend ships in the `web` image, so the script then runs a public smoke test.
+4. Run `make cloud-render`. Put the non-secret files from `build/cloud/manifests` on the GitOps branch reachable by Argo CD. Set `GITOPS_REPO`, `GITOPS_REVISION`, `GITOPS_PATH`, `CLERK_SECRET_KEY`, `CLERK_ISSUER_URL`, `FLASHKART_ALLOWED_ORIGINS`, and `FLASHKART_OWNER_USER_ID`. Build the frontend with its production `VITE_CLERK_PUBLISHABLE_KEY`; see [authentication setup](authentication.md).
+5. Run `make demo`. The bootstrap resolves the requested Git revision to a commit and pins Argo CD to it. Rerun the bootstrap with the next revision to deploy an update. Bootstrap installs Argo CD, creates database and Clerk secrets, and registers the controller and application Git sources. Argo CD applies migrations and provisions Kafka topics before services start. The web pods serve the frontend through the public ALB, and the script runs a public smoke test.
 
-The notification Lambda owns the outcomes queue in AWS. The EKS notification deployment serves reads from DynamoDB. MSK uses per-service IAM roles, including scoped topic, group, and transaction permissions. Flink uses the EMR 7.13.0 runtime, AWS MSK IAM authentication, and S3 checkpoint storage. [EMR Flink release](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-7.13.0-flink-20260410.html)
-
-When Terraform runs as account root, set `eks_operator_principal_arn` to the IAM user or role that will access this EKS cluster. Set `FLASHKART_KUBECONFIG` to that identity's kubeconfig for the disposable cluster, and use it throughout deployment and teardown. [EKS access entries](https://docs.aws.amazon.com/eks/latest/userguide/creating-access-entries.html)
+The notification Lambda owns the outcomes queue in AWS. The EKS notification deployment serves reads from DynamoDB. MSK uses per-service IAM roles, including scoped topic, group, and transaction permissions. Flink uses the EMR 7.13.0 runtime, AWS MSK IAM authentication, and S3 checkpoint storage. [EMR Flink release](https://docs.aws.amazon.com/emr/latest/EMR-on-EKS-DevelopmentGuide/emr-eks-7.13.0-flink-20260410.html) · [CloudFront VPC origins](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html)
 
 ## Acceptance and recreation
 
@@ -24,4 +22,4 @@ Archive the reports with the infrastructure revision, GitOps commit, image tags 
 
 ## Verification status
 
-Live AWS acceptance passed on 16 November 2026 against GitOps revision `a8d9f16`. Six deployment defects were found and fixed during the run. See the [Phase 13B verification report](phase-13b-verification.md). Teardown and recreation from the recorded revision remain open.
+Terraform configuration validation and local tests are separate from a live AWS rehearsal. The AWS session was expired when checked, so no cloud apply, acceptance, teardown, or recreation was performed. Phase 12 remains open until live evidence is recorded.

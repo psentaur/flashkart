@@ -1,0 +1,17 @@
+{
+  "auth_access_control": { "sign_up_mode": "public" },
+  "auth_email": {
+    "used_for_sign_in": true,
+    "used_for_sign_up": true,
+    "required_for_sign_up": true,
+    "verify_at_sign_up": true,
+    "verification_strategies": ["email_code"]
+  },
+  "auth_password": { "enabled": true, "required": true },
+  "auth_multi_factor": { "required_for_sign_in": false, "required_for_sign_up": false },
+  "connection_oauth_google": { "enabled": true, "authenticatable": true },
+  "session": {
+    "claims": { "role": "{{user.public_metadata.role}}" },
+    "lifetime": 60
+  }
+}

@@ -76,9 +76,12 @@ for obj in base:
             pod["containers"] = [container]
             pod["volumes"] = [v for v in pod["volumes"] if v["name"] != "emulator"]
             container["volumeMounts"] = [m for m in container["volumeMounts"] if m["name"] != "emulator"]
-            container["envFrom"] = [{"secretRef": {"name": "demo-tokens"}}] if name in {
-                "product-catalog", "flash-sale-manager", "inventory-reservation", "admission-controller", "order-service", "payment-service",
-                "notification"} else []
+            container["envFrom"] = ([{"secretRef": {"name": "clerk-config"}}] if name in {
+                "identity-api", "product-catalog", "flash-sale-manager", "inventory-reservation", "admission-controller",
+                "order-service", "payment-service", "notification", "analytics-api"} else [])
+            if name == "identity-api":
+                container["envFrom"].append({"secretRef": {"name": "clerk-secret"}})
+            container["env"] = [e for e in container["env"] if e["name"] != "FLASHKART_AUTH_MODE"]
             dsns = [e["name"] for e in container["env"] if e["name"].endswith("_DSN")]
             container["env"] = [e for e in container["env"] if e["name"] not in dsns]
             if dsns:

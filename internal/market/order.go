@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strings"
 	"time"
 
 	pb "flashkart/gen/flashkart/v1"
@@ -14,6 +13,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+
+	"flashkart/internal/identity"
 )
 
 type Orders struct {
@@ -65,12 +66,10 @@ func (o Orders) CreateFromReservation(ctx context.Context, req *pb.CreateOrderRe
 func (o Orders) Handler(token, customer string, fallback http.Handler) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/orders/{order_id}", func(w http.ResponseWriter, r *http.Request) {
-		supplied, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer ")
-		if !ok || !matchesToken(token, supplied) {
-			w.Header().Set("WWW-Authenticate", "Bearer")
-			writeError(w, r, 401, "UNAUTHENTICATED", "customer bearer token required")
+		if !customerAuthorized(w, r, token) {
 			return
 		}
+		customer := identity.CustomerID(r, customer)
 		id := r.PathValue("order_id")
 		if !validID(id) {
 			writeError(w, r, 400, "INVALID_ARGUMENT", "invalid order ID")

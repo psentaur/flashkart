@@ -9,3 +9,9 @@
 *.tfvars
 *.tfplan
 crash.log
+
+.env.*
+!.env.example
+.clerk/
+
+__pycache__/

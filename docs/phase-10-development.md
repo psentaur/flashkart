@@ -1,5 +1,21 @@
 # Phase 10 browser demo
 
+## Local start and stop
+
+With Python 3, Go, Node 22, npm, and Docker Compose or Podman Compose installed, run from the repository root:
+
+```sh
+python3 deploy/local/dev.py start
+python3 deploy/local/dev.py status
+python3 deploy/local/dev.py stop
+```
+
+The Linux launcher detects Compose, starts the five PostgreSQL databases, applies migrations, builds Go services, installs missing frontend dependencies, and starts the marketplace and Vite in the background. Open <http://127.0.0.1:5173>. Logs are in `build/local/market.log` and `build/local/web.log`. Clerk is the default authentication provider; see [login setup and admin management](authentication.md). Explicit local demo mode (`FLASHKART_AUTH_MODE=demo`) uses `local-admin` as the default admin token. Set `COMPOSE='podman compose'` to choose a provider explicitly.
+
+`stop` shuts down the app processes created by this launcher and stops the five databases, preserving their volumes. Stop apps launched manually before using this script. Checkout, notifications, and analytics need the additional configuration described below; the basic launch provides catalog, publication, inventory, and replicas. Existing queue and table environment variables are passed through to the marketplace launcher.
+
+## Full browser demo
+
 Start the marketplace with the purchase and outcome queues, notification table, and analytics table configured. Use the [Phase 8 setup](phase-8-development.md) and [Phase 9 Flink and projection setup](phase-9-development.md), then run `make run-market`.
 
 In a second terminal, install the frontend dependencies and start Vite.
@@ -9,31 +25,23 @@ npm --prefix web ci
 make run-web
 ```
 
-Open [Flashkart on localhost](http://127.0.0.1:5173) and sign in. Choose **Customer** or **Administrator** and enter that role's access key, which is the matching bearer token configured on the backend. The sign-in checks the key against an endpoint of that role, and the tab keeps the session in session storage until you sign out. The local Vite proxy routes same-origin API calls to the marketplace ports, as nginx does in Kubernetes.
+Open [Flashkart on localhost](http://127.0.0.1:5173). Sign in with Clerk. In explicit local demo mode only, enter the configured customer and administrator tokens under **Access tokens** and submit **Sign in**. Demo tokens stay in tab session storage; Clerk manages real signed-in sessions. The local Vite proxy routes same-origin API calls to the marketplace ports. A deployment serving the static build needs equivalent `/api` routing.
 
-Administrators see these pages:
-
-1. **Products.** Create a product with a name, a permanent ID suggested from the name, a description, an optional regular price and a photo. Every product is a catalog item. It is put on sale from the Sales page, either as a flash sale or as a regular listing. The list shows each product's status (flash, regular, scheduled or not listed) and the stock it has for sale, and can be grouped (listed or not listed first) and sorted by price; products that are not listed are hidden from customers. Drop or choose a photo and it previews at once; it uploads to S3 when the product is saved, and the Product Catalog serves it at `/api/products/{id}/image`. If replicas hold concurrent versions of a product, the page names it, and **Resolve** opens the version picker.
-2. **Sales.** Choose **Flash sale** (a price below the regular price, limited stock, a short window) or **Regular listing** (always the product's regular price, which cannot be edited there; it starts when published and has no end date, running until an administrator ends it). Both are sales in the Flash Sale Manager and go through the same purchase services; the storefront treats a sale cheaper than the product's regular price, or for a product without one, as a flash deal. Published terms are frozen: **End sale** stops a live or scheduled sale (Inventory Reservation rejects further purchases while held reservations finish), and **Publish a replacement** starts a new sale for the same product with a new price or stock. Choose the product from a dropdown, then set the price, the currency, the stock limit and the window. Save the draft and publish it. The Flash Sale Manager rejects drafts for products that are not in the catalog.
-3. **Rush test.** A demonstration tool, not a shopper feature. **Cloud burst** asks the Flash Sale Manager to send 400 parallel shoppers to the Admission Controller for 20 seconds from inside the cluster, which a browser cannot do, and shows how many were admitted and throttled; Analytics shows the throttled and sold-out counts a minute later. Only one burst runs at a time. **Browser shoppers** sends up to 300 shoppers at a live sale at once, signed with the customer key, and shows how the Admission Controller, Inventory Reservation, Order Service, Payment Service and Notification Service handled them. Inventory never sells more than the stock limit. The Admission Controller turns shoppers away above its configured rate (`FLASHKART_ADMISSION_RATE`, `FLASHKART_ADMISSION_BURST`); a browser reaches about 100 attempts per second, so that appears only when those limits are lower than the 200 per second default.
-4. **Analytics.** **All sales** totals demand, confirmed orders, revenue, sold-out and throttled rejections and cancellations across every sale, with a per-sale table. Pick a sale by product name to see demand, throttled and sold-out rejections, reservations, confirmed purchases, latency, stock consumed, a per-minute chart and the window history.
-5. **Replicas.** Shows replica readiness and pending hints. Choose a product to see its preferred owners and visible versions.
-
-Customers see these pages:
-
-1. **Shop.** A banner shows how many flash deals are live. Each product appears once in a single grid that can be grouped (on sale or not on sale first) and sorted by price. A flash deal has its own countdown and shows its price, its discount against the regular price, a countdown, live "X of Y left" stock from Inventory Reservation and a quantity picker. Only products that can be bought now are listed: at the flash price while a flash deal has stock, otherwise at the regular listing's price.
-2. **Cart.** Adjust quantities and choose the payment: **Card** succeeds, and **Test card** is always declined so the unit returns to stock. **Place order** sends one purchase attempt per unit and retries a lost response with the same attempt ID.
-3. **Notifications.** The bell shows one message per order, built from the Notification Service's per-item results, with an unread count. Opening a message shows that order in My orders.
-4. **My orders.** Each order lists its items with a plain tracker (order placed, item reserved, payment, confirmed) that shows where an item stopped and why, for example sold out or payment declined.
+1. In **Administration**, load a new product ID, enter a name, and save it. Use that product ID to create a sale draft with a window that is already open and a stock limit of one. Publish it and wait for the published terms.
+2. In **Storefront**, open the sale and reserve one unit. The details show the queued and terminal states. Open the order and find the same attempt in **Activity**. To submit a separate purchase, choose **Start another attempt** after the first outcome appears.
+3. In **Replicas**, inspect the product to see its preferred owners, visible versions, replica readiness, and pending hints. If the product has siblings, load it in **Administration**, choose a version, and explicitly resolve the conflict.
+4. In **Analytics**, select the sale. The charts and table update after Flink finalizes a window. The latest window end and last successful query time show how current the projection is.
 
 ## Browser checks
 
 Install Chromium with `cd web && npm exec -- playwright install chromium`. Run the suite against the local demo services, with Vite stopped so Playwright can start its own instance. Supply the same `FLASHKART_ADMIN_TOKEN` and `FLASHKART_CUSTOMER_TOKEN` environment variables to the test command.
 
 ```sh
-FLASHKART_E2E_ANALYTICS=1 make test-e2e
+FLASHKART_PAYMENT_FIXTURE=success FLASHKART_E2E_ANALYTICS=1 make test-e2e
+# Restart the marketplace with FLASHKART_PAYMENT_FIXTURE=decline before the next run.
+FLASHKART_PAYMENT_FIXTURE=decline make test-e2e
 ```
 
-The suite creates unique products and sales in the local demo database. It uploads a product image, checks that the Flash Sale Manager rejects unknown products, buys with a declining test card and then a normal card, and sells the last unit before a flash crowd is rejected as sold out. It drops one browser response after the real backend accepts the attempt, then checks that the retry preserves the attempt ID. The conflict test creates two siblings with the real catalog API and resolves them in the browser. Enable the analytics assertion when Kafka, Flink, and the projection worker are running. A window can take up to about two minutes to appear.
+The suite creates unique products and sales in the local demo database. It drops one browser response after the real backend accepts the attempt, then checks that the retry preserves the attempt ID. The conflict test creates two siblings with the real catalog API and resolves them in the browser. Enable the analytics assertion when Kafka, Flink, and the projection worker are running. A window can take up to about two minutes to appear.
 
 For an isolated analytics test run, create dedicated purchase-event and results topics. Pass them to Flink with `--events-topic` and `--results-topic`, and set `FLASHKART_PURCHASE_EVENTS_TOPIC` and `FLASHKART_ANALYTICS_RESULTS_TOPIC` on the marketplace to the same names. Use a unique Flink transactional ID prefix, a dedicated analytics table, and a dedicated consumer group for the run.

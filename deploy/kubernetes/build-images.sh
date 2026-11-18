@@ -17,7 +17,9 @@ for image in app web flink proxy emulator; do
         source=$context/emulator
     fi
     reference="docker.io/library/flashkart-$image:$IMAGE_TAG"
-    "$engine" build -f "$dockerfile" -t "$reference" "$source"
+    set --
+    if [ "$image" = web ]; then set -- --build-arg VITE_AUTH_MODE=demo; fi
+    "$engine" build "$@" -f "$dockerfile" -t "$reference" "$source"
     "$engine" save -o "$context/image.tar" "$reference"
     "$kind" load image-archive --name "$cluster" "$context/image.tar"
     rm "$context/image.tar"

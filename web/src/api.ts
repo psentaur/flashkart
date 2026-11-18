@@ -1,4 +1,6 @@
 export type Price = { amount_minor: number; currency: string };
+export type Credential = string | { userID: string; getToken: () => Promise<string | null> };
+export const credentialKey = (token?: Credential) => typeof token === "string" ? token : token?.userID;
 export type Product = { product_id: string; name: string; description?: string; image_url?: string; regular_price?: Price };
 export type Context = Record<string, { first: string; last: string }[]>;
 export type ProductView = { product: Product; context: Context };
@@ -34,11 +36,15 @@ export class ApiError extends Error {
 export const segment = encodeURIComponent;
 export const operationID = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, "0")).join("");
 
-type Options = { method?: string; token?: string; body?: unknown; raw?: Blob; attemptID?: string; signal?: AbortSignal };
+type Options = { method?: string; token?: Credential; body?: unknown; raw?: Blob; attemptID?: string; signal?: AbortSignal };
 
 export async function api<T>(path: string, options: Options = {}): Promise<T> {
   const headers = new Headers();
-  if (options.token) headers.set("Authorization", `Bearer ${options.token}`);
+  if (options.token) {
+    const token = typeof options.token === "string" ? options.token : await options.token.getToken();
+    if (!token) throw new ApiError(401, "UNAUTHENTICATED", "Sign in to continue.", 1);
+    headers.set("Authorization", "Bearer " + token);
+  }
   if (options.body !== undefined) headers.set("Content-Type", "application/json");
   if (options.raw) headers.set("Content-Type", options.raw.type || "application/octet-stream");
   if (options.attemptID) headers.set("Idempotency-Key", options.attemptID);

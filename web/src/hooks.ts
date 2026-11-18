@@ -1,12 +1,13 @@
+import type { Credential } from "./api";
 import { useEffect, useRef, useState } from "react";
-import { api } from "./api";
+import { api, credentialKey } from "./api";
 
 type Result<T> = { data?: T; error?: unknown; loading: boolean; fetchedAt?: string };
 
-export function useQuery<T>(path: string | null, token?: string, poll = 0, stopWhen?: (data: T) => boolean) {
+export function useQuery<T>(path: string | null, token?: Credential, poll = 0, stopWhen?: (data: T) => boolean) {
   const shouldStop = useRef(stopWhen);
   useEffect(() => { shouldStop.current = stopWhen; }, [stopWhen]);
-  const key = JSON.stringify([path, token]);
+  const key = JSON.stringify([path, credentialKey(token)]);
   const [result, setResult] = useState<Result<T> & { key: string }>({ key, loading: Boolean(path) });
   const [revision, setRevision] = useState(0);
   useEffect(() => {
