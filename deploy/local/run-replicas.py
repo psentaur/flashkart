@@ -70,8 +70,10 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
             for name, port, grpc, dsn in services:
                 settings = dict(config, http_address=f"127.0.0.1:{port}", grpc_address=grpc)
                 variables = {"FLASHKART_ADMIN_TOKEN": token}
-                if name in ("admission-controller", "order-service", "payment-service", "notification"):
+                if name in ("admission-controller", "order-service", "payment-service", "notification", "flash-sale-manager"):
                     variables.update({key: os.environ[key] for key in customer_vars})
+                if name == "flash-sale-manager":
+                    variables["FLASHKART_BURST_TARGET"] = "http://127.0.0.1:8204"
                 if name in ("admission-controller", "inventory-reservation") and os.environ.get(queue_vars[0]):
                     variables.update({key: os.environ[key] for key in queue_vars})
                     settings["aws"] = {"region": "us-east-1", "endpoints": {"sqs": os.environ["FLASHKART_SQS_ENDPOINT"]}}

@@ -80,6 +80,9 @@ test("publishes a sale and follows real purchase outcomes through every service"
   await page.getByRole("radio", { name: /Regular listing/ }).click();
   await page.getByLabel("Product").selectOption(id);
   await expect(page.getByLabel("Price (regular)")).toHaveValue("49.99");
+  await expect(page.getByLabel("Price (regular)")).toHaveAttribute("readonly", "");
+  await expect(page.getByLabel("Starts at")).toHaveCount(0);
+  await expect(page.getByText("stays on sale until you end it")).toBeVisible();
   await page.getByLabel("Stock available").fill("2");
   await page.getByRole("button", { name: "Save draft" }).click();
   await page.getByRole("button", { name: "Publish sale" }).click();
@@ -98,11 +101,10 @@ test("publishes a sale and follows real purchase outcomes through every service"
 
   // Customer: a declined test card cancels the order and returns the unit to stock.
   await signIn(page, "Customer", customer);
+  // Each product appears once: as a flash deal while it has stock.
   const card = page.getByRole("article", { name, exact: true });
-  const listed = page.getByRole("article", { name: name + " in catalog" });
-  // While the flash deal has stock, the catalog card sells at the flash price.
-  await expect(listed.getByText(/⚡ Flash deal · ends in/)).toBeVisible();
-  await expect(listed.getByText("1 of 1 left")).toBeVisible();
+  await expect(card).toHaveCount(1);
+  await expect(card.getByText("⚡ Flash deal")).toBeVisible();
   await expect(card.getByText("1 of 1 left")).toBeVisible();
   await expect(card.getByText("50% off")).toBeVisible();
   await card.getByRole("button", { name: "Add to cart" }).click();
@@ -142,19 +144,23 @@ test("publishes a sale and follows real purchase outcomes through every service"
 
   // The last unit is gone: the next attempt is rejected by Inventory.
   await page.getByRole("button", { name: "Shop", exact: true }).click();
-  await expect(card.getByRole("button", { name: "Sold out" })).toBeDisabled({ timeout: 15_000 });
+  // With the flash deal sold out, the same card switches to the regular listing.
+  await expect(card.getByText("2 of 2 left")).toBeVisible({ timeout: 15_000 });
+  await expect(card).toHaveCount(1);
+  await expect(card.getByRole("button", { name: "Add to cart" })).toBeEnabled();
+  await expect(card.getByText(/Flash deal/)).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Flash-crowd demo" })).toHaveCount(0);
-  // With the flash deal sold out, the catalog falls back to the regular listing.
-  await expect(listed.getByText("2 of 2 left")).toBeVisible();
-  await expect(listed.getByRole("button", { name: "Add to cart" })).toBeEnabled();
-  await expect(listed.getByText(/Flash deal/)).toHaveCount(0);
 
   // The Notification Service's messages appear in the bell for this shopper's own orders.
   await page.getByRole("button", { name: /^Notifications/ }).click();
   const bell = page.getByRole("dialog", { name: "Notifications" });
-  await expect(bell.getByText(`${name}: order confirmed`)).toBeVisible();
-  await expect(bell.getByText(`${name}: payment declined, not charged`)).toBeVisible();
-  await page.keyboard.press("Escape");
+  // One message per order, naming its items; opening it shows that order.
+  await expect(bell.getByRole("button", { name: /^Order confirmed · 1 item/ })).toBeVisible();
+  await expect(bell.getByRole("button", { name: /^Payment declined · 1 item, not charged/ })).toBeVisible();
+  await expect(bell.getByText(name)).toHaveCount(2);
+  await bell.getByRole("button", { name: /^Order confirmed/ }).click();
+  await expect(page.getByRole("heading", { name: "My orders" })).toBeVisible();
+  await expect(page.locator("article.order.focused").getByText("Paid and confirmed. You got it!")).toBeVisible();
 
   // The administrator's rush test sends a crowd of shoppers and traces it through each service.
   await signIn(page, "Administrator", admin);
@@ -164,6 +170,13 @@ test("publishes a sale and follows real purchase outcomes through every service"
   await page.getByLabel("Customer access key").fill(customer);
   await page.getByRole("button", { name: "Send 3 shoppers" }).click();
   await expect(page.locator(".crowd-card").getByText("0 got a unit · 3 sold out")).toBeVisible({ timeout: 35_000 });
+
+  // A cloud burst is a real flash crowd: the Admission Controller turns shoppers away.
+  await page.getByRole("button", { name: "Run 20-second burst" }).click();
+  const burst = page.locator(".burst");
+  await expect(burst.getByText("Finished")).toBeVisible({ timeout: 40_000 });
+  const throttled = Number((await burst.locator(".tile", { hasText: "Throttled" }).locator("strong").innerText()).replace(/,/g, ""));
+  expect(throttled).toBeGreaterThan(0);
 
   // Ending the regular listing early stops further orders; held stock is unaffected.
   const listing = (await (await request.get("/api/sales")).json()).find((s: { terms: { product_id: string; price_minor: number } }) =>

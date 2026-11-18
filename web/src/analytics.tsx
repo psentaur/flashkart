@@ -54,7 +54,7 @@ export function Analytics() {
     </select></label>
     {sale && <div className="panel chosen-sale"><ProductImage product={product} small />
       <div><h2>{product?.name || sale.terms.product_id}</h2>
-        <p className="small">{money(sale.terms)} · {date(sale.terms.starts_at)} – {date(sale.terms.ends_at)} · stock limit {sale.terms.stock}</p></div></div>}
+        <p className="small">{money(sale.terms)} · {isFlash(sale.terms, product) ? `${date(sale.terms.starts_at)} – ${date(sale.terms.ends_at)}` : `regular listing since ${date(sale.terms.starts_at)}`} · stock limit {sale.terms.stock}</p></div></div>}
     <Feedback query={windows} />
     {selection && <div className="tiles">
       <Tile label="Demand" value={totals.demand} hint="Purchase attempts received" />

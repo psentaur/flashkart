@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { date, formatMoney } from "./api";
 import type { Attempt, Notification, Product, Sale } from "./api";
 import { useQuery } from "./hooks";
@@ -32,7 +33,7 @@ export function outcomeOf(purchase: Purchase, attempt?: Attempt): Outcome {
       : "Payment did not complete in time, so the item went back on sale.", steps: steps(["done", "done", "failed", "skipped"]) };
 }
 
-export function Orders({ token, purchases, onShop }: { token: string; purchases: Purchase[]; onShop: () => void }) {
+export function Orders({ token, purchases, focus, onShop }: { token: string; purchases: Purchase[]; focus?: string; onShop: () => void }) {
   const products = useQuery<Product[]>("/api/products");
   const sales = useQuery<Sale[]>("/api/sales");
   const notifications = useQuery<Notification[]>("/api/notifications", token, 2000);
@@ -40,6 +41,10 @@ export function Orders({ token, purchases, onShop }: { token: string; purchases:
   const bySale = saleByID(sales.data);
   const delivered = new Map(notifications.data?.map(item => [item.attempt.attempt_id, item.attempt]));
   const mine = purchases.filter(p => !p.crowd);
+  // Opening an order from a notification scrolls to it once the page has rendered.
+  useEffect(() => {
+    if (focus) document.getElementById(`order-${focus}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [focus]);
   const orders = new Map<string, Purchase[]>();
   for (const p of mine) orders.set(p.checkout || p.attempt_id, [...(orders.get(p.checkout || p.attempt_id) || []), p]);
 
@@ -63,7 +68,7 @@ export function Orders({ token, purchases, onShop }: { token: string; purchases:
       const paid = confirmed.reduce((sum, g) => sum + (bySale.get(g.purchase.sale_id)?.terms.price_minor || 0) * g.count, 0);
       const currency = bySale.get(items[0].sale_id)?.terms.currency;
       const status = pending ? "Processing…" : confirmed.length === all.length ? "Confirmed" : confirmed.length ? "Partly confirmed" : "Not completed";
-      return <article className="panel order" key={id} aria-label={`Order from ${date(items[0].created_at)}`}>
+      return <article className={`panel order ${focus === id ? "focused" : ""}`} key={id} id={`order-${id}`} aria-label={`Order from ${date(items[0].created_at)}`}>
         <div className="order-top"><div><h2>Order · {date(items[0].created_at)}</h2>
           <p className="small">{items.length} item{items.length === 1 ? "" : "s"}{currency && paid > 0 && ` · paid ${formatMoney(paid, currency)}`}</p></div>
           <span className={`pill ${pending ? "soon" : confirmed.length === all.length ? "live" : confirmed.length ? "soon" : "bad"}`}>{status}</span></div>

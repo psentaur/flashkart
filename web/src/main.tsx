@@ -22,6 +22,7 @@ function App() {
   const [page, setPage] = useState<Page>(() => session?.role === "admin" ? "Products" : "Shop");
   const [cart, setCart] = useState<CartLine[]>(loadCart);
   const [purchases, setPurchases] = useState<Purchase[]>(loadPurchases);
+  const [focus, setFocus] = useState<string>();
   useEffect(() => saveCart(cart), [cart]);
   useEffect(() => savePurchases(purchases), [purchases]);
 
@@ -40,7 +41,7 @@ function App() {
         aria-current={page === item ? "page" : undefined} onClick={() => setPage(item)}>
         {item}{item === "Cart" && cartCount(cart) > 0 && <span className="count">{cartCount(cart)}</span>}
       </button>)}</nav>
-      <div className="account">{session.role === "customer" && <Bell token={token} purchases={purchases} onOpenOrders={() => setPage("My orders")} />}
+      <div className="account">{session.role === "customer" && <Bell token={token} purchases={purchases} onOpenOrder={id => { setFocus(id); setPage("My orders"); }} />}
         <span className="pill role-pill">{session.role === "admin" ? "Administrator" : "Customer"}</span>
         <button className="secondary" onClick={signOut}>Sign out</button></div>
     </div></header>
@@ -48,10 +49,10 @@ function App() {
       {page === "Shop" && <Shop cart={cart} setCart={setCart} onCart={() => setPage("Cart")} />}
       {page === "Cart" && <Cart token={token} cart={cart} setCart={setCart}
         onPurchased={added => { setPurchases(previous => [...added, ...previous]); setPage("My orders"); }} onShop={() => setPage("Shop")} />}
-      {page === "My orders" && <Orders token={token} purchases={purchases} onShop={() => setPage("Shop")} />}
+      {page === "My orders" && <Orders token={token} purchases={purchases} focus={focus} onShop={() => setPage("Shop")} />}
       {page === "Products" && <Products token={token} />}
       {page === "Sales" && <Sales token={token} />}
-      {page === "Rush test" && <Rush />}
+      {page === "Rush test" && <Rush token={token} />}
       {page === "Analytics" && <Analytics />}
       {page === "Replicas" && <Replicas token={token} />}
     </main>

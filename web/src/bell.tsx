@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Notification, Product, Sale } from "./api";
+import type { Attempt, Notification, Product, Sale } from "./api";
 import { useQuery } from "./hooks";
 import type { Purchase } from "./session";
 import { saleByID } from "./session";
@@ -7,27 +7,45 @@ import { saleByID } from "./session";
 const SEEN = "flashkart.seen-notifications";
 const seenIDs = (): string[] => { try { return JSON.parse(sessionStorage.getItem(SEEN) || "[]"); } catch { return []; } };
 
-function text(n: Notification, name: string) {
-  const a = n.attempt;
-  if (a.state === "CONFIRMED") return { title: `${name}: order confirmed`, tone: "good" };
-  if (a.state === "REJECTED") return { title: a.reason === "SOLD_OUT" ? `${name}: sold out before your order` : `${name}: the sale was not running`, tone: "bad" };
-  if (a.reason === "PAYMENT_DECLINED") return { title: `${name}: payment declined, not charged`, tone: "bad" };
-  return { title: `${name}: order cancelled, not charged`, tone: "bad" };
+type OrderNote = { id: string; title: string; detail: string; tone: "good" | "bad" | "mixed"; key: string };
+
+/** One message per order: it appears once every item in the order has a result from the Notification Service. */
+function summarise(id: string, items: Purchase[], outcomes: Map<string, Attempt>, name: (p: Purchase) => string): OrderNote | undefined {
+  const results = items.map(p => outcomes.get(p.attempt_id));
+  if (results.some(r => !r)) return undefined;
+  const confirmed = results.filter(r => r!.state === "CONFIRMED").length;
+  const counts = new Map<string, number>();
+  for (const p of items) counts.set(name(p), (counts.get(name(p)) || 0) + 1);
+  const detail = [...counts].map(([n, c]) => c > 1 ? `${n} ×${c}` : n).join(", ");
+  const units = `${items.length} item${items.length === 1 ? "" : "s"}`;
+  const declined = results.every(r => r!.reason === "PAYMENT_DECLINED");
+  const soldOut = results.every(r => r!.reason === "SOLD_OUT");
+  const title = confirmed === items.length ? `Order confirmed · ${units}`
+    : confirmed ? `Order partly confirmed · ${confirmed} of ${items.length} items`
+      : declined ? `Payment declined · ${units}, not charged` : soldOut ? `Sold out · ${units}, not charged` : `Order not completed · ${units}, not charged`;
+  return { id, title, detail, tone: confirmed === items.length ? "good" : confirmed ? "mixed" : "bad", key: `${id}:${confirmed}` };
 }
 
 /** Messages from the Notification Service about this shopper's own orders, with an unread count. */
-export function Bell({ token, purchases, onOpenOrders }: { token: string; purchases: Purchase[]; onOpenOrders: () => void }) {
+export function Bell({ token, purchases, onOpenOrder }: { token: string; purchases: Purchase[]; onOpenOrder: (id?: string) => void }) {
   const notifications = useQuery<Notification[]>("/api/notifications", token, 4000);
   const sales = useQuery<Sale[]>("/api/sales", undefined, 30_000);
   const products = useQuery<Product[]>("/api/products", undefined, 30_000);
   const [open, setOpen] = useState(false);
   const [seen, setSeen] = useState<string[]>(seenIDs);
   const box = useRef<HTMLDivElement>(null);
-  const mine = new Set(purchases.filter(p => !p.crowd).map(p => p.attempt_id));
   const bySale = saleByID(sales.data);
   const catalog = new Map(products.data?.map(item => [item.product_id, item]));
-  const list = (notifications.data || []).filter(n => mine.has(n.attempt.attempt_id)).reverse();
-  const unread = list.filter(n => !seen.includes(n.event_id)).length;
+  const outcomes = new Map((notifications.data || []).map(n => [n.attempt.attempt_id, n.attempt]));
+  const name = (p: Purchase) => { const sale = bySale.get(p.sale_id); return (sale && catalog.get(sale.terms.product_id)?.name) || "Item"; };
+  // Purchases are stored newest first; group them into the orders they were placed in.
+  const orders = new Map<string, Purchase[]>();
+  for (const p of purchases.filter(p => !p.crowd && p.admission === "admitted")) {
+    const id = p.checkout || p.attempt_id;
+    orders.set(id, [...(orders.get(id) || []), p]);
+  }
+  const list = [...orders].flatMap(([id, items]) => summarise(id, items, outcomes, name) ?? []);
+  const unread = list.filter(n => !seen.includes(n.key)).length;
 
   useEffect(() => {
     if (!open) return;
@@ -40,7 +58,7 @@ export function Bell({ token, purchases, onOpenOrders }: { token: string; purcha
 
   function toggle() {
     if (!open) {
-      const ids = [...new Set([...seen, ...list.map(n => n.event_id)])];
+      const ids = [...new Set([...seen, ...list.map(n => n.key)])];
       try { sessionStorage.setItem(SEEN, JSON.stringify(ids)); } catch { /* memory only */ }
       // Mark as read after opening, so this view still highlights what was new.
       window.setTimeout(() => setSeen(ids), 1500);
@@ -55,13 +73,10 @@ export function Bell({ token, purchases, onOpenOrders }: { token: string; purcha
     {open && <div className="bell-panel" role="dialog" aria-label="Notifications">
       <strong>Notifications</strong>
       {list.length === 0 && <p className="small">No updates yet. You will be told here when an order is confirmed or fails.</p>}
-      <ul>{list.slice(0, 8).map(n => {
-        const sale = bySale.get(n.attempt.sale_id);
-        const name = (sale && catalog.get(sale.terms.product_id)?.name) || "Your item";
-        const { title, tone } = text(n, name);
-        return <li key={n.event_id} className={`${tone} ${seen.includes(n.event_id) ? "" : "new"}`}>{title}</li>;
-      })}</ul>
-      {list.length > 0 && <button className="link" onClick={() => { setOpen(false); onOpenOrders(); }}>See all orders</button>}
+      <ul>{list.slice(0, 8).map(n => <li key={n.id}>
+        <button className={`note-item ${n.tone} ${seen.includes(n.key) ? "" : "new"}`} onClick={() => { setOpen(false); onOpenOrder(n.id); }}>
+          <strong>{n.title}</strong><span>{n.detail}</span></button></li>)}</ul>
+      {list.length > 0 && <button className="link" onClick={() => { setOpen(false); onOpenOrder(); }}>See all orders</button>}
     </div>}
   </div>;
 }

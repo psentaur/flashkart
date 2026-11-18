@@ -13,27 +13,25 @@ export function Shop({ cart, setCart, onCart }: Props) {
   const stock = useQuery<Stock[]>("/api/inventory/sales", undefined, 3000);
   const now = useNow();
   const [added, setAdded] = useState<string>();
-  const [sort, setSort] = useState<SortKey>("sale");
+  const [sort, setSort] = useState<Sorting>(DEFAULT_SORT);
   const catalog = new Map(products.data?.map(item => [item.product_id, item]));
   const levels = new Map(stock.data?.map(item => [item.sale_id, item]));
-  // Flash deals get their own section; regular listings make products in the catalog buyable.
-  const all = (sales.data || []).filter(s => isFlash(s.terms, catalog.get(s.terms.product_id)));
   const status = (s: Sale) => statusOf(s, levels.get(s.sale_id), now);
+  const flash = (sales.data || []).filter(s => isFlash(s.terms, catalog.get(s.terms.product_id)));
   const listings = (sales.data || []).filter(s => !isFlash(s.terms, catalog.get(s.terms.product_id)) && status(s) === "Live");
-  const live = all.filter(s => status(s) === "Live").sort((a, b) => a.terms.ends_at.localeCompare(b.terms.ends_at));
-  const upcoming = all.filter(s => status(s) === "Upcoming").sort((a, b) => a.terms.starts_at.localeCompare(b.terms.starts_at));
-  const ended = all.filter(s => status(s) === "Ended").sort((a, b) => b.terms.ends_at.localeCompare(a.terms.ends_at)).slice(0, 6);
-  // Customers only see products that can be bought now: those with a live regular listing or flash deal.
+  const live = flash.filter(s => status(s) === "Live").sort((a, b) => a.terms.ends_at.localeCompare(b.terms.ends_at));
+  const upcoming = flash.filter(s => status(s) === "Upcoming").sort((a, b) => a.terms.starts_at.localeCompare(b.terms.starts_at));
+  // Each product appears once: as a flash deal while one is live, otherwise at its regular listing.
+  // A sold-out flash deal gives way to the regular listing, if there is one.
   const shelf = (products.data || []).flatMap(item => {
     const deal = live.find(s => s.terms.product_id === item.product_id);
     const listing = listings.find(s => s.terms.product_id === item.product_id);
-    // A sold-out flash deal gives way to the regular listing, if there is one.
     const usable = deal && (levels.get(deal.sale_id)?.available ?? 1) > 0 ? deal : listing ? undefined : deal;
     const best = usable || listing;
-    return best ? [{ item, deal: usable, listing, price: best.terms.price_minor }] : [];
+    return best ? [{ item, sale: best, onSale: !!usable, price: best.terms.price_minor }] : [];
   });
-  shelf.sort((a, b) => sort === "low" ? a.price - b.price : sort === "high" ? b.price - a.price
-    : Number(!!b.deal) - Number(!!a.deal) || a.price - b.price);
+  sortProducts(shelf, sort);
+  const liveDeals = shelf.filter(entry => entry.onSale).length;
 
   function add(sale: Sale, quantity: number) {
     setCart(previous => {
@@ -49,45 +47,41 @@ export function Shop({ cart, setCart, onCart }: Props) {
     justAdded={added === sale.sale_id} onAdd={add} onCart={onCart} />;
 
   return <div className="stack">
-    <section className={`hero ${live.length ? "on" : ""}`}>
+    <section className={`hero ${liveDeals ? "on" : ""}`}>
       <div>
         <span className="hero-tag">⚡ Flash sales</span>
-        <h1>{live.length ? `${live.length} deal${live.length === 1 ? " is" : "s are"} live now` : upcoming.length ? "Flash deals are coming soon" : "No flash deals right now"}</h1>
+        <h1>{liveDeals ? `${liveDeals} deal${liveDeals === 1 ? " is" : "s are"} live now` : upcoming.length ? "Flash deals are coming soon" : "No flash deals right now"}</h1>
         <p>Limited stock at flash prices. Each deal has its own timer — first come, first served, and stock updates live as other shoppers buy.</p>
       </div>
     </section>
     <Feedback query={sales} />
-
-    {live.length > 0 && <section><div className="section-head"><h2>Live now</h2>
-      <button className="secondary" onClick={() => { products.reload(); sales.reload(); stock.reload(); }}>Refresh</button></div>
-      <div className="cards">{live.map(card)}</div></section>}
-    {upcoming.length > 0 && <section><h2 className="spaced">Coming soon</h2><div className="cards">{upcoming.map(card)}</div></section>}
-    {ended.length > 0 && <section><h2 className="spaced">Recently ended</h2><div className="cards compact">{ended.map(card)}</div></section>}
-
-    <section className="catalog">
-      <div className="section-head"><div><h2>All products</h2>
-        <p>Everything you can buy right now. ⚡ marks products that are cheaper in a flash sale.</p></div>
+    <section>
+      <div className="section-head"><div><h2>Products</h2>
+        <p>Everything you can buy right now. ⚡ Flash deals are marked, with their discount and a timer.</p></div>
         <SortPicker value={sort} onChange={setSort} /></div>
       <Feedback query={products} />
-      {products.data && shelf.length === 0 && <p className="empty">Nothing is for sale right now. Check back soon.</p>}
-      <div className="cards compact">{shelf.map(({ item, deal, listing }) => {
-        const buy = deal || listing!;
-        const off = deal ? discount(deal.terms, item.regular_price) : 0;
-        return <article className="product-card" key={item.product_id} aria-label={`${item.name} in catalog`}>
-          <div className="deal-image"><ProductImage product={item} />{off > 0 && <span className="badge-off">−{off}%</span>}</div>
-          <div className="card-content"><h3>{item.name}</h3>
-            {item.description && <p className="clamp">{item.description}</p>}
-            <div className="prices"><strong className="price small-price">{money(buy.terms)}</strong>
-              {deal && item.regular_price && off > 0 && <s className="was">{formatMoney(item.regular_price.amount_minor, item.regular_price.currency)}</s>}</div>
-            {deal && <span className="pill flash">⚡ Flash deal · ends in {countdown(deal.terms.ends_at, now)}</span>}
-            <StockBar stock={levels.get(buy.sale_id)} limit={buy.terms.stock} />
-            <BuyControls sale={buy} name={item.name} stock={levels.get(buy.sale_id)} flash={!!deal}
-              inCart={cart.find(line => line.sale_id === buy.sale_id)?.quantity || 0} justAdded={added === buy.sale_id} onAdd={add} onCart={onCart} />
-          </div>
-        </article>;
-      })}</div>
+      {products.data && sales.data && shelf.length === 0 && <p className="empty">Nothing is for sale right now. Check back soon.</p>}
+      <div className="cards">{shelf.map(({ item, sale, onSale }) => onSale ? card(sale)
+        : <RegularCard key={item.product_id} product={item} sale={sale} stock={levels.get(sale.sale_id)}
+          inCart={cart.find(line => line.sale_id === sale.sale_id)?.quantity || 0} justAdded={added === sale.sale_id} onAdd={add} onCart={onCart} />)}</div>
     </section>
+    {upcoming.length > 0 && <section><h2 className="spaced">Coming soon</h2><div className="cards compact">{upcoming.map(card)}</div></section>}
   </div>;
+}
+
+function RegularCard({ product, sale, stock, inCart, justAdded, onAdd, onCart }: {
+  product: Product; sale: Sale; stock?: Stock; inCart: number; justAdded: boolean;
+  onAdd: (sale: Sale, quantity: number) => void; onCart: () => void;
+}) {
+  return <article className="product-card" aria-label={product.name}>
+    <ProductImage product={product} />
+    <div className="card-content"><h3>{product.name}</h3>
+      {product.description && <p className="clamp">{product.description}</p>}
+      <strong className="price small-price">{money(sale.terms)}</strong>
+      <StockBar stock={stock} limit={sale.terms.stock} />
+      <BuyControls sale={sale} name={product.name} stock={stock} inCart={inCart} justAdded={justAdded} onAdd={onAdd} onCart={onCart} />
+    </div>
+  </article>;
 }
 
 function DealCard({ sale, product, stock, now, inCart, justAdded, onAdd, onCart }: {
@@ -140,10 +134,22 @@ function BuyControls({ sale, name, stock, inCart, justAdded, onAdd, onCart, flas
   </>;
 }
 
-export type SortKey = "sale" | "low" | "high";
+export type Sorting = { group: "sale" | "regular" | "none"; price: "low" | "high" };
+export const DEFAULT_SORT: Sorting = { group: "sale", price: "low" };
 
-export function SortPicker({ value, onChange, labels = { sale: "On sale first" } }: { value: string; onChange: (key: SortKey) => void; labels?: { sale: string } }) {
-  return <label className="sort">Sort by<select value={value} onChange={e => onChange(e.target.value as SortKey)}>
-    <option value="sale">{labels.sale}</option><option value="low">Price: low to high</option><option value="high">Price: high to low</option>
-  </select></label>;
+/** Sorts by sale group first (if any), then by price. */
+export function sortProducts<T extends { onSale: boolean; price: number }>(items: T[], sort: Sorting) {
+  const group = (x: T) => sort.group === "none" ? 0 : (x.onSale === (sort.group === "sale") ? 0 : 1);
+  return items.sort((a, b) => group(a) - group(b) || (sort.price === "low" ? a.price - b.price : b.price - a.price));
+}
+
+export function SortPicker({ value, onChange, groups = { sale: "On sale first", regular: "Not on sale first" } }: {
+  value: Sorting; onChange: (sort: Sorting) => void; groups?: { sale: string; regular: string };
+}) {
+  return <div className="sort-controls">
+    <label className="sort">Show<select value={value.group} onChange={e => onChange({ ...value, group: e.target.value as Sorting["group"] })}>
+      <option value="sale">{groups.sale}</option><option value="regular">{groups.regular}</option><option value="none">All mixed</option></select></label>
+    <label className="sort">Price<select value={value.price} onChange={e => onChange({ ...value, price: e.target.value as Sorting["price"] })}>
+      <option value="low">Low to high</option><option value="high">High to low</option></select></label>
+  </div>;
 }

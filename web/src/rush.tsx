@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { date, money, statusOf } from "./api";
+import { ApiError, api, date, message, money, segment, statusOf } from "./api";
 import type { Attempt, Notification, Product, Sale, Stock } from "./api";
 import { submitAttempt } from "./checkout";
 import { useQuery } from "./hooks";
@@ -19,7 +19,7 @@ function store(key: string, value: unknown) {
  * Administrator tool: a crowd of shoppers hits one live sale at once, and the run is traced through
  * every service on the purchase path. Shoppers act as customers, so the run uses the customer key.
  */
-export function Rush() {
+export function Rush({ token }: { token: string }) {
   const products = useQuery<Product[]>("/api/products");
   const sales = useQuery<Sale[]>("/api/sales", undefined, 10_000);
   const stock = useQuery<Stock[]>("/api/inventory/sales", undefined, 2000);
@@ -56,7 +56,7 @@ export function Rush() {
   const crowds = [...new Set(runs.map(r => r.crowd!))];
   return <section className="stack">
     <div className="section-head"><div><h1>Rush test</h1>
-      <p>Simulate a crowd of shoppers hitting a live flash sale at the same moment, and see how each service handled them.</p></div></div>
+      <p>Simulate a crowd of shoppers hitting a live sale at the same moment, and see how the services handle them.</p></div></div>
     <div className="panel">
       <Feedback query={sales} />
       {live.length === 0 ? <p className="empty">No sale is live. Publish a sale whose window includes now, then come back.</p>
@@ -65,6 +65,14 @@ export function Rush() {
             {live.map(s => <option key={s.sale_id} value={s.sale_id}>{catalog.get(s.terms.product_id)?.name || s.terms.product_id} · {money(s.terms)}</option>)}</select></label>
           {sale && <div className="full chosen"><ProductImage product={catalog.get(sale.terms.product_id)} small />
             <div style={{ flex: 1 }}><StockBar stock={levels.get(sale.sale_id)} limit={sale.terms.stock} detail /></div></div>}
+        </div>}
+    </div>
+    {sale && <CloudBurst token={token} sale={sale} name={catalog.get(sale.terms.product_id)?.name || sale.terms.product_id} />}
+    {sale && <div className="panel">
+      <h2>Browser shoppers</h2>
+      <p className="small">Shoppers sent from this browser go through the whole purchase path, shown service by service below.
+        A browser sends only a few requests at a time, so they are never throttled — use the cloud burst for that.</p>
+      <div className="form-grid">
           <label>Shoppers at once<input type="number" min={1} max={300} value={count}
             onChange={e => setCount(Math.min(300, Math.max(1, e.target.valueAsNumber || 1)))} /></label>
           <label>Their payment<select value={payment} onChange={e => setPayment(e.target.value as PaymentChoice)}>
@@ -73,8 +81,8 @@ export function Rush() {
             <span className="small">The crowd shops as customers, so it signs requests with the customer key.</span></label>
           <div className="full"><button className="flash-button" disabled={busy || !key} onClick={() => void run()}>
             {busy ? "Sending shoppers…" : `Send ${count} shopper${count === 1 ? "" : "s"}`}</button></div>
-        </div>}
-    </div>
+      </div>
+    </div>}
     {crowds.map(crowd => {
       const members = runs.filter(r => r.crowd === crowd);
       return <CrowdCard key={crowd} members={members} sale={bySale.get(members[0].sale_id)}
@@ -114,4 +122,56 @@ function CrowdCard({ members, sale, product, delivered }: {
     <Pipeline steps={steps} />
     <p className="small">Stock limit {sale?.terms.stock ?? "—"}: however many shoppers arrive, no more units are sold than exist.</p>
   </article>;
+}
+
+type Burst = { burst_id: string; sale_id: string; shoppers: number; seconds: number; state: "RUNNING" | "COMPLETED";
+  sent: number; admitted: number; throttled: number; failed: number };
+
+/**
+ * A real flash crowd, sent from inside the cluster by the Flash Sale Manager: hundreds of shoppers in
+ * parallel for up to 20 seconds. Unlike browser shoppers, this is enough to trip admission control.
+ */
+function CloudBurst({ token, sale, name }: { token: string; sale: Sale; name: string }) {
+  const [burst, setBurst] = useState<Burst>();
+  const [error, setError] = useState<unknown>();
+  const [starting, setStarting] = useState(false);
+  const running = burst?.state === "RUNNING";
+  useEffect(() => {
+    if (!burst || burst.state !== "RUNNING") return;
+    const timer = window.setInterval(async () => {
+      try { setBurst(await api<Burst>("/api/admin/load-bursts/" + segment(burst.burst_id), { token })); }
+      catch (err) { setError(err); }
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [burst, token]);
+
+  async function start() {
+    if (starting || running) return;
+    setStarting(true);
+    setError(undefined);
+    try {
+      setBurst(await api<Burst>("/api/admin/load-bursts", { method: "POST", token, body: { sale_id: sale.sale_id, shoppers: 400, seconds: 20 } }));
+    } catch (err) {
+      setError(err instanceof ApiError && err.code === "BURST_RUNNING" ? new Error("A burst is already running. Try again in a few seconds.") : err);
+    } finally { setStarting(false); }
+  }
+  const share = (n: number) => burst && burst.sent ? Math.round(n / burst.sent * 100) : 0;
+  return <div className="panel burst">
+    <div className="section-head"><div><h2>⚡ Cloud burst</h2>
+      <p className="small">400 shoppers order <strong>{name}</strong> in parallel for 20 seconds, sent from inside the cloud to the Admission Controller.
+        This is a real flash crowd: watch it turn shoppers away when they arrive faster than it can admit them.</p></div>
+      <button className="flash-button" disabled={starting || running} onClick={() => void start()}>
+        {running ? "Burst running…" : starting ? "Starting…" : "Run 20-second burst"}</button></div>
+    {error !== undefined && <p role="alert" className="error">{message(error)}</p>}
+    {burst && <>
+      <div className="tiles">
+        <div className="tile"><span>Orders sent</span><strong>{burst.sent.toLocaleString()}</strong><small>{running ? "Still sending…" : "Finished"}</small></div>
+        <div className="tile good"><span>Admitted</span><strong>{burst.admitted.toLocaleString()}</strong><small>{share(burst.admitted)}% let in to buy</small></div>
+        <div className="tile warn"><span>Throttled</span><strong>{burst.throttled.toLocaleString()}</strong><small>{share(burst.throttled)}% turned away: too many at once</small></div>
+        <div className="tile"><span>Errors</span><strong>{burst.failed.toLocaleString()}</strong><small>Timeouts or unexpected answers</small></div>
+      </div>
+      {!running && <p className="small">Admitted orders then compete for the {sale.terms.stock} units in stock: Inventory sells exactly that many and
+        rejects the rest as sold out. Open <strong>Analytics</strong> in about a minute to see throttled and sold-out counts for this sale.</p>}
+    </>}
+  </div>;
 }

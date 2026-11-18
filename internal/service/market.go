@@ -187,7 +187,15 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 	}
 	defer conn.Close()
 	publisher := market.Publisher{DB: db, Replicas: client, Inventory: pb.NewInventoryClient(conn), Log: log}
-	app.wrap = func(fallback http.Handler) http.Handler { return publisher.Handler(token, fallback) }
+	// The burst generator signs attempts as the demo customer and sends them to the Admission Controller.
+	target := os.Getenv("FLASHKART_BURST_TARGET")
+	if target == "" {
+		target = "http://admission-controller:8080"
+	}
+	burster := &market.Burster{Target: target, CustomerToken: os.Getenv("FLASHKART_CUSTOMER_TOKEN"), Log: log}
+	app.wrap = func(fallback http.Handler) http.Handler {
+		return publisher.Handler(token, burster.Handler(token, fallback))
+	}
 	workCtx, stop := context.WithCancel(ctx)
 	done := make(chan struct{})
 	go func() { defer close(done); publisher.Run(workCtx) }()

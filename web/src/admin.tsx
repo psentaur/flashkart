@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { ApiError, api, date, discount, formatMoney, fromMinor, isFlash, message, money, operationID, saleStatus, segment, statusOf, toMinor } from "./api";
+import { ApiError, api, date, discount, formatMoney, fromMinor, isFlash, message, money, operationID, segment, statusOf, toMinor } from "./api";
 import type { Context, Draft, Product, ProductView, Publication, Sale, Stock, Version } from "./api";
 import { useQuery } from "./hooks";
-import { SortPicker } from "./shop";
-import type { SortKey } from "./shop";
+import { DEFAULT_SORT, SortPicker, sortProducts } from "./shop";
+import type { Sorting } from "./shop";
 import { Feedback, ProductImage, StockBar } from "./ui";
 
 const slug = (value: string) => value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
@@ -13,7 +13,7 @@ export function Products({ token }: { token: string }) {
   const products = useQuery<Product[]>("/api/products");
   const sales = useQuery<Sale[]>("/api/sales", undefined, 10_000);
   const stock = useQuery<Stock[]>("/api/inventory/sales", undefined, 4000);
-  const [sort, setSort] = useState<SortKey>("sale");
+  const [sort, setSort] = useState<Sorting>(DEFAULT_SORT);
   const levels = new Map(stock.data?.map(item => [item.sale_id, item]));
   // Every product with its listing status; a product that is not on sale has no stock for customers.
   const rows = (products.data || []).map(item => {
@@ -24,10 +24,9 @@ export function Products({ token }: { token: string }) {
     const upcoming = mine.some(s => statusOf(s, levels.get(s.sale_id)) === "Upcoming");
     const units = live.reduce((sum, s) => sum + Math.max(0, levels.get(s.sale_id)?.available ?? s.terms.stock), 0);
     const price = (flash || regular)?.terms.price_minor ?? item.regular_price?.amount_minor ?? 0;
-    return { item, flash, regular, upcoming, units, price, listed: !!(flash || regular) };
+    return { item, flash, regular, upcoming, units, price, listed: !!(flash || regular), onSale: !!(flash || regular) };
   });
-  rows.sort((a, b) => sort === "low" ? a.price - b.price : sort === "high" ? b.price - a.price
-    : Number(b.listed) - Number(a.listed) || Number(!!b.flash) - Number(!!a.flash) || a.item.name.localeCompare(b.item.name));
+  sortProducts(rows, sort);
   const [editing, setEditing] = useState<{ id?: string; key: number }>();
   // The catalog list refuses to pick a version when replicas hold siblings; offer to resolve that product.
   const conflicted = products.error instanceof ApiError && products.error.code === "CATALOG_CONFLICT"
@@ -45,7 +44,7 @@ export function Products({ token }: { token: string }) {
     {products.data?.length === 0 && <p className="empty">No products yet. Create the first one.</p>}
     {rows.length > 0 && <div className="toolbar"><p className="small">{rows.filter(r => r.listed).length} of {rows.length} on sale.
       Products that are not listed are hidden from customers — put them on sale from the Sales page.</p>
-      <SortPicker value={sort} onChange={setSort} labels={{ sale: "On sale first" }} /></div>}
+      <SortPicker value={sort} onChange={setSort} groups={{ sale: "Listed first", regular: "Not listed first" }} /></div>}
     <div className="cards compact">{rows.map(({ item, flash, regular, upcoming, units, listed }) => <article className={`product-card ${listed ? "" : "muted"}`} key={item.product_id}>
       <ProductImage product={item} />
       <div className="card-content"><h3>{item.name}</h3><p className="identifier">{item.product_id}</p>
@@ -263,7 +262,7 @@ export function Sales({ token }: { token: string }) {
     <div><h1>Sales</h1><p>Put products up for sale: as a short, discounted flash sale, or as a regular listing at the regular price. The Flash Sale Manager publishes both; Inventory Reservation enforces their stock.</p></div>
     <SaleEditor key={form} token={token} products={products.data || []} initial={prefill}
       onPublished={() => { sales.reload(); stock.reload(); products.reload(); }} onReset={() => { setPrefill(undefined); setForm(Date.now()); }}
-      onProductChanged={() => products.reload()} />
+ />
     <section className="panel table-wrap"><h2>Published</h2><Feedback query={sales} />
       {ended && <div className="notice" role="status" tabIndex={-1} ref={notice}><strong>{catalog.get(ended.terms.product_id)?.name || "The sale"} has ended.</strong> New orders are refused;
         orders already in progress finish normally. To change its price or stock, publish a replacement.
@@ -279,7 +278,8 @@ export function Sales({ token }: { token: string }) {
           return <tr key={sale.sale_id}>
             <td><div className="cell-product"><ProductImage product={product} small /><span>{product?.name || sale.terms.product_id}</span></div></td>
             <td>{isFlash(sale.terms, product) ? <span className="pill flash">⚡ Flash sale</span> : <span className="pill">Regular</span>}</td>
-            <td>{money(sale.terms)}</td><td>{date(sale.terms.starts_at)} – {date(sale.terms.ends_at)}</td>
+            <td>{money(sale.terms)}</td><td>{isFlash(sale.terms, product) ? <>{date(sale.terms.starts_at)} – {date(sale.terms.ends_at)}</>
+              : <>Since {date(sale.terms.starts_at)} · until ended</>}</td>
             <td><span className={`pill ${status === "Live" ? "live" : ""}`}>{status}</span></td>
             <td className="stock-cell">{status === "Ended" && levels.get(sale.sale_id)
               ? <span className="small">{levels.get(sale.sale_id)!.sold} sold · {Math.max(0, levels.get(sale.sale_id)!.available)} unsold</span>
@@ -297,9 +297,11 @@ export function Sales({ token }: { token: string }) {
 
 type Form = { product_id: string; price: string; currency: string; stock: number; starts_at: string; ends_at: string };
 type Prefill = { product_id: string; kind: "flash" | "regular"; stock: number };
+// Regular listings have no end date for the administrator; the stored window runs ten years.
+const OPEN_ENDED = 10 * 365 * 86400_000;
 
-function SaleEditor({ token, products, initial, onPublished, onReset, onProductChanged }: {
-  token: string; products: Product[]; initial?: Prefill; onPublished: () => void; onReset: () => void; onProductChanged: () => void;
+function SaleEditor({ token, products, initial, onPublished, onReset }: {
+  token: string; products: Product[]; initial?: Prefill; onPublished: () => void; onReset: () => void;
 }) {
   const [draft, setDraft] = useState<Draft>();
   const [form, setForm] = useState<Form>(() => ({
@@ -353,21 +355,18 @@ function SaleEditor({ token, products, initial, onPublished, onReset, onProductC
       setError(new ApiError(400, "NOT_A_DISCOUNT", "A flash price must be below the regular price. To sell at the regular price, choose Regular listing.", 1)); return;
     }
     if (!Number.isFinite(price) || price < 0 || (regular && price <= 0)) { setError(new ApiError(400, "INVALID_PRICE", "Enter a valid price.", 1)); return; }
-    if (Date.parse(form.ends_at) <= Date.parse(form.starts_at)) { setError(new ApiError(400, "INVALID_WINDOW", "The sale must end after it starts.", 1)); return; }
+    if (regular && !product?.regular_price) { setError(new ApiError(400, "REGULAR_PRICE_REQUIRED", "Set a regular price on the Products page before listing this product.", 1)); return; }
+    if (!regular && Date.parse(form.ends_at) <= Date.parse(form.starts_at)) { setError(new ApiError(400, "INVALID_WINDOW", "The sale must end after it starts.", 1)); return; }
     setBusy(true);
     try {
-      // A regular listing's price is the product's regular price: keep the catalog in step with it.
-      const minor = toMinor(price, form.currency);
-      if (regular && product && (product.regular_price?.amount_minor !== minor || product.regular_price?.currency !== form.currency)) {
-        const current = await api<ProductView>("/api/admin/products/" + segment(product.product_id), { token });
-        await api<ProductView>("/api/admin/products/" + segment(product.product_id), { method: "PUT", token, body: {
-          operation_id: operationID(), context: current.context,
-          product: { ...current.product, regular_price: { amount_minor: minor, currency: form.currency } } } });
-        onProductChanged();
-      }
+      // A regular listing sells at the product's regular price from now until an administrator ends it;
+      // published sales need a window, so it gets one far in the future.
+      const fixed = regular ? product!.regular_price! : undefined;
       const body = {
-        product_id: form.product_id, price_minor: toMinor(price, form.currency), currency: form.currency, stock: form.stock,
-        starts_at: new Date(form.starts_at).toISOString(), ends_at: new Date(form.ends_at).toISOString(),
+        product_id: form.product_id, price_minor: fixed ? fixed.amount_minor : toMinor(price, form.currency),
+        currency: fixed ? fixed.currency : form.currency, stock: form.stock,
+        starts_at: new Date(regular ? Date.now() - 60_000 : Date.parse(form.starts_at)).toISOString(),
+        ends_at: new Date(regular ? Date.now() + OPEN_ENDED : Date.parse(form.ends_at)).toISOString(),
       };
       setDraft(await api<Draft>(draft ? "/api/admin/sale-drafts/" + segment(draft.sale_id) : "/api/admin/sale-drafts",
         { method: draft ? "PATCH" : "POST", token, body }));
@@ -405,7 +404,7 @@ function SaleEditor({ token, products, initial, onPublished, onReset, onProductC
           <button type="button" role="radio" aria-checked={!regular} className={`role ${!regular ? "selected" : ""}`} onClick={() => choose("flash")}>
             <strong>⚡ Flash sale</strong><span>Discounted price, limited stock, short time window.</span></button>
           <button type="button" role="radio" aria-checked={regular} className={`role ${regular ? "selected" : ""}`} onClick={() => choose("regular")}>
-            <strong>Regular listing</strong><span>Sell at the product's regular price, for as long as you set.</span></button>
+            <strong>Regular listing</strong><span>Sell at the product's regular price until you end it.</span></button>
         </div>
         <label className="full">Product<select required value={form.product_id} onChange={e => {
           update("product_id", e.target.value);
@@ -418,16 +417,18 @@ function SaleEditor({ token, products, initial, onPublished, onReset, onProductC
           {product.regular_price ? <p className="small">Regular price {formatMoney(product.regular_price.amount_minor, product.regular_price.currency)}
             {(() => { const off = Number(form.price) > 0 ? discount({ price_minor: toMinor(Number(form.price), form.currency), currency: form.currency }, product.regular_price) : 0;
               return off > 0 ? <strong className="off"> · this sale is {off}% off</strong> : null; })()}</p>
-            : <p className="small">{regular ? "No regular price yet — this listing's price will become it." : "No regular price set, so shoppers will not see a discount."}</p>}
-          {regular && <p className="small">Changing the price here also updates the product's regular price.</p>}</div></div>}
+            : <p className={regular ? "error" : "small"}>{regular ? "This product has no regular price. Set one on the Products page to list it." : "No regular price set, so shoppers will not see a discount."}</p>}
+          {regular && product.regular_price && <p className="small">Regular listings always sell at the regular price. To change it, edit the product, then end this listing and publish a replacement.</p>}</div></div>}
         <label>{regular ? "Price (regular)" : "Flash price"}<input inputMode="decimal" required placeholder="499.00" value={form.price}
-          onChange={e => update("price", e.target.value)} /></label>
-        <label>Currency<select value={form.currency} onChange={e => update("currency", e.target.value)}>
+          readOnly={regular} aria-readonly={regular} onChange={e => update("price", e.target.value)} /></label>
+        <label>Currency<select value={form.currency} disabled={regular} onChange={e => update("currency", e.target.value)}>
           <option value="INR">INR (₹)</option><option value="USD">USD ($)</option><option value="EUR">EUR (€)</option></select></label>
         <label>{regular ? "Stock available" : "Stock limit"}<input type="number" min="1" max="100000" step="1" required value={Number.isNaN(form.stock) ? "" : form.stock} onChange={e => update("stock", e.target.valueAsNumber)} /></label>
         <span />
-        <label>Starts at<input required type="datetime-local" value={form.starts_at} onChange={e => update("starts_at", e.target.value)} /></label>
-        <label>Ends at<input required type="datetime-local" value={form.ends_at} onChange={e => update("ends_at", e.target.value)} /></label>
+        {regular ? <p className="full small">Starts as soon as it is published and stays on sale until you end it.</p> : <>
+          <label>Starts at<input required type="datetime-local" value={form.starts_at} onChange={e => update("starts_at", e.target.value)} /></label>
+          <label>Ends at<input required type="datetime-local" value={form.ends_at} onChange={e => update("ends_at", e.target.value)} /></label>
+        </>}
       </fieldset>
       <div className="catalog-list sale-actions"><button disabled={busy || !!operation || products.length === 0}>{draft ? "Save draft changes" : "Save draft"}</button>
         {draft && <button className="secondary" type="button" disabled={busy || (dirty && !operation)} onClick={() => void publish()}>{operation ? "Retry publication" : "Publish sale"}</button>}</div>

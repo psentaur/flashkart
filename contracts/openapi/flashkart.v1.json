@@ -1423,6 +1423,132 @@
           }
         ]
       }
+    },
+    "/api/admin/load-bursts": {
+      "post": {
+        "operationId": "startLoadBurst",
+        "summary": "Start a bounded flash crowd against a sale. Only one burst runs at a time (409 BURST_RUNNING); 501 when the deployment has no customer token.",
+        "parameters": [
+          {
+            "name": "X-Correlation-ID",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "sale_id"
+                ],
+                "properties": {
+                  "sale_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "shoppers": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 400,
+                    "default": 400
+                  },
+                  "seconds": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "default": 20
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoadBurst"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminToken": []
+          }
+        ]
+      }
+    },
+    "/api/admin/load-bursts/{burst_id}": {
+      "get": {
+        "operationId": "getLoadBurst",
+        "parameters": [
+          {
+            "name": "burst_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "X-Correlation-ID",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoadBurst"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Request error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminToken": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2026,6 +2152,74 @@
         "required": [
           "amount_minor",
           "currency"
+        ]
+      },
+      "LoadBurst": {
+        "type": "object",
+        "description": "A bounded flash crowd that the Flash Sale Manager sends to the Admission Controller for demonstrations.",
+        "properties": {
+          "burst_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sale_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "shoppers": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 400
+          },
+          "seconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 20
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "RUNNING",
+              "COMPLETED"
+            ]
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ended_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sent": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "admitted": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "throttled": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "burst_id",
+          "sale_id",
+          "shoppers",
+          "seconds",
+          "state",
+          "started_at",
+          "sent",
+          "admitted",
+          "throttled",
+          "failed"
         ]
       }
     },
