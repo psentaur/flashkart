@@ -6,8 +6,22 @@ locals {
 }
 resource "aws_db_subnet_group" "private" {
   name       = var.name
-  subnet_ids = module.vpc.private_subnets
+  subnet_ids = concat(module.vpc.private_subnets, aws_subnet.database_capacity[*].id)
 }
+
+# Keep the original VPC subnets, NAT gateways, EKS and Kafka placement intact.
+# RDS needs only private VPC-local routing, not another NAT gateway.
+resource "aws_subnet" "database_capacity" {
+  count                   = var.database_availability_zone == null ? 0 : 1
+  vpc_id                  = module.vpc.vpc_id
+  availability_zone       = var.database_availability_zone
+  cidr_block              = "10.42.64.0/20"
+  map_public_ip_on_launch = false
+  tags = {
+    Name = "${var.name}-database-capacity"
+  }
+}
+
 resource "aws_db_instance" "postgres" {
   for_each                    = local.databases
   identifier                  = "${var.name}-${each.key}"
@@ -21,7 +35,7 @@ resource "aws_db_instance" "postgres" {
   manage_master_user_password = true
   db_subnet_group_name        = aws_db_subnet_group.private.name
   vpc_security_group_ids      = [aws_security_group.database[each.key].id]
-  availability_zone           = module.vpc.azs[each.value]
+  availability_zone           = var.database_availability_zone != null ? var.database_availability_zone : module.vpc.azs[each.value]
   multi_az                    = false
   publicly_accessible         = false
   skip_final_snapshot         = true

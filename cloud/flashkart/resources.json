@@ -178,7 +178,7 @@
             "containers": [
               {
                 "name": "migrate",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:migrations-7b24554fae10",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:migrations-cloud-demo-ca1",
                 "command": [
                   "sh",
                   "/sql/migrate.sh"
@@ -2330,7 +2330,7 @@
             "containers": [
               {
                 "name": "nginx",
-                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:web-7b24554fae10",
+                "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:web-cloud-demo-ca1",
                 "imagePullPolicy": "IfNotPresent",
                 "readinessProbe": {
                   "httpGet": {
@@ -2392,9 +2392,10 @@
         }
       },
       "spec": {
-        "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:flink-7b24554fae10",
+        "image": "224033508410.dkr.ecr.ap-south-1.amazonaws.com/flashkart-artifacts:flink-cloud-demo-ca1",
         "flinkVersion": "v1_20",
         "serviceAccount": "flink",
+        "emrReleaseLabel": "emr-7.13.0-flink-latest",
         "flinkConfiguration": {
           "high-availability.type": "kubernetes",
           "high-availability.storageDir": "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/ha",
@@ -2435,11 +2436,11 @@
           }
         },
         "jobManager": {
+          "storageDir": "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/ha",
           "resource": {
             "memory": "1024m",
             "cpu": 0.5
-          },
-          "storageDir": "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/ha"
+          }
         },
         "taskManager": {
           "resource": {
@@ -2461,8 +2462,7 @@
             "--kafka-properties",
             "/kafka/client.properties"
           ]
-        },
-        "emrReleaseLabel": "emr-7.13.0-flink-latest"
+        }
       }
     },
     {

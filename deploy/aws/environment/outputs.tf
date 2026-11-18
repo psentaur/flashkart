@@ -27,3 +27,8 @@ output "database_passwords" {
 output "replica_databases" {
   value = { for key, db in aws_db_instance.postgres : key => db.identifier if key != "transactional" }
 }
+
+output "elastic_ips" {
+  description = "Public Elastic IP addresses of the NAT gateways (outbound traffic)."
+  value       = module.vpc.nat_public_ips
+}

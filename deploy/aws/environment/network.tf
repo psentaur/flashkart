@@ -43,6 +43,17 @@ module "eks" {
       min_size       = 3
       desired_size   = 3
       max_size       = 3
+      block_device_mappings = {
+        root = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 80
+            volume_type           = "gp3"
+            encrypted             = true
+            delete_on_termination = true
+          }
+        }
+      }
     }
   }
 }

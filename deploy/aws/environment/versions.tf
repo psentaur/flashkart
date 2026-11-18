@@ -35,3 +35,10 @@ variable "operator_cidrs" {
 }
 variable "artifact_repository" { type = string }
 variable "image_tag" { type = string }
+
+variable "database_availability_zone" {
+  description = "Optional RDS capacity override. Adds a private database-only subnet in this AZ."
+  type        = string
+  default     = null
+  nullable    = true
+}

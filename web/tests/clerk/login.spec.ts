@@ -144,13 +144,13 @@ test("real Clerk admin claim permits catalog management and blocks Team", async 
   expect(response.status()).toBe(401); // Backend-issued tokens without an allowed browser azp remain rejected.
 });
 
-test("deployment helper renews genuine browser sessions", async ({ browser }) => {
+test("deployment helper renews genuine browser sessions", async ({ browser, baseURL }) => {
   test.setTimeout(120_000);
   const contexts = [];
   try {
     for (const [role, account] of [["customer", customer], ["admin", admin]] as const) {
       const context = await browser.newContext(); contexts.push(context);
-      const page = await context.newPage(); await page.goto("http://127.0.0.1:5173/");
+      const page = await context.newPage(); await page.goto(`${baseURL}/`);
       await clerk.signIn({ page, emailAddress: account.email });
       await expect(page.getByRole("button", { name: "Activity", exact: true })).toBeVisible();
       const path = `../build/clerk-${role}-state.json`;
@@ -163,10 +163,12 @@ test("deployment helper renews genuine browser sessions", async ({ browser }) =>
       "for role,token in tokens.items():",
       " r=urllib.request.Request(os.environ['BASE_URL']+'/api/auth/me',headers={'Authorization':'Bearer '+token})",
       " with urllib.request.urlopen(r) as response: assert json.load(response)['role']==role",
+      "if os.environ.get('FLASHKART_TEST_CLOUD_SMOKE') == '1':",
+      " import subprocess; subprocess.run(['sh','deploy/aws/acceptance.sh','smoke'],cwd='..',check=True)",
     ].join("\n");
     const result = await new Promise<number>((resolve, reject) => {
       const child = spawn(process.execPath, ["tests/clerk/run-with-sessions.mjs", "--", "python3", "-c", code], {
-        env: { ...process.env, BASE_URL: "http://127.0.0.1:5173", CLERK_TEST_ADMIN_STATE: "../build/clerk-admin-state.json", CLERK_TEST_CUSTOMER_STATE: "../build/clerk-customer-state.json" },
+        env: { ...process.env, BASE_URL: baseURL, CLERK_TEST_ADMIN_STATE: "../build/clerk-admin-state.json", CLERK_TEST_CUSTOMER_STATE: "../build/clerk-customer-state.json" },
         stdio: "inherit",
       });
       child.once("error", reject); child.once("exit", code => resolve(code ?? 1));
