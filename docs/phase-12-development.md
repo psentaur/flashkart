@@ -53,7 +53,7 @@ Archive the reports with the infrastructure revision, GitOps commit, image tags 
 
 ## Verification status
 
-The development demo was deployed to AWS on 2026-11-18 using the existing Clerk development app. Public Google/email login rendering, customer/admin authorization, password sign-in, password reset, verified email registration, and a confirmed customer checkout have been verified. Evidence is stored locally in `build/cloud`. Full load, recovery, teardown, and recreation acceptance remain separate work; Phase 12 is not yet fully accepted.
+The development demo was deployed to AWS on 2026-11-18 using the existing Clerk development app. Public Google/email login rendering, customer/admin authorization, password sign-in, password reset, verified email registration, and a confirmed customer checkout have been verified. Evidence is stored locally in `build/cloud`. The approved EMR webhook workaround was applied with UPDATE validation retained. All GitOps applications reached Synced/Healthy, the analytics job reached RUNNING/STABLE and wrote aggregate results, and checkpoints continued completing without new failures. All three workers now use 80 GiB disks; the rollout completed within the existing CPU quota using MINIMAL updates. A final Terraform plan reported no changes. Full load, recovery, teardown, and recreation acceptance remain separate work; Phase 12 is not yet fully accepted.
 
 ## Cloud demo login checks
 
