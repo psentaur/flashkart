@@ -2462,8 +2462,7 @@
             "/kafka/client.properties"
           ]
         },
-        "emrReleaseLabel": "emr-7.13.0-flink-latest",
-        "executionRoleArn": "arn:aws:iam::224033508410:role/flashkart-demo-flink"
+        "emrReleaseLabel": "emr-7.13.0-flink-latest"
       }
     },
     {

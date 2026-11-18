@@ -122,7 +122,7 @@ add("rbac.authorization.k8s.io/v1", "RoleBinding", "flink",
     roleRef={"apiGroup": "rbac.authorization.k8s.io", "kind": "ClusterRole", "name": "edit"})
 add("flink.apache.org/v1beta1", "FlinkDeployment", "sales-analytics", spec={
     "image": image("flink"), "flinkVersion": "v1_20", "serviceAccount": "flink",
-    "emrReleaseLabel": "emr-7.13.0-flink-latest", "executionRoleArn": settings["roles"]["flink"],
+    "emrReleaseLabel": "emr-7.13.0-flink-latest",
     "flinkConfiguration": {
         "high-availability.type": "kubernetes", "high-availability.storageDir": checkpoint + "/ha",
         "state.checkpoints.dir": checkpoint + "/checkpoints", "taskmanager.numberOfTaskSlots": "1",
