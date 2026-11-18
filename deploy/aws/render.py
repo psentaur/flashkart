@@ -132,7 +132,7 @@ add("flink.apache.org/v1beta1", "FlinkDeployment", "sales-analytics", spec={
     },
     "podTemplate": {"metadata": {"annotations": {"prometheus.io/scrape": "true", "prometheus.io/port": "9249"}},
                     "spec": {"volumes": [{"name": "kafka", "configMap": {"name": "flink-kafka"}}],
-                             "containers": [{"name": "flink-main-container", "volumeMounts": [
+                             "containers": [{"name": "flink-main-container", "resources": {"requests": {"ephemeral-storage": "8Gi"}}, "volumeMounts": [
                                  {"name": "kafka", "mountPath": "/kafka", "readOnly": True}]}]}},
     "jobManager": {"storageDir": checkpoint + "/ha", "resource": {"memory": "1024m", "cpu": 0.5}},
     "taskManager": {"resource": {"memory": "1536m", "cpu": 0.5}},

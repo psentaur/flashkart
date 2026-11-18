@@ -2424,6 +2424,11 @@
             "containers": [
               {
                 "name": "flink-main-container",
+                "resources": {
+                  "requests": {
+                    "ephemeral-storage": "8Gi"
+                  }
+                },
                 "volumeMounts": [
                   {
                     "name": "kafka",
