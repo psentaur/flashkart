@@ -34,6 +34,8 @@ ns argocd
 ns flashkart
 kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.1.8/manifests/install.yaml
 kubectl wait --for=condition=Established crd/applications.argoproj.io --timeout=180s
+kubectl apply --server-side -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.3/cert-manager.yaml
+kubectl -n cert-manager rollout status deployment/cert-manager-webhook --timeout=180s
 
 curl -fsSL https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o "$work/ca.pem"
 kubectl -n flashkart create configmap rds-ca --from-file="$work/ca.pem" --dry-run=client -o yaml | kubectl apply -f -
@@ -85,7 +87,7 @@ app("cloud-lb-controller","kube-system",chart("https://aws.github.io/eks-charts"
     "serviceAccount":{"annotations":{"eks.amazonaws.com/role-arn":s["controller_role"]}}}))
 app("cloud-metrics-server","kube-system",chart("https://kubernetes-sigs.github.io/metrics-server/","metrics-server","3.13.0",{}))
 app("cloud-flink-operator","flink-operator",chart("public.ecr.aws/emr-on-eks","flink-kubernetes-operator","7.13.0",{
-    "watchNamespaces":["flashkart"],"webhook":{"create":False},"emrContainers":{"awsRegion":s["region"]}}))
+    "watchNamespaces":["flashkart"],"webhook":{"create":True},"emrContainers":{"awsRegion":s["region"]}}))
 print(json.dumps({"apiVersion":"v1","kind":"List","items":apps}))
 PY
 kubectl -n argocd create secret generic emr-helm-repo \

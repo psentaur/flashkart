@@ -69,6 +69,8 @@ for obj in base:
                 "name": "topics", "image": image("app"), "command": ["kafka-topics"],
                 "env": env(aws_env | {"KAFKA_BROKERS": ",".join(settings["brokers"])})}]
     elif kind == "Deployment":
+        if name == "web":
+            obj["metadata"]["annotations"]["argocd.argoproj.io/sync-wave"] = "1"
         pod = obj["spec"]["template"]["spec"]
         container = pod["containers"][0]
         container["image"] = image("web" if name == "web" else "app")
@@ -113,7 +115,7 @@ for obj in base:
 add("elbv2.k8s.aws/v1beta1", "TargetGroupBinding", "api", spec={
     "serviceRef": {"name": "web", "port": 8080}, "targetGroupARN": settings["target_group"], "targetType": "ip",
 })
-objects[-1]["metadata"]["annotations"] = {"argocd.argoproj.io/sync-wave": "3"}
+objects[-1]["metadata"]["annotations"] = {"argocd.argoproj.io/sync-wave": "1"}
 checkpoint = f"s3://{settings['buckets']['checkpoints']}"
 add("rbac.authorization.k8s.io/v1", "RoleBinding", "flink",
     subjects=[{"kind": "ServiceAccount", "name": "flink"}],
