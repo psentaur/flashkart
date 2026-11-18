@@ -2438,7 +2438,8 @@
           "resource": {
             "memory": "1024m",
             "cpu": 0.5
-          }
+          },
+          "storageDir": "s3://flashkart-demo-224033508410-ap-south-1-checkpoints/ha"
         },
         "taskManager": {
           "resource": {
@@ -2460,7 +2461,9 @@
             "--kafka-properties",
             "/kafka/client.properties"
           ]
-        }
+        },
+        "emrReleaseLabel": "emr-7.13.0-flink-latest",
+        "executionRoleArn": "arn:aws:iam::224033508410:role/flashkart-demo-flink"
       }
     },
     {

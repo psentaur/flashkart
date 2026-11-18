@@ -120,6 +120,7 @@ add("rbac.authorization.k8s.io/v1", "RoleBinding", "flink",
     roleRef={"apiGroup": "rbac.authorization.k8s.io", "kind": "ClusterRole", "name": "edit"})
 add("flink.apache.org/v1beta1", "FlinkDeployment", "sales-analytics", spec={
     "image": image("flink"), "flinkVersion": "v1_20", "serviceAccount": "flink",
+    "emrReleaseLabel": "emr-7.13.0-flink-latest", "executionRoleArn": settings["roles"]["flink"],
     "flinkConfiguration": {
         "high-availability.type": "kubernetes", "high-availability.storageDir": checkpoint + "/ha",
         "state.checkpoints.dir": checkpoint + "/checkpoints", "taskmanager.numberOfTaskSlots": "1",
@@ -131,7 +132,7 @@ add("flink.apache.org/v1beta1", "FlinkDeployment", "sales-analytics", spec={
                     "spec": {"volumes": [{"name": "kafka", "configMap": {"name": "flink-kafka"}}],
                              "containers": [{"name": "flink-main-container", "volumeMounts": [
                                  {"name": "kafka", "mountPath": "/kafka", "readOnly": True}]}]}},
-    "jobManager": {"resource": {"memory": "1024m", "cpu": 0.5}},
+    "jobManager": {"storageDir": checkpoint + "/ha", "resource": {"memory": "1024m", "cpu": 0.5}},
     "taskManager": {"resource": {"memory": "1536m", "cpu": 0.5}},
     "job": {"jarURI": "local:///opt/flink/usrlib/analytics.jar", "parallelism": 1, "upgradeMode": "last-state",
             "args": ["--brokers", ",".join(settings["brokers"]), "--checkpoints", checkpoint + "/checkpoints",
