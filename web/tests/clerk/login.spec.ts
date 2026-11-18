@@ -43,10 +43,7 @@ test("email registration verifies ownership and creates a customer", async ({ pa
   await page.goto("/sign-up");
   await page.getByLabel("Email address", { exact: true }).fill(email);
   await page.getByLabel("Password", { exact: true }).fill(randomBytes(24).toString("base64url"));
-  await Promise.all([
-    page.waitForResponse(r => r.url().includes("/prepare_verification") && r.status() === 200),
-    page.getByRole("button", { name: "Continue", exact: true }).click(),
-  ]);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.locator('input[autocomplete="one-time-code"]').fill("424242");
   await expect(page.getByRole("button", { name: "Activity", exact: true })).toBeVisible();
   const id = await page.evaluate(() => window.Clerk.user!.id);

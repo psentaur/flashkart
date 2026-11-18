@@ -24,6 +24,10 @@
       <groupId>org.apache.flink</groupId><artifactId>flink-connector-kafka</artifactId>
       <version>${flink.kafka.version}</version>
     </dependency>
+    <dependency>
+      <groupId>software.amazon.msk</groupId><artifactId>aws-msk-iam-auth</artifactId>
+      <version>2.3.5</version>
+    </dependency>
   </dependencies>
   <build>
     <plugins>

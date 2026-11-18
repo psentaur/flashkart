@@ -38,7 +38,6 @@ fi
 if ! exists flink; then
     mkdir "$work/flink"
     cp analytics/target/sales-analytics-0.1.0.jar "$work/flink/sales-analytics.jar"
-    curl -fsSL https://repo.maven.apache.org/maven2/software/amazon/msk/aws-msk-iam-auth/2.3.5/aws-msk-iam-auth-2.3.5-all.jar -o "$work/flink/aws-msk-iam-auth.jar"
     "$engine" build --platform linux/amd64 --build-arg EMR_FLINK_IMAGE=public.ecr.aws/emr-on-eks/flink/emr-7.13.0-flink:20260410 \
         -f deploy/aws/flink.Dockerfile -t "$ARTIFACT_REPOSITORY:flink-$IMAGE_TAG" "$work/flink"
     publish flink

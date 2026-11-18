@@ -39,7 +39,7 @@ Use an AWS operator identity authorized for the intended account, Terraform 1.10
 4. Run `make cloud-render`. Put the non-secret files from `build/cloud/manifests` on the GitOps branch reachable by Argo CD. Set `GITOPS_REPO`, `GITOPS_REVISION`, `GITOPS_PATH`, `CLERK_SECRET_KEY`, `CLERK_ISSUER_URL`, `FLASHKART_ALLOWED_ORIGINS`, and `FLASHKART_OWNER_USER_ID`. Build the frontend with its production `VITE_CLERK_PUBLISHABLE_KEY`; see [authentication setup](authentication.md).
 5. Run `make demo`. The bootstrap resolves the requested Git revision to a commit and pins Argo CD to it. Rerun the bootstrap with the next revision to deploy an update. Bootstrap installs Argo CD, creates database and Clerk secrets, and registers the controller and application Git sources. Argo CD applies migrations and provisions Kafka topics before services start. The script uploads the frontend and runs a public smoke test.
 
-Workers use encrypted 80 GiB gp3 root disks to accommodate the EMR operator and Flink images. The backend runtime includes trusted CA certificates for TLS connections to MSK and Clerk. The Lambda config file is explicitly readable by its runtime user.
+Workers use encrypted 80 GiB gp3 root disks to accommodate the EMR operator and Flink images. EKS module 21.15.0 supports the `MINIMAL` update strategy, which replaces one worker at a time without surge capacity. Analytics pods reserve 20 GiB ephemeral storage so they cannot be scheduled onto legacy 20 GiB workers. The backend runtime includes trusted CA certificates for TLS connections to MSK and Clerk. The Lambda config file is explicitly readable by its runtime user.
 
 The bootstrap installs cert-manager before enabling the EMR operator admission webhook. The webhook adds the required Flink pod labels; the job uses its existing `flink` IRSA service account. The storefront and API target group start before analytics so an analytics startup failure does not block the website.
 
@@ -53,7 +53,7 @@ Archive the reports with the infrastructure revision, GitOps commit, image tags 
 
 ## Verification status
 
-Terraform configuration validation and local tests are separate from a live AWS rehearsal. The AWS session was expired when checked, so no cloud apply, acceptance, teardown, or recreation was performed. Phase 12 remains open until live evidence is recorded.
+The development demo was deployed to AWS on 2026-11-18 using the existing Clerk development app. Public Google/email login rendering, customer/admin authorization, password sign-in, password reset, verified email registration, and a confirmed customer checkout have been verified. Evidence is stored locally in `build/cloud`. Full load, recovery, teardown, and recreation acceptance remain separate work; Phase 12 is not yet fully accepted.
 
 ## Cloud demo login checks
 

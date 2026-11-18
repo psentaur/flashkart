@@ -21,7 +21,7 @@ module "vpc" {
 
 module "eks" {
   source                                   = "terraform-aws-modules/eks/aws"
-  version                                  = "21.30.2"
+  version                                  = "21.15.0"
   name                                     = var.name
   kubernetes_version                       = var.eks_version
   endpoint_public_access                   = true
