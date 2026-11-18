@@ -1,13 +1,17 @@
+import { Link, useSearchParams } from "react-router-dom";
+import type { Credential } from "./api";
 import { useEffect, useState } from "react";
 import { ApiError, api, date, message, money, operationID, segment } from "./api";
 import type { Attempt, Notification, Order, Product, ProductView, Sale } from "./api";
 import { useQuery } from "./hooks";
 import { Feedback } from "./ui";
 
-export function Store({ token, intents }: { token: string; intents: Map<string, Intent> }) {
+export function Store({ token, intents }: { token: Credential; intents: Map<string, Intent> }) {
   const products = useQuery<Product[]>("/api/products");
   const sales = useQuery<Sale[]>("/api/sales");
-  const [selection, setSelection] = useState<{ product: string; sale?: string }>();
+  const [search, setSearch] = useSearchParams();
+  const selection = search.get("product") ? { product: search.get("product")!, sale: search.get("sale") || undefined } : undefined;
+  const setSelection = (value?: {product: string; sale?: string}) => setSearch(value ? { product: value.product, ...(value.sale ? { sale: value.sale } : {}) } : {});
   const product = useQuery<ProductView>(selection ? "/api/products/" + segment(selection.product) : null);
   const sale = useQuery<Sale>(selection?.sale ? "/api/sales/" + segment(selection.sale) : null);
   const [now, setNow] = useState(Date.now);
@@ -66,7 +70,7 @@ export function SaleTerms({ sale }: { sale: Sale }) {
 type Intent = { id: string; accepted?: Attempt; retryAt?: number; sending?: boolean };
 export const newIntents = () => new Map<string, Intent>();
 
-function Purchase({ sale, token, now, intents }: { sale: Sale; token: string; now: number; intents: Map<string, Intent> }) {
+function Purchase({ sale, token, now, intents }: { sale: Sale; token: Credential; now: number; intents: Map<string, Intent> }) {
   const key = sale.sale_id;
   const [, redraw] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -108,7 +112,7 @@ function Purchase({ sale, token, now, intents }: { sale: Sale; token: string; no
   return <div className="purchase">
     {intent?.accepted ? <AttemptStatus attempt={intent.accepted} token={token}
       onNew={() => { intents.delete(key); setError(undefined); redraw(value => value + 1); }} /> : <>
-      {!token && <p>Add your customer token to reserve stock.</p>}
+      {!token && <p><Link to={"/login?returnTo=" + encodeURIComponent("/" + window.location.search)}>Sign in to reserve stock</Link></p>}
       <button disabled={!token || busy || intent?.sending || waiting || (!intent && outsideWindow)} onClick={() => void purchase()}>
         {busy || intent?.sending ? "Submitting…" : intent ? "Retry same attempt" : "Reserve one unit"}
       </button>
@@ -117,7 +121,7 @@ function Purchase({ sale, token, now, intents }: { sale: Sale; token: string; no
   </div>;
 }
 
-function AttemptStatus({ attempt, token, onNew }: { attempt: Attempt; token: string; onNew: () => void }) {
+function AttemptStatus({ attempt, token, onNew }: { attempt: Attempt; token: Credential; onNew: () => void }) {
   const status = useQuery<Attempt>(`/api/attempts/${segment(attempt.attempt_id)}`, token, 1300,
     value => value.state !== "QUEUED");
   const current = status.data || attempt;
@@ -129,7 +133,7 @@ function AttemptStatus({ attempt, token, onNew }: { attempt: Attempt; token: str
   </div>;
 }
 
-function Outcome({ attempt, token }: { attempt: Attempt; token: string }) {
+function Outcome({ attempt, token }: { attempt: Attempt; token: Credential }) {
   const [expanded, setExpanded] = useState(false);
   const order = useQuery<Order>(expanded && attempt.order_id ? "/api/orders/" + segment(attempt.order_id) : null, token);
   return <div className="outcome">
@@ -142,12 +146,12 @@ function Outcome({ attempt, token }: { attempt: Attempt; token: string }) {
   </div>;
 }
 
-export function Activity({ token }: { token: string }) {
+export function Activity({ token }: { token: Credential }) {
   const notifications = useQuery<Notification[]>(token ? "/api/notifications" : null, token, 4000);
   return <section>
-    <div className="section-head"><div><h1>Purchase activity</h1><p>Terminal outcomes for the signed-in demo customer.</p></div>
+    <div className="section-head"><div><h1>Purchase activity</h1><p>Your purchases and terminal outcomes.</p></div>
       {token && <button className="secondary" onClick={notifications.reload}>Refresh notifications</button>}</div>
-    {!token && <p className="empty">Add your customer token to see notifications.</p>}
+    {!token && <p className="empty">Sign in to see your purchase activity.</p>}
     <Feedback query={notifications} />
     {notifications.data?.length === 0 && <p className="empty">No notifications yet.</p>}
     <div className="stack">{notifications.data?.map(item => <article className="panel" key={item.event_id}>

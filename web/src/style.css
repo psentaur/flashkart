@@ -88,3 +88,14 @@ th, td { border-bottom: 1px solid var(--line); text-align: left; padding: .65rem
   .section-head { align-items: flex-start; flex-direction: column; }
   .form-grid, .tokens { grid-template-columns: 1fr; }
 }
+
+.auth-page { min-height: 65vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 440px); align-items: center; gap: 4rem; padding: 3rem 0; }
+.auth-intro h1 { font-size: clamp(2.4rem, 5vw, 4.4rem); max-width: 12ch; line-height: 1.07; margin: 1rem 0; }
+.auth-intro p { max-width: 38ch; font-size: 1.1rem; }
+.eyebrow { font-size: .75rem; letter-spacing: .14em; font-weight: 700; }
+.auth-card { display: flex; justify-content: center; }
+.auth-card > .panel { width: 100%; }
+.account-controls, .pagination { display: flex; align-items: center; gap: .75rem; }
+.pagination { justify-content: flex-end; margin-top: 1.2rem; }
+.confirmation { border: 2px solid #17543f; }
+@media (max-width: 760px) { .auth-page { grid-template-columns: 1fr; gap: 1rem; padding-top: 1rem; } .auth-intro h1 { max-width: none; } .pagination { flex-wrap: wrap; } }

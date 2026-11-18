@@ -12,6 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+
+	"flashkart/internal/identity"
 )
 
 type Outcome struct {
@@ -149,7 +151,7 @@ func (n *Notifications) Handler(token, customer string, fallback http.Handler) h
 		if !customerAuthorized(w, r, token) {
 			return
 		}
-		values, err := n.list(r.Context(), customer)
+		values, err := n.list(r.Context(), identity.CustomerID(r, customer))
 		if err != nil {
 			writeError(w, r, 503, "UNAVAILABLE", "notifications unavailable")
 			return

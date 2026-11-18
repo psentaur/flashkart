@@ -1,5 +1,21 @@
 # Phase 10 browser demo
 
+## Local start and stop
+
+With Python 3, Go, Node 22, npm, and Docker Compose or Podman Compose installed, run from the repository root:
+
+```sh
+python3 deploy/local/dev.py start
+python3 deploy/local/dev.py status
+python3 deploy/local/dev.py stop
+```
+
+The Linux launcher detects Compose, starts the five PostgreSQL databases, applies migrations, builds Go services, installs missing frontend dependencies, and starts the marketplace and Vite in the background. Open <http://127.0.0.1:5173>. Logs are in `build/local/market.log` and `build/local/web.log`. Clerk is the default authentication provider; see [login setup and admin management](authentication.md). Explicit local demo mode (`FLASHKART_AUTH_MODE=demo`) uses `local-admin` as the default admin token. Set `COMPOSE='podman compose'` to choose a provider explicitly.
+
+`stop` shuts down the app processes created by this launcher and stops the five databases, preserving their volumes. Stop apps launched manually before using this script. Checkout, notifications, and analytics need the additional configuration described below; the basic launch provides catalog, publication, inventory, and replicas. Existing queue and table environment variables are passed through to the marketplace launcher.
+
+## Full browser demo
+
 Start the marketplace with the purchase and outcome queues, notification table, and analytics table configured. Use the [Phase 8 setup](phase-8-development.md) and [Phase 9 Flink and projection setup](phase-9-development.md), then run `make run-market`.
 
 In a second terminal, install the frontend dependencies and start Vite.
@@ -9,7 +25,7 @@ npm --prefix web ci
 make run-web
 ```
 
-Open [Flashkart on localhost](http://127.0.0.1:5173). Enter the same customer and administrator tokens configured on the backend under **Access tokens**. The browser keeps the tokens in memory. The local Vite proxy routes same-origin API calls to the marketplace ports. A deployment serving the static build needs equivalent `/api` routing.
+Open [Flashkart on localhost](http://127.0.0.1:5173). Sign in with Clerk. In explicit local demo mode only, enter the configured customer and administrator tokens under **Access tokens** and submit **Sign in**. Demo tokens stay in tab session storage; Clerk manages real signed-in sessions. The local Vite proxy routes same-origin API calls to the marketplace ports. A deployment serving the static build needs equivalent `/api` routing.
 
 1. In **Administration**, load a new product ID, enter a name, and save it. Use that product ID to create a sale draft with a window that is already open and a stock limit of one. Publish it and wait for the published terms.
 2. In **Storefront**, open the sale and reserve one unit. The details show the queued and terminal states. Open the order and find the same attempt in **Activity**. To submit a separate purchase, choose **Start another attempt** after the first outcome appears.

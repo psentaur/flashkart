@@ -33,6 +33,10 @@ jobs:
           echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
           python -m pip install -r tests/requirements.txt
       - run: make build test-unit test-contracts test-smoke
+      - name: Install browser for authentication checks
+        run: cd web && npm exec -- playwright install --with-deps chromium
+      - name: Verify role-based navigation and admin controls
+        run: cd web && npm exec -- playwright test tests/auth.spec.ts tests/admin.spec.ts
       - name: Verify local PostgreSQL persistence
         run: make dev-up migrate seed test-persistence test-replication-core test-replication-recovery test-catalog-publication test-reservations test-workflows test-events-notifications
       - name: Verify Flink analytics and checkpoint recovery

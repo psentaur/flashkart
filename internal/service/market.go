@@ -29,8 +29,8 @@ type serviceApp struct {
 
 func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) error {
 	app := serviceApp{}
-	token := os.Getenv("FLASHKART_ADMIN_TOKEN")
-	if (name == "product-catalog" || name == "flash-sale-manager") && token == "" {
+	token := demoAdminToken()
+	if (name == "product-catalog" || name == "flash-sale-manager") && os.Getenv("FLASHKART_AUTH_MODE") == "demo" && token == "" {
 		return errors.New("FLASHKART_ADMIN_TOKEN is required")
 	}
 	var db *pgxpool.Pool
@@ -194,7 +194,17 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 	return serve(ctx, name, cfg, log, nil, nil, app)
 }
 
+func demoAdminToken() string {
+	if os.Getenv("FLASHKART_AUTH_MODE") == "demo" {
+		return os.Getenv("FLASHKART_ADMIN_TOKEN")
+	}
+	return ""
+}
+
 func customerConfig() (string, string, error) {
+	if os.Getenv("FLASHKART_AUTH_MODE") != "demo" {
+		return "", "", nil
+	}
 	token, id := os.Getenv("FLASHKART_CUSTOMER_TOKEN"), os.Getenv("FLASHKART_CUSTOMER_ID")
 	if strings.TrimSpace(token) == "" || strings.ContainsAny(token, " \t\r\n") ||
 		strings.TrimSpace(id) == "" || len(id) > 200 || strings.ContainsRune(id, 0) || token == os.Getenv("FLASHKART_ADMIN_TOKEN") {

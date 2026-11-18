@@ -1,8 +1,10 @@
 #!/bin/sh
 set -eu
 mode=$1
-: "${FLASHKART_ADMIN_TOKEN:?Set the deployed admin token}"
-: "${FLASHKART_CUSTOMER_TOKEN:?Set the deployed customer token}"
+if [ -z "${FLASHKART_TEST_TOKEN_URL:-}" ]; then
+    : "${FLASHKART_ADMIN_TOKEN:?Use the Clerk session helper or set a current admin session token}"
+    : "${FLASHKART_CUSTOMER_TOKEN:?Use the Clerk session helper or set a current customer session token}"
+fi
 reports=${REPORT_DIR:-build/cloud}
 mkdir -p "$reports"
 settings=$(terraform -chdir=deploy/aws/environment output -json deployment)
@@ -27,7 +29,7 @@ kubectl -n flashkart get deployments,pods,hpa,flinkdeployments,targetgroupbindin
 kubectl -n argocd get applications -o wide >"$reports/gitops.txt"
 kubectl -n flashkart get flinkdeployment sales-analytics -o jsonpath='{.status.jobStatus.state}' | grep -qx RUNNING
 for _ in $(seq 1 30); do
-    curl -fsS "$BASE_URL/api/analytics/sales/$sale" -o "$reports/analytics.json"
+    python3 tests/kubernetes-market.py analytics "$sale" >"$reports/analytics.json"
     if jq -e 'any(.[]; .confirmed_purchases > 0)' "$reports/analytics.json" >/dev/null; then break; fi
     sleep 5
 done

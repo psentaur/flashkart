@@ -91,6 +91,10 @@ resource "aws_cloudfront_distribution" "site" {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
     cache_policy_id        = data.aws_cloudfront_cache_policy.static.id
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.spa.arn
+    }
   }
   ordered_cache_behavior {
     path_pattern             = "/api/*"
@@ -105,6 +109,21 @@ resource "aws_cloudfront_distribution" "site" {
     geo_restriction { restriction_type = "none" }
   }
   viewer_certificate { cloudfront_default_certificate = true }
+}
+
+resource "aws_cloudfront_function" "spa" {
+  name    = "${var.name}-spa"
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  code    = <<-JS
+    function handler(event) {
+      var request = event.request;
+      if (request.uri === '/' || /^\/(login|sign-up|activity|analytics|admin|replicas|team)(\/|$)/.test(request.uri)) {
+        request.uri = '/index.html';
+      }
+      return request;
+    }
+  JS
 }
 resource "aws_s3_bucket_policy" "frontend" {
   bucket = aws_s3_bucket.data["frontend"].id

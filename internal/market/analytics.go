@@ -136,9 +136,9 @@ func (a *Analytics) list(ctx context.Context, sale string) ([]SaleWindow, error)
 	return windows, nil
 }
 
-func (a *Analytics) Handler(fallback http.Handler) http.Handler {
+func (a *Analytics) Handler(token string, fallback http.Handler) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/analytics/sales/{sale_id}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /api/analytics/sales/{sale_id}", admin(token, func(w http.ResponseWriter, r *http.Request) {
 		sale := r.PathValue("sale_id")
 		if !validID(sale) {
 			writeError(w, r, 400, "INVALID_ARGUMENT", "invalid sale ID")
@@ -150,7 +150,7 @@ func (a *Analytics) Handler(fallback http.Handler) http.Handler {
 			return
 		}
 		send(w, 200, windows)
-	})
+	}))
 	return serveAPI(mux, fallback)
 }
 

@@ -13,6 +13,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"flashkart/internal/identity"
 )
 
 type PurchaseWork struct {
@@ -78,6 +80,7 @@ func (a *Admission) Handler(token, customerID string, fallback http.Handler) htt
 		if !customerAuthorized(w, r, token) {
 			return
 		}
+		customerID := identity.CustomerID(r, customerID)
 		var input struct {
 			Attempt string `json:"attempt_id"`
 			Sale    string `json:"sale_id"`
@@ -114,6 +117,7 @@ func (a *Admission) Handler(token, customerID string, fallback http.Handler) htt
 		if !customerAuthorized(w, r, token) {
 			return
 		}
+		customerID := identity.CustomerID(r, customerID)
 		id := r.PathValue("attempt_id")
 		if !validID(id) {
 			writeError(w, r, 400, "INVALID_ARGUMENT", "invalid attempt ID")

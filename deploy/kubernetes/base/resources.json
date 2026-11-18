@@ -850,6 +850,10 @@
                 ],
                 "env": [
                   {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
+                  {
                     "name": "FLASHKART_CONFIG",
                     "value": "/config/a.json"
                   },
@@ -984,6 +988,10 @@
                   "catalog-replica"
                 ],
                 "env": [
+                  {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
                   {
                     "name": "FLASHKART_CONFIG",
                     "value": "/config/b.json"
@@ -1120,6 +1128,10 @@
                 ],
                 "env": [
                   {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
+                  {
                     "name": "FLASHKART_CONFIG",
                     "value": "/config/c.json"
                   },
@@ -1255,6 +1267,10 @@
                 ],
                 "env": [
                   {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
+                  {
                     "name": "FLASHKART_CONFIG",
                     "value": "/config/d.json"
                   },
@@ -1384,6 +1400,10 @@
                   "flash-sale-manager"
                 ],
                 "env": [
+                  {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
                   {
                     "name": "FLASHKART_CONFIG",
                     "value": "/config/market.json"
@@ -1516,6 +1536,10 @@
                   "inventory-reservation"
                 ],
                 "env": [
+                  {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
                   {
                     "name": "FLASHKART_CONFIG",
                     "value": "/config/market.json"
@@ -1678,6 +1702,10 @@
                   "admission-controller"
                 ],
                 "env": [
+                  {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
                   {
                     "name": "FLASHKART_CONFIG",
                     "value": "/config/market.json"
@@ -1872,6 +1900,10 @@
                 ],
                 "env": [
                   {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
+                  {
                     "name": "FLASHKART_CONFIG",
                     "value": "/config/market.json"
                   },
@@ -2039,6 +2071,10 @@
                 ],
                 "env": [
                   {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
+                  {
                     "name": "FLASHKART_CONFIG",
                     "value": "/config/market.json"
                   },
@@ -2169,6 +2205,10 @@
                   "product-catalog"
                 ],
                 "env": [
+                  {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
                   {
                     "name": "FLASHKART_CONFIG",
                     "value": "/config/market.json"
@@ -2318,6 +2358,10 @@
                   "notification"
                 ],
                 "env": [
+                  {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
                   {
                     "name": "FLASHKART_CONFIG",
                     "value": "/config/market.json"
@@ -2469,6 +2513,10 @@
                 ],
                 "env": [
                   {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
+                  {
                     "name": "FLASHKART_CONFIG",
                     "value": "/config/market.json"
                   }
@@ -2556,6 +2604,129 @@
                 "name": "emulator",
                 "secret": {
                   "secretName": "emulator-files"
+                }
+              }
+            ],
+            "terminationGracePeriodSeconds": 30
+          }
+        },
+        "replicas": 1
+      }
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "identity-api"
+      },
+      "spec": {
+        "selector": {
+          "app": "identity-api"
+        },
+        "ports": [
+          {
+            "name": "http",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "identity-api",
+        "annotations": {
+          "argocd.argoproj.io/sync-wave": "2"
+        }
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "identity-api"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "identity-api"
+            },
+            "annotations": {
+              "prometheus.io/scrape": "true"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "identity-api",
+                "image": "flashkart-app",
+                "imagePullPolicy": "IfNotPresent",
+                "command": [
+                  "identity-api"
+                ],
+                "env": [
+                  {
+                    "name": "FLASHKART_AUTH_MODE",
+                    "value": "demo"
+                  },
+                  {
+                    "name": "FLASHKART_CONFIG",
+                    "value": "/config/market.json"
+                  }
+                ],
+                "ports": [
+                  {
+                    "name": "http",
+                    "containerPort": 8080
+                  }
+                ],
+                "envFrom": [
+                  {
+                    "secretRef": {
+                      "name": "demo-tokens"
+                    }
+                  }
+                ],
+                "volumeMounts": [
+                  {
+                    "name": "config",
+                    "mountPath": "/config",
+                    "readOnly": true
+                  }
+                ],
+                "readinessProbe": {
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "livenessProbe": {
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": 8080
+                  },
+                  "periodSeconds": 5,
+                  "timeoutSeconds": 2
+                },
+                "resources": {
+                  "requests": {
+                    "cpu": "50m",
+                    "memory": "48Mi"
+                  },
+                  "limits": {
+                    "memory": "192Mi"
+                  }
+                }
+              }
+            ],
+            "volumes": [
+              {
+                "name": "config",
+                "configMap": {
+                  "name": "service-config"
                 }
               }
             ],

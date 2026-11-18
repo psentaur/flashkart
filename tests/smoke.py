@@ -14,6 +14,7 @@ bin_dir = Path(sys.argv[1]).resolve()
 config = json.loads(Path("deploy/config/local.example.json").read_text())
 config.update(http_address="127.0.0.1:0", grpc_address="127.0.0.1:0")
 env = dict(os.environ)
+env["FLASHKART_AUTH_MODE"] = "demo"
 env.pop("AWS_LAMBDA_RUNTIME_API", None)
 env["FLASHKART_REPLICA_A_DSN"] = (
     "postgres://replica_app@127.0.0.1:1/flashkart?sslmode=disable&connect_timeout=1"
@@ -29,7 +30,7 @@ env.pop("FLASHKART_PUBLISH_EVENTS", None)
 env["FLASHKART_CUSTOMER_TOKEN"] = "smoke-customer-token"
 env["FLASHKART_CUSTOMER_ID"] = "smoke-customer"
 services = (
-    "admission-controller", "analytics-api", "catalog-replica",
+    "identity-api", "admission-controller", "analytics-api", "catalog-replica",
     "flash-sale-manager", "inventory-reservation", "notification",
     "order-service", "payment-service", "product-catalog",
 )
@@ -99,4 +100,4 @@ with tempfile.TemporaryDirectory() as directory:
     )
     assert rejected.returncode != 0
     assert "invalid HTTP or gRPC listen address" in rejected.stderr
-print("Nine service shells passed startup, HTTP health, API status and SIGTERM checks. Invalid configuration was rejected.")
+print("Ten service shells passed startup, HTTP health, API status and SIGTERM checks. Invalid configuration was rejected.")

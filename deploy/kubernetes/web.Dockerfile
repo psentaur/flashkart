@@ -4,6 +4,10 @@ COPY web/package*.json ./
 RUN npm ci
 COPY web/src ./src
 COPY web/index.html web/tsconfig.json ./
+ARG VITE_AUTH_MODE=clerk
+ARG VITE_CLERK_PUBLISHABLE_KEY
+ENV VITE_AUTH_MODE=$VITE_AUTH_MODE VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY
+RUN test "$VITE_AUTH_MODE" = demo || test -n "$VITE_CLERK_PUBLISHABLE_KEY"
 RUN npm run build
 
 FROM nginx:1.28-alpine
