@@ -1,9 +1,13 @@
 package market
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
 	"errors"
+	"io"
 	"net"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
@@ -16,8 +20,66 @@ import (
 
 type Images struct {
 	bucket string
+	client *s3.Client
 	signer *s3.PresignClient
 }
+
+// MaxImageBytes caps an uploaded product image.
+const MaxImageBytes = 5 << 20
+
+var imageExtensions = map[string]string{"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif"}
+
+// Upload stores an image in the configured bucket and returns its s3:// reference.
+// The content type is detected from the bytes, so a mislabeled upload is rejected.
+func (i *Images) Upload(ctx context.Context, productID string, data []byte) (string, error) {
+	if i == nil {
+		return "", errImagesDisabled
+	}
+	kind := http.DetectContentType(data)
+	ext, ok := imageExtensions[kind]
+	if !ok || len(data) == 0 || len(data) > MaxImageBytes {
+		return "", errInvalidImage
+	}
+	key := "products/" + keySegment(productID) + "/" + strings.ToLower(rand.Text()) + "." + ext
+	_, err := i.client.PutObject(ctx, &s3.PutObjectInput{Bucket: aws.String(i.bucket), Key: aws.String(key),
+		Body: bytes.NewReader(data), ContentType: aws.String(kind), CacheControl: aws.String("max-age=31536000, immutable")})
+	if err != nil {
+		return "", err
+	}
+	return "s3://" + i.bucket + "/" + key, nil
+}
+
+// Open returns the stored object for an s3:// reference in the configured bucket.
+func (i *Images) Open(ctx context.Context, ref string) (io.ReadCloser, string, error) {
+	if i == nil {
+		return nil, "", errImagesDisabled
+	}
+	u, err := url.Parse(ref)
+	if err != nil || u.Scheme != "s3" || u.Host != i.bucket || strings.TrimPrefix(u.Path, "/") == "" {
+		return nil, "", errInvalidImage
+	}
+	out, err := i.client.GetObject(ctx, &s3.GetObjectInput{Bucket: aws.String(i.bucket), Key: aws.String(strings.TrimPrefix(u.Path, "/"))})
+	if err != nil {
+		return nil, "", err
+	}
+	return out.Body, aws.ToString(out.ContentType), nil
+}
+
+// keySegment maps a product ID onto characters that survive the s3:// reference unescaped,
+// so the stored key and the parsed reference always match.
+func keySegment(id string) string {
+	return strings.Map(func(r rune) rune {
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '.' || r == '-' || r == '_' {
+			return r
+		}
+		return '_'
+	}, id)
+}
+
+var (
+	errImagesDisabled = errors.New("product image storage is not configured")
+	errInvalidImage   = errors.New("upload a JPEG, PNG, WebP or GIF image of at most 5 MB")
+)
 
 func NewImages(ctx context.Context, bucket, region, endpoint, credentialsFile string, local bool) (*Images, error) {
 	if bucket == "" {
@@ -33,7 +95,7 @@ func NewImages(ctx context.Context, bucket, region, endpoint, credentialsFile st
 			o.UsePathStyle = true
 		}
 	})
-	return &Images{bucket, s3.NewPresignClient(client)}, nil
+	return &Images{bucket, client, s3.NewPresignClient(client)}, nil
 }
 
 func (i *Images) Validate(value string) error {

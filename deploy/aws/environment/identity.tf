@@ -20,7 +20,7 @@ locals {
     ]
     order-service   = [local.kafka_connect, local.produce, { Action = local.queue_send, Resource = [aws_sqs_queue.work["outcomes"].arn] }]
     payment-service = [local.kafka_connect, local.produce]
-    product-catalog = [{ Action = ["s3:GetObject"], Resource = ["${aws_s3_bucket.data["images"].arn}/*"] }]
+    product-catalog = [{ Action = ["s3:GetObject", "s3:PutObject"], Resource = ["${aws_s3_bucket.data["images"].arn}/*"] }]
     notification    = [{ Action = local.notification_read, Resource = [aws_dynamodb_table.projection["notifications"].arn] }]
     analytics-api = [
       local.kafka_connect, local.produce,

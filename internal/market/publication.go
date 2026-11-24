@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
@@ -88,6 +89,15 @@ func (p Publisher) saveDraft(update bool) http.HandlerFunc {
 			writeError(w, r, 400, "INVALID_ARGUMENT", err.Error())
 			return
 		}
+		exists, err := p.productExists(r.Context(), terms.ProductID, r.Header.Get("X-Correlation-ID"))
+		if err != nil {
+			serviceError(w, r, err)
+			return
+		}
+		if !exists {
+			writeError(w, r, 400, "PRODUCT_NOT_FOUND", "create the product in the catalog before scheduling a sale for it")
+			return
+		}
 		id, code := rand.Text(), 201
 		data, err := json.Marshal(terms)
 		if err != nil {
@@ -116,6 +126,21 @@ func (p Publisher) saveDraft(update bool) http.HandlerFunc {
 		}
 		send(w, code, draft{Sale{id, terms}, "DRAFT"})
 	}
+}
+
+// productExists reports whether the catalog replication layer holds a visible product document.
+func (p Publisher) productExists(ctx context.Context, id, correlation string) (bool, error) {
+	if p.Replicas == nil {
+		return true, nil
+	}
+	versions, err := readDocument(ctx, p.Replicas, productKind, id, correlation)
+	if status.Code(err) == codes.NotFound {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	return len(versions.GetSiblings()) > 0, nil
 }
 
 func (p Publisher) publish(w http.ResponseWriter, r *http.Request) {

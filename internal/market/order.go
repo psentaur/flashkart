@@ -75,8 +75,16 @@ func (o Orders) Handler(token, customer string, fallback http.Handler) http.Hand
 			writeError(w, r, 400, "INVALID_ARGUMENT", "invalid order ID")
 			return
 		}
-		var state string
-		err := o.DB.QueryRow(r.Context(), "SELECT state FROM orders.purchases WHERE order_id=$1 AND customer_id=$2", id, customer).Scan(&state)
+		var state, reason string
+		var data []byte
+		var created time.Time
+		err := o.DB.QueryRow(r.Context(), `SELECT p.state,p.request,p.created_at,coalesce(o.body->'payload'->>'reason','')
+ FROM orders.purchases p LEFT JOIN orders.outcomes o ON o.event_id='attempt.terminal:'||p.order_id
+ WHERE p.order_id=$1 AND p.customer_id=$2`, id, customer).Scan(&state, &data, &created, &reason)
+		var req pb.CreateOrderRequest
+		if err == nil {
+			err = proto.Unmarshal(data, &req)
+		}
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeError(w, r, 404, "NOT_FOUND", "order not found")
 			return
@@ -85,7 +93,13 @@ func (o Orders) Handler(token, customer string, fallback http.Handler) http.Hand
 			writeError(w, r, 503, "UNAVAILABLE", "order lookup unavailable")
 			return
 		}
-		send(w, 200, map[string]string{"order_id": id, "attempt_id": id, "state": state})
+		view := map[string]any{"order_id": id, "attempt_id": id, "state": state, "sale_id": req.GetTerms().GetSaleId(),
+			"amount_minor": req.GetTerms().GetPriceMinor(), "currency": req.GetTerms().GetCurrency(),
+			"created_at": created.UTC().Format(time.RFC3339)}
+		if reason != "" {
+			view["reason"] = reason
+		}
+		send(w, 200, view)
 	})
 	return serveAPI(mux, fallback)
 }

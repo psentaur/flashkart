@@ -11,6 +11,8 @@ test("locks draft terms during save and retries a lost publication response", as
     const path = new URL(route.request().url()).pathname;
     if (path === "/api/auth/me") {
       await route.fulfill({ json: { user_id: "test-admin", role: "admin" } });
+    } else if (path === "/api/products") {
+      await route.fulfill({ json: [{ product_id: "product", name: "Test product" }] });
     } else if (path === "/api/admin/sale-drafts") {
       saved = route.request().postDataJSON();
       await allowSave;
@@ -32,11 +34,12 @@ test("locks draft terms during save and retries a lost publication response", as
   await page.getByRole("button", { name: "Access tokens" }).click();
   await page.getByLabel("Administrator token").fill("test-admin");
   await page.getByRole("button", { name: "Sign in", exact: true }).last().click();
-  await page.getByRole("button", { name: "Administration", exact: true }).click();
-  await page.getByLabel("Sale product ID").fill("product");
+  await page.getByRole("button", { name: "Sales", exact: true }).click();
+  await page.getByRole("combobox", { name: "Product", exact: true }).selectOption("product");
+  await page.getByLabel("Flash price", { exact: true }).fill("10");
   const stock = page.getByLabel("Stock limit");
   await stock.fill("10");
-  await page.getByRole("button", { name: "Create draft" }).click();
+  await page.getByRole("button", { name: "Save draft", exact: true }).click();
   try {
     await expect(stock).toBeDisabled();
   } finally {
@@ -50,7 +53,7 @@ test("locks draft terms during save and retries a lost publication response", as
   await expect(stock).toBeDisabled();
   await expect(page.getByRole("button", { name: "Save draft changes" })).toBeDisabled();
   await page.getByRole("button", { name: "Retry publication" }).click();
-  await expect(page.getByRole("heading", { name: "Published terms" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sale published" })).toBeVisible();
   expect(operations).toEqual([operations[0], operations[0]]);
   expect(operations[0]).toBeTruthy();
 });

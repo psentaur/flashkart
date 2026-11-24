@@ -76,7 +76,7 @@ export function Authentication({ children }: { children: ReactNode }) {
     <p>Configure the Clerk publishable key and restart the development server.</p></main>;
   return <ClerkProvider publishableKey={publishableKey} signInUrl="/login" signUpUrl="/sign-up"
     signInFallbackRedirectUrl="/" signUpFallbackRedirectUrl="/" afterSignOutUrl="/"
-    appearance={{ variables: { colorPrimary: "#17543f", borderRadius: "0.75rem" } }}>
+    appearance={{ variables: { colorPrimary: "#5b3df5", borderRadius: "0.75rem" } }}>
     <Session>{children}</Session>
   </ClerkProvider>;
 }
@@ -93,7 +93,7 @@ export function AccountControls() {
 export function returnDestination(value: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/";
   const target = new URL(value, window.location.origin);
-  if (target.origin !== window.location.origin || !["/", "/activity", "/analytics", "/admin", "/replicas", "/team"].includes(target.pathname)) return "/";
+  if (target.origin !== window.location.origin || !["/", "/activity", "/activity/cart", "/analytics", "/admin", "/admin/sales", "/admin/rush", "/replicas", "/team"].includes(target.pathname)) return "/";
   return target.pathname + target.search;
 }
 

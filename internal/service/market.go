@@ -140,7 +140,7 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 			if err != nil {
 				return err
 			}
-			inventory := market.Inventory{DB: db, HoldDuration: hold}
+			inventory := market.Inventory{DB: db, HoldDuration: hold, AdminToken: token}
 			orderConn, err := checkoutClient(cfg.OrderGRPC)
 			if err != nil {
 				return err
@@ -151,6 +151,7 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 			workers.Go(func() { inventory.SweepExpired(workerCtx, log, sweep) })
 			defer func() { stop(); workers.Wait() }()
 			app.register = func(server *grpc.Server) { pb.RegisterInventoryServer(server, inventory) }
+			app.wrap = inventory.Handler
 			worker = func() { inventory.Consume(workerCtx, queue, log) }
 		}
 		if queue != nil {
@@ -186,7 +187,17 @@ func runMarket(ctx context.Context, name string, cfg config, log *slog.Logger) e
 	}
 	defer conn.Close()
 	publisher := market.Publisher{DB: db, Replicas: client, Inventory: pb.NewInventoryClient(conn), Log: log}
-	app.wrap = func(fallback http.Handler) http.Handler { return publisher.Handler(token, fallback) }
+	burstTarget := os.Getenv("FLASHKART_BURST_TARGET")
+	if burstTarget == "" {
+		burstTarget = "http://admission-controller:8080"
+	}
+	burster := &market.Burster{Target: burstTarget, Log: log}
+	if os.Getenv("FLASHKART_AUTH_MODE") == "demo" {
+		burster.CustomerToken = os.Getenv("FLASHKART_CUSTOMER_TOKEN")
+	}
+	app.wrap = func(fallback http.Handler) http.Handler {
+		return publisher.Handler(token, burster.Handler(token, fallback))
+	}
 	workCtx, stop := context.WithCancel(ctx)
 	done := make(chan struct{})
 	go func() { defer close(done); publisher.Run(workCtx) }()

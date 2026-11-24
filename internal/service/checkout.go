@@ -49,9 +49,13 @@ func runCheckout(ctx context.Context, name string, cfg config, log *slog.Logger,
 		if err != nil {
 			return err
 		}
-		app.register = func(s *grpc.Server) {
-			pb.RegisterPaymentServer(s, market.Payment{DB: db, Fixture: fixture, Delay: delay})
+		token, customer, err := customerConfig()
+		if err != nil {
+			return err
 		}
+		payment := market.Payment{DB: db, Fixture: fixture, Delay: delay}
+		app.register = func(s *grpc.Server) { pb.RegisterPaymentServer(s, payment) }
+		app.wrap = func(fallback http.Handler) http.Handler { return payment.Handler(token, customer, fallback) }
 		return serve(ctx, name, cfg, log, nil, nil, app)
 	}
 	token, customer, err := customerConfig()

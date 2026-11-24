@@ -14,13 +14,15 @@ for (const role of ["guest", "customer", "admin", "owner"] as const) {
     });
     await page.goto("/");
     const nav = page.getByRole("navigation", { name: "Main navigation" });
-    await expect(nav.getByRole("button", { name: "Storefront" })).toBeVisible();
+    await expect(nav.getByRole("button", { name: "Shop" })).toBeVisible();
     if (role !== "guest") await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
-    for (const label of ["Analytics", "Administration", "Replicas"]) {
+    for (const label of ["Products", "Sales", "Rush test", "Analytics", "Replicas"]) {
       if (role === "admin" || role === "owner") await expect(nav.getByRole("button", { name: label })).toBeVisible();
       else await expect(nav.getByRole("button", { name: label })).toHaveCount(0);
     }
-    await expect(nav.getByRole("button", { name: "Activity" })).toHaveCount(role === "guest" ? 0 : 1);
+    for (const label of ["Cart", "My orders"]) {
+      await expect(nav.getByRole("button", { name: label })).toHaveCount(role === "guest" ? 0 : 1);
+    }
     await expect(nav.getByRole("button", { name: "Team" })).toHaveCount(role === "owner" ? 1 : 0);
     if (role === "guest") {
       await page.goto("/analytics");
@@ -54,7 +56,10 @@ test("owner confirms access changes and can revoke an invitation", async ({ page
     }
     if (path === "/api/admin/team/invitations" && method === "POST") { invited = true; return route.fulfill({ status: 201, json: { id: "invite" } }); }
     if (path === "/api/admin/team/invitations/invite") { invited = false; return route.fulfill({ json: { status: "revoked" } }); }
-    return route.fulfill({ json: { data: invited ? [{ id: "invite", email: "new@example.com", status: "pending" }] : [], total_count: invited ? 1 : 0 } });
+    if (path === "/api/admin/team/invitations") return route.fulfill({ json: {
+      data: invited ? [{ id: "invite", email: "new@example.com", status: "pending" }] : [], total_count: invited ? 1 : 0,
+    } });
+    return route.fulfill({ json: [] });
   });
   await page.goto("/team");
   await expect(page.getByText("Protected owner")).toBeVisible();
@@ -87,4 +92,37 @@ test("session renewal gets a fresh token without changing a purchase attempt", a
     { authorization: "Bearer session-1", attempt: "same-attempt" },
     { authorization: "Bearer session-2", attempt: "same-attempt" },
   ]);
+});
+
+test("signed-in customers can add a Phase 13b deal to the cart and see its outcome", async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem("flashkart-demo", JSON.stringify({ customer: "shopper", admin: "" })));
+  let attemptID = "";
+  const sale = { sale_id: "deal", terms: { product_id: "speaker", price_minor: 2500, currency: "USD", stock: 2,
+    starts_at: new Date(Date.now() - 60_000).toISOString(), ends_at: new Date(Date.now() + 600_000).toISOString() } };
+  await page.route("**/api/**", async route => {
+    switch (new URL(route.request().url()).pathname) {
+      case "/api/auth/me": return route.fulfill({ json: { user_id: "shopper", role: "customer" } });
+      case "/api/products": return route.fulfill({ json: [{ product_id: "speaker", name: "Speaker" }] });
+      case "/api/sales": return route.fulfill({ json: [sale] });
+      case "/api/inventory/sales": return route.fulfill({ json: [{ sale_id: "deal", stock: 2, available: 2, sold: 0, held: 0, active: true }] });
+      case "/api/attempts":
+        expect(route.request().headers().authorization).toBe("Bearer shopper");
+        attemptID = route.request().postDataJSON().attempt_id;
+        expect(route.request().headers()["idempotency-key"]).toBe(attemptID);
+        return route.fulfill({ status: 202, json: { attempt_id: attemptID, sale_id: "deal", state: "QUEUED" } });
+      case "/api/notifications": return route.fulfill({ json: attemptID ? [{ event_id: "settled", attempt: {
+        attempt_id: attemptID, sale_id: "deal", state: "CONFIRMED", order_id: attemptID,
+      } }] : [] });
+      default: return route.fulfill({ status: 404, json: {} });
+    }
+  });
+  await page.goto("/");
+  const card = page.getByRole("article", { name: "Speaker" });
+  await expect(card.getByText("2 of 2 left")).toBeVisible();
+  await expect(page.getByRole("navigation").getByRole("button", { name: "Cart" })).toBeVisible();
+  await card.getByRole("button", { name: "Add to cart" }).click();
+  await page.getByRole("navigation").getByRole("button", { name: /^Cart/ }).click();
+  await page.getByRole("button", { name: "Place order" }).click();
+  await expect(page.getByRole("heading", { name: "My orders" })).toBeVisible();
+  await expect(page.getByText("Paid and confirmed. You got it!")).toBeVisible();
 });

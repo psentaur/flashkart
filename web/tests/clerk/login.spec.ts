@@ -45,7 +45,7 @@ test("email registration verifies ownership and creates a customer", async ({ pa
   await page.getByLabel("Password", { exact: true }).fill(randomBytes(24).toString("base64url"));
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.locator('input[autocomplete="one-time-code"]').fill("424242");
-  await expect(page.getByRole("button", { name: "Activity", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "My orders", exact: true })).toBeVisible();
   const id = await page.evaluate(() => window.Clerk.user!.id);
   created.push(id);
   const result = await page.evaluate(async () => {
@@ -64,11 +64,11 @@ test("password sign-in completes Clerk's new-device verification", async ({ page
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   const code = page.locator('input[autocomplete="one-time-code"]');
   const outcome = await Promise.race([
-    page.getByRole("button", { name: "Activity", exact: true }).waitFor().then(() => "complete"),
+    page.getByRole("button", { name: "My orders", exact: true }).waitFor().then(() => "complete"),
     code.waitFor().then(() => "verify"),
   ]);
   if (outcome === "verify") await code.fill("424242");
-  await expect(page.getByRole("button", { name: "Activity", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "My orders", exact: true })).toBeVisible();
 });
 
 test("password reset verifies email before changing the password", async ({ page }) => {
@@ -88,7 +88,7 @@ test("password reset verifies email before changing the password", async ({ page
   await fields.first().fill(password);
   if (await fields.count() > 1) await fields.nth(1).fill(password);
   await page.getByRole("button", { name: /Reset password|Continue/i }).click();
-  await expect(page.getByRole("button", { name: "Activity", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "My orders", exact: true })).toBeVisible();
   customer.password = password;
 });
 
@@ -102,7 +102,7 @@ test("real Clerk customer stays out of admin APIs and tabs", async ({ page }) =>
     return { status: r.status, body: await r.json(), claims: { iss: decoded.iss, azp: decoded.azp, role: decoded.role, sid: !!decoded.sid, nbf: !!decoded.nbf, exp: !!decoded.exp } };
   });
   expect(diagnostic.status, JSON.stringify(diagnostic)).toBe(200);
-  await expect(page.getByRole("button", { name: "Activity", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "My orders", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Analytics", exact: true })).toHaveCount(0);
   const result = await page.evaluate(async () => {
     const token = await window.Clerk.session!.getToken();
@@ -117,7 +117,7 @@ test("real Clerk customer stays out of admin APIs and tabs", async ({ page }) =>
   await page.goto("/analytics");
   await expect(page.getByRole("heading", { name: "Access restricted" })).toBeVisible();
   await clerk.signOut({ page });
-  await expect(page.getByRole("button", { name: "Activity", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "My orders", exact: true })).toHaveCount(0);
 });
 
 test("real Clerk admin claim permits catalog management and blocks Team", async ({ page }) => {
@@ -149,7 +149,7 @@ test("deployment helper renews genuine browser sessions", async ({ browser, base
       const context = await browser.newContext(); contexts.push(context);
       const page = await context.newPage(); await page.goto(`${baseURL}/`);
       await clerk.signIn({ page, emailAddress: account.email });
-      await expect(page.getByRole("button", { name: "Activity", exact: true })).toBeVisible();
+      await expect(page.getByRole("button", { name: "My orders", exact: true })).toBeVisible();
       const path = `../build/clerk-${role}-state.json`;
       await context.storageState({ path }); await chmod(path, 0o600);
     }

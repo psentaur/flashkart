@@ -3,15 +3,22 @@ package market
 import (
 	"context"
 	"errors"
+	"net/http"
+	"strings"
 	"time"
 
 	pb "flashkart/gen/flashkart/v1"
+	"flashkart/internal/identity"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
+
+// DeclineAttemptPrefix marks a purchase attempt whose simulated card payment is declined.
+// The storefront offers it as a "declined card" option, like a payment provider's test card.
+const DeclineAttemptPrefix = "decline-"
 
 type Payment struct {
 	pb.UnimplementedPaymentServer
@@ -61,7 +68,7 @@ func (p Payment) run(ctx context.Context, id string, input *pb.SimulatePaymentRe
 				return err
 			}
 			decision = "SUCCEEDED"
-			if p.Fixture == "decline" {
+			if p.Fixture == "decline" || strings.HasPrefix(input.GetReservation().GetAttemptId(), DeclineAttemptPrefix) {
 				decision = "DECLINED"
 			}
 			due = now
@@ -128,4 +135,40 @@ func (p Payment) run(ctx context.Context, id string, input *pb.SimulatePaymentRe
 		return nil, status.Error(codes.Unavailable, "simulated lost reply after payment commit")
 	}
 	return &pb.PaymentResult{PaymentId: id, State: pb.PaymentState(pb.PaymentState_value["PAYMENT_STATE_"+state])}, nil
+}
+
+// Handler serves the customer's view of a payment: GET /api/payments/{payment_id}.
+// The payment ID equals the order and attempt ID.
+func (p Payment) Handler(token, customer string, fallback http.Handler) http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/payments/{payment_id}", func(w http.ResponseWriter, r *http.Request) {
+		if !customerAuthorized(w, r, token) {
+			return
+		}
+		customer := identity.CustomerID(r, customer)
+		id := r.PathValue("payment_id")
+		if !validID(id) {
+			writeError(w, r, 400, "INVALID_ARGUMENT", "invalid payment ID")
+			return
+		}
+		var encoded []byte
+		var state string
+		err := p.DB.QueryRow(r.Context(), "SELECT request,state FROM payment.transactions WHERE payment_id=$1", id).Scan(&encoded, &state)
+		var request pb.SimulatePaymentRequest
+		if err == nil {
+			err = proto.Unmarshal(encoded, &request)
+		}
+		if errors.Is(err, pgx.ErrNoRows) || err == nil && request.GetReservation().GetCustomerId() != customer {
+			writeError(w, r, 404, "NOT_FOUND", "payment not found")
+			return
+		}
+		if err != nil {
+			writeError(w, r, 503, "UNAVAILABLE", "payment lookup unavailable")
+			return
+		}
+		send(w, 200, map[string]any{"payment_id": id, "order_id": request.GetOrderId(), "state": state,
+			"amount_minor": request.GetAmountMinor(), "currency": request.GetCurrency(),
+			"simulated_decline": strings.HasPrefix(request.GetReservation().GetAttemptId(), DeclineAttemptPrefix)})
+	})
+	return serveAPI(mux, fallback)
 }

@@ -113,7 +113,7 @@ kubectl -n flink-operator rollout status deployment/flink-kubernetes-operator --
 # Keep defaulting on creation and retain the separate validation webhook on updates.
 kubectl patch mutatingwebhookconfiguration flink-operator-flink-operator-webhook-configuration --type=json \
     -p '[{"op":"replace","path":"/webhooks/0/rules/0/operations","value":["CREATE"]}]'
-consumers="admission-controller flash-sale-manager notification order-service product-catalog analytics-api identity-api"
+consumers="admission-controller flash-sale-manager inventory-reservation notification order-service payment-service product-catalog analytics-api identity-api"
 export FLASHKART_TOKEN_CONSUMERS="$consumers"
 python3 - <<'PY' | kubectl apply -f -
 import json, os

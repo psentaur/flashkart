@@ -79,7 +79,8 @@ for obj in base:
             pod["volumes"] = [v for v in pod["volumes"] if v["name"] != "emulator"]
             container["volumeMounts"] = [m for m in container["volumeMounts"] if m["name"] != "emulator"]
             container["envFrom"] = ([{"secretRef": {"name": "clerk-config"}}] if name in {
-                "identity-api", "product-catalog", "flash-sale-manager", "admission-controller", "order-service", "notification", "analytics-api"} else [])
+                "identity-api", "product-catalog", "flash-sale-manager", "admission-controller", "inventory-reservation",
+                "order-service", "payment-service", "notification", "analytics-api"} else [])
             if name == "identity-api":
                 container["envFrom"].append({"secretRef": {"name": "clerk-secret"}})
             container["env"] = [e for e in container["env"] if e["name"] != "FLASHKART_AUTH_MODE"]
