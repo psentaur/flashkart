@@ -93,7 +93,7 @@ export function AccountControls() {
 export function returnDestination(value: string | null) {
   if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/";
   const target = new URL(value, window.location.origin);
-  if (target.origin !== window.location.origin || !["/", "/activity", "/activity/cart", "/analytics", "/admin", "/admin/sales", "/admin/rush", "/replicas", "/team"].includes(target.pathname)) return "/";
+  if (target.origin !== window.location.origin || !["/", "/activity", "/activity/cart", "/analytics", "/admin", "/admin/sales", "/replicas", "/team"].includes(target.pathname)) return "/";
   return target.pathname + target.search;
 }
 

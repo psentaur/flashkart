@@ -9,7 +9,6 @@ import { Bell } from "./bell";
 import { Cart } from "./cart";
 import { Orders } from "./orders";
 import { Replicas } from "./replicas";
-import { Rush } from "./rush";
 import { cartCount, loadCart, loadPurchases, saveCart, savePurchases } from "./session";
 import { Shop } from "./shop";
 import { Team } from "./team";
@@ -18,7 +17,7 @@ import "./style.css";
 
 const pages = [
   ["Shop", "/", "public"], ["Cart", "/activity/cart", "customer"], ["My orders", "/activity", "customer"],
-  ["Products", "/admin", "admin"], ["Sales", "/admin/sales", "admin"], ["Rush test", "/admin/rush", "admin"],
+  ["Products", "/admin", "admin"], ["Sales", "/admin/sales", "admin"],
   ["Analytics", "/analytics", "admin"],
   ["Replicas", "/replicas", "admin"], ["Team", "/team", "owner"],
 ] as const;
@@ -29,7 +28,8 @@ function Guard({ role = "customer", children }: { role?: "customer" | "admin" | 
   if (auth.loading) return <p role="status">Checking your session…</p>;
   if (auth.error !== undefined) return <p role="alert">{message(auth.error)}</p>;
   if (!auth.principal) return <Navigate to={"/login?returnTo=" + encodeURIComponent(location.pathname + location.search)} replace />;
-  const allowed = role === "customer" || auth.principal.role === "owner" || (role === "admin" && auth.principal.role === "admin");
+  if (role === "customer") return auth.principal.role === "customer" ? children : <Navigate to="/admin" replace />;
+  const allowed = auth.principal.role === "owner" || (role === "admin" && auth.principal.role === "admin");
   if (!allowed) return <section><h1>Access restricted</h1><p>Your account does not have access to this page.</p></section>;
   return children;
 }
@@ -49,24 +49,28 @@ function Marketplace({ userID }: { userID?: string }) {
   useEffect(() => { if (userID) savePurchases(userID, purchases); }, [userID, purchases]);
   const openOrders = (id?: string) => navigate(id ? `/activity?order=${encodeURIComponent(id)}` : "/activity");
   const openCart = () => navigate("/activity/cart");
-  const staff = auth.principal?.role === "admin" || auth.principal?.role === "owner";
-  const visible = pages.filter(([, , role]) => role === "public" || (!auth.loading &&
-    (role === "customer" ? !!auth.principal : role === "admin" ? staff : auth.principal?.role === "owner")));
+  const accountRole = auth.principal?.role;
+  const staff = accountRole === "admin" || accountRole === "owner";
+  const home = staff ? "/admin" : "/";
+  const visible = pages.filter(([, , role]) => {
+    if (staff) return role === "admin" || (role === "owner" && accountRole === "owner");
+    return role === "public" || (role === "customer" && accountRole === "customer");
+  });
   return <>
     <a className="skip" href="#main">Skip to content</a>
     <header className="header"><div className="shell navigation">
-      <button className="brand" onClick={() => navigate("/")}><span aria-hidden="true">⚡</span> Flashkart</button>
+      <button className="brand" onClick={() => navigate(home)}><span aria-hidden="true">⚡</span> Flashkart</button>
       <nav aria-label="Main navigation">{visible.map(([label, path]) => <button key={path}
         aria-current={location.pathname === path ? "page" : undefined} onClick={() => navigate(path)}>{label}
         {label === "Cart" && cart.length > 0 && <span className="count">{cartCount(cart)}</span>}</button>)}</nav>
       <div className="account">
-        {userID && <Bell key={userID} userID={userID} token={auth.customer} purchases={purchases} onOpenOrder={openOrders} />}
+        {accountRole === "customer" && userID && <Bell key={userID} userID={userID} token={auth.customer} purchases={purchases} onOpenOrder={openOrders} />}
         {auth.principal ? <AccountControls /> : <button className="secondary" onClick={() => navigate("/login")}>Sign in</button>}
         {demoMode && <button className="secondary" onClick={() => navigate("/login")}>Access tokens</button>}
       </div>
     </div></header>
     <main className="shell main" id="main"><Routes>
-      <Route path="/" element={<Shop cart={cart} setCart={setCart} onCart={openCart}
+      <Route path="/" element={staff ? <Navigate to={home} replace /> : <Shop cart={cart} setCart={setCart} onCart={openCart}
         onSignIn={userID ? undefined : () => navigate("/login")} />} />
       <Route path="/login/*" element={<Login />} />
       <Route path="/sign-up/*" element={<Login signUp />} />
@@ -77,10 +81,9 @@ function Marketplace({ userID }: { userID?: string }) {
       <Route path="/analytics" element={<Guard role="admin"><Analytics token={auth.admin} /></Guard>} />
       <Route path="/admin" element={<Guard role="admin"><Products token={auth.admin} /></Guard>} />
       <Route path="/admin/sales" element={<Guard role="admin"><Sales token={auth.admin} /></Guard>} />
-      <Route path="/admin/rush" element={<Guard role="admin"><Rush token={auth.admin} customer={auth.customer} /></Guard>} />
       <Route path="/replicas" element={<Guard role="admin"><Replicas token={auth.admin} /></Guard>} />
       <Route path="/team" element={<Guard role="owner"><Team token={auth.admin} /></Guard>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to={home} replace />} />
     </Routes></main>
   </>;
 }

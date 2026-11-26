@@ -149,7 +149,7 @@ test("deployment helper renews genuine browser sessions", async ({ browser, base
       const context = await browser.newContext(); contexts.push(context);
       const page = await context.newPage(); await page.goto(`${baseURL}/`);
       await clerk.signIn({ page, emailAddress: account.email });
-      await expect(page.getByRole("button", { name: "My orders", exact: true })).toBeVisible();
+      await expect(page.getByRole("button", { name: role === "admin" ? "Products" : "My orders", exact: true })).toBeVisible();
       const path = `../build/clerk-${role}-state.json`;
       await context.storageState({ path }); await chmod(path, 0o600);
     }

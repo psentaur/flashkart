@@ -210,7 +210,6 @@ label.radio input { width: auto; margin-top: .2rem; accent-color: var(--brand); 
 
 /* Administrator pipeline */
 .order button.link { justify-self: start; }
-.crowd-card { border-left: 5px solid var(--brand); }
 .order-head { display: grid; grid-template-columns: 56px 1fr auto; gap: 1rem; align-items: center; }
 .order-head p { margin: .15rem 0 0; }
 .pipeline { list-style: none; padding: 0; margin: .4rem 0 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: .5rem; }
@@ -361,8 +360,6 @@ button.danger:hover { background: #b82b39; }
 .sr-only { margin: -1px; padding: 0; border: 0; }
 .section-head > button { white-space: nowrap; }
 .notice:focus { outline: 3px solid #f2dc9b; outline-offset: 2px; }
-.burst { border-left: 5px solid var(--flash-2); display: grid; gap: .8rem; }
-.burst .section-head { margin-bottom: 0; }
 .bell-panel li { padding: 0; background: none; border: 0; }
 .note-item { width: 100%; text-align: left; display: grid; gap: .15rem; font-weight: 400; color: var(--ink); background: #f7f5fc;
   border-radius: 10px; border-left: 4px solid #d6d0e4; padding: .55rem .7rem; }

@@ -5,6 +5,7 @@ for (const role of ["guest", "customer", "admin", "owner"] as const) {
     if (role !== "guest") await page.addInitScript(role => {
       sessionStorage.setItem("flashkart-demo", JSON.stringify({ customer: "test-session", admin: "test-session" }));
     }, role);
+    const staff = role === "admin" || role === "owner";
     let privateRequests = 0;
     await page.route("**/api/**", async route => {
       const path = new URL(route.request().url()).pathname;
@@ -14,16 +15,29 @@ for (const role of ["guest", "customer", "admin", "owner"] as const) {
     });
     await page.goto("/");
     const nav = page.getByRole("navigation", { name: "Main navigation" });
-    await expect(nav.getByRole("button", { name: "Shop" })).toBeVisible();
+    await expect(page).toHaveURL(staff ? "/admin" : "/");
+    await expect(nav.getByRole("button", { name: "Shop", exact: true })).toHaveCount(staff ? 0 : 1);
+    await expect(page.getByRole("button", { name: /^Notifications/ })).toHaveCount(role === "customer" ? 1 : 0);
     if (role !== "guest") await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
-    for (const label of ["Products", "Sales", "Rush test", "Analytics", "Replicas"]) {
-      if (role === "admin" || role === "owner") await expect(nav.getByRole("button", { name: label })).toBeVisible();
+    for (const label of ["Products", "Sales", "Analytics", "Replicas"]) {
+      if (staff) await expect(nav.getByRole("button", { name: label })).toBeVisible();
       else await expect(nav.getByRole("button", { name: label })).toHaveCount(0);
     }
+    await expect(nav.getByRole("button", { name: "Rush test", exact: true })).toHaveCount(0);
     for (const label of ["Cart", "My orders"]) {
-      await expect(nav.getByRole("button", { name: label })).toHaveCount(role === "guest" ? 0 : 1);
+      await expect(nav.getByRole("button", { name: label, exact: true })).toHaveCount(role === "customer" ? 1 : 0);
     }
     await expect(nav.getByRole("button", { name: "Team" })).toHaveCount(role === "owner" ? 1 : 0);
+    if (staff) {
+      for (const path of ["/activity/cart", "/activity"]) {
+        await page.goto(path);
+        await expect(page).toHaveURL("/admin");
+      }
+      await nav.getByRole("button", { name: "Sales", exact: true }).click();
+      await expect(page).toHaveURL("/admin/sales");
+      await page.getByRole("button", { name: "Flashkart", exact: true }).click();
+      await expect(page).toHaveURL("/admin");
+    }
     if (role === "guest") {
       await page.goto("/analytics");
       await expect(page).toHaveURL(/\/login\?returnTo=%2Fanalytics/);
@@ -31,6 +45,8 @@ for (const role of ["guest", "customer", "admin", "owner"] as const) {
       await page.goto("/analytics"); await expect(page.getByRole("heading", { name: "Access restricted" })).toBeVisible();
       await page.goto("/admin"); await expect(page.getByRole("heading", { name: "Access restricted" })).toBeVisible();
     } else if (role === "admin") {
+      await page.goto("/admin/rush");
+      await expect(page).toHaveURL("/admin");
       await page.goto("/team"); await expect(page.getByRole("heading", { name: "Access restricted" })).toBeVisible();
     } else {
       await page.goto("/team"); await expect(page.getByRole("heading", { name: "Team", exact: true })).toBeVisible();

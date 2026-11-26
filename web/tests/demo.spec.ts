@@ -160,20 +160,7 @@ test("publishes a sale and follows real purchase outcomes through every service"
   await expect(page.getByRole("heading", { name: "My orders" })).toBeVisible();
   await expect(page.locator("article.order.focused").getByText("Paid and confirmed. You got it!")).toBeVisible();
 
-  // The administrator's rush test sends a crowd of shoppers and traces it through each service.
-  await signIn(page, "Administrator", admin, customer);
-  await page.getByRole("button", { name: "Rush test", exact: true }).click();
-  await page.getByLabel("Live sale").selectOption(sale);
-  await page.getByLabel("Shoppers at once").fill("3");
-  await page.getByRole("button", { name: "Send 3 shoppers" }).click();
-  await expect(page.locator(".crowd-card").getByText("0 got a unit · 3 sold out")).toBeVisible({ timeout: 35_000 });
-
-  // A cloud burst is a real flash crowd: the Admission Controller turns shoppers away.
-  await page.getByRole("button", { name: "Run 20-second burst" }).click();
-  const burst = page.locator(".burst");
-  await expect(burst.getByText("Finished")).toBeVisible({ timeout: 40_000 });
-  const throttled = Number((await burst.locator(".tile", { hasText: "Throttled" }).locator("strong").innerText()).replace(/,/g, ""));
-  expect(throttled).toBeGreaterThan(0);
+  await signIn(page, "Administrator", admin);
 
   // Ending the regular listing early stops further orders; held stock is unaffected.
   const listing = (await (await request.get("/api/sales")).json()).find((s: { terms: { product_id: string; price_minor: number } }) =>

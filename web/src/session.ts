@@ -7,8 +7,6 @@ export type Purchase = {
   admission: "admitted" | "throttled" | "failed"; error?: string;
   /** Units placed together from the cart share a checkout and show as one order. */
   checkout?: string;
-  /** Set for attempts sent together by the administrator's rush test; they are summarised as one run. */
-  crowd?: string;
 };
 
 // Keep cart and checkout groupings separate for each account on this browser tab.
@@ -40,7 +38,7 @@ export function orderItems(purchases: Purchase[], notifications: Notification[] 
   const previous = notifications.flatMap(({ attempt }) => known.has(attempt.attempt_id) ? [] : [{
     attempt_id: attempt.attempt_id, sale_id: attempt.sale_id, admission: "admitted" as const,
   }]);
-  return [...purchases.filter(purchase => !purchase.crowd), ...previous];
+  return [...purchases, ...previous];
 }
 
 export const cartCount = (cart: CartLine[]) => cart.reduce((sum, line) => sum + line.quantity, 0);

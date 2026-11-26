@@ -79,8 +79,6 @@ with tempfile.TemporaryDirectory(prefix="flashkart-replicas-") as temp:
                     variables["CLERK_SECRET_KEY"] = os.environ["CLERK_SECRET_KEY"]
                 if os.environ.get("FLASHKART_AUTH_MODE") == "demo":
                     variables.update({key: os.environ[key] for key in customer_vars})
-                if name == "flash-sale-manager":
-                    variables["FLASHKART_BURST_TARGET"] = "http://127.0.0.1:8204"
                 if name in ("admission-controller", "inventory-reservation") and os.environ.get(queue_vars[0]):
                     variables.update({key: os.environ[key] for key in queue_vars})
                     settings["aws"] = {"region": "us-east-1", "endpoints": {"sqs": os.environ["FLASHKART_SQS_ENDPOINT"]}}
