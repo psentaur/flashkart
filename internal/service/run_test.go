@@ -1,11 +1,15 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/json"
 	"log/slog"
+	"net/http"
+	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,6 +22,45 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 )
+
+func TestAPIMetrics(t *testing.T) {
+	var metrics apiMetrics
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/fail" {
+			http.Error(w, "unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		w.Write([]byte("ok"))
+	})
+	for _, request := range []struct {
+		path string
+		code int
+		body string
+	}{
+		{"/api/products", http.StatusOK, "ok"},
+		{"/api/fail", http.StatusServiceUnavailable, "unavailable\n"},
+		{"/readyz", http.StatusOK, "ok"},
+	} {
+		response := httptest.NewRecorder()
+		metrics.serve(handler, response, httptest.NewRequest(http.MethodGet, request.path, nil))
+		if response.Code != request.code || response.Body.String() != request.body {
+			t.Fatalf("%s returned %d %q", request.path, response.Code, response.Body.String())
+		}
+	}
+
+	var output bytes.Buffer
+	metrics.writePrometheus(&output)
+	for _, line := range []string{
+		`flashkart_http_api_responses_total{status_class="2xx"} 1`,
+		`flashkart_http_api_responses_total{status_class="5xx"} 1`,
+		`flashkart_http_api_duration_seconds_bucket{le="+Inf"} 2`,
+		`flashkart_http_api_duration_seconds_count 2`,
+	} {
+		if !strings.Contains(output.String(), line+"\n") {
+			t.Errorf("missing metric %s", line)
+		}
+	}
+}
 
 type logChannel chan []byte
 

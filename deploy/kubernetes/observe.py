@@ -5,13 +5,22 @@ from pathlib import Path
 
 panels = {
     "Application health": 'sum by (app) (up{job="flashkart"})',
-    "HTTP requests per second": "sum by (app) (rate(flashkart_http_requests_total[1m]))",
+    "HTTP requests per second": "sum by (app) (rate(flashkart_http_api_responses_total[1m]))",
     "Available stock by sale": "flashkart_inventory_available_stock",
     "Work waiting for delivery": "sum by (source) (flashkart_outbox_pending) or max by (service) (flashkart_workflow_pending)",
     "Replica backend failures": "sum by (app) (rate(flashkart_replica_sql_failures_total[1m]))",
     "Replica peer failures": 'sum by (app) (rate(flashkart_replica_peer_requests_total{result="error"}[1m]))',
     "Analytics event-time progress": '{__name__=~"flink_.*currentOutputWatermark"}',
     "Analytics late events": '{__name__=~"flink_.*lateEventsDropped"}',
+    "HTTP 5xx error rate (%)": (
+        '100 * sum by (app) (rate(flashkart_http_api_responses_total{status_class="5xx"}[5m]))'
+        ' / sum by (app) (rate(flashkart_http_api_responses_total[5m]))'
+    ),
+    "HTTP p95 latency (ms)": (
+        "1000 * histogram_quantile(0.95, sum by (app, le) (rate(flashkart_http_api_duration_seconds_bucket[5m])))"
+    ),
+    "Kubernetes nodes ready": 'sum(kube_node_status_condition{condition="Ready",status="true"})',
+    "Kubernetes deployment unavailable replicas": 'kube_deployment_status_replicas_unavailable{namespace="flashkart"}',
 }
 dashboard = {
     "uid": "flashkart", "title": "Flashkart", "schemaVersion": 39, "refresh": "10s",
@@ -46,6 +55,9 @@ scrape_configs:
     action: keep
   - source_labels: [__meta_kubernetes_pod_label_app]
     target_label: app
+- job_name: kube-state-metrics
+  static_configs:
+  - targets: ['kube-state-metrics:8080']
 """
 loki = """auth_enabled: false
 server:
@@ -127,6 +139,37 @@ add("rbac.authorization.k8s.io/v1", "Role", "prometheus",
 add("rbac.authorization.k8s.io/v1", "RoleBinding", "prometheus",
     roleRef={"apiGroup": "rbac.authorization.k8s.io", "kind": "Role", "name": "prometheus"},
     subjects=[{"kind": "ServiceAccount", "name": "prometheus"}])
+
+state_metrics = "kube-state-metrics"
+state_metrics_role = "flashkart-kube-state-metrics"
+state_metrics_labels = {"app": state_metrics}
+add("v1", "ServiceAccount", state_metrics)
+add("rbac.authorization.k8s.io/v1", "ClusterRole", state_metrics_role, rules=[
+    {"apiGroups": [""], "resources": ["nodes"], "verbs": ["list", "watch"]},
+    {"apiGroups": ["apps"], "resources": ["deployments"], "verbs": ["list", "watch"]},
+])
+add("rbac.authorization.k8s.io/v1", "ClusterRoleBinding", state_metrics_role,
+    roleRef={"apiGroup": "rbac.authorization.k8s.io", "kind": "ClusterRole", "name": state_metrics_role},
+    subjects=[{"kind": "ServiceAccount", "name": state_metrics, "namespace": "flashkart"}])
+add("v1", "Service", state_metrics,
+    spec={"selector": state_metrics_labels, "ports": [{"name": "metrics", "port": 8080}]})
+add("apps/v1", "Deployment", state_metrics, spec={
+    "selector": {"matchLabels": state_metrics_labels},
+    "template": {"metadata": {"labels": state_metrics_labels}, "spec": {
+        "serviceAccountName": state_metrics,
+        "containers": [{
+            "name": state_metrics,
+            "image": "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0",
+            "args": [
+                "--resources=nodes,deployments",
+                "--metric-allowlist=kube_node_status_condition,kube_deployment_status_replicas_unavailable",
+            ],
+            "ports": [{"name": "metrics", "containerPort": 8080}],
+            "resources": {"requests": {"cpu": "25m", "memory": "32Mi"}},
+        }],
+    }},
+})
+
 for name, image, port, args, files in (
     ("prometheus", "prom/prometheus:v3.5.0", 9090,
      ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=24h"],

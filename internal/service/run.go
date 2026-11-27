@@ -165,9 +165,11 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 		}
 		w.WriteHeader(http.StatusOK)
 	})
+	var apiStats apiMetrics
 	mux.HandleFunc("GET /metrics", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; version=0.0.4")
 		fmt.Fprintf(w, "# TYPE flashkart_http_requests_total counter\nflashkart_http_requests_total %d\n", requests.Load())
+		apiStats.writePrometheus(w)
 		if coordinator != nil {
 			coordinator.WriteMetrics(w)
 		}
@@ -203,7 +205,7 @@ func serve(ctx context.Context, name string, cfg config, log *slog.Logger, store
 		IdleTimeout:       30 * time.Second,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requests.Add(1)
-			handler.ServeHTTP(w, r)
+			apiStats.serve(handler, w, r)
 		}),
 	}
 	go func() { failures <- server.Serve(listener) }()

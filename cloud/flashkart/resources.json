@@ -262,7 +262,7 @@
             "containers": [
               {
                 "name": "topics",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "command": [
                   "kafka-topics"
                 ],
@@ -341,7 +341,7 @@
             "containers": [
               {
                 "name": "replica-a",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -499,7 +499,7 @@
             "containers": [
               {
                 "name": "replica-b",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -657,7 +657,7 @@
             "containers": [
               {
                 "name": "replica-c",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -815,7 +815,7 @@
             "containers": [
               {
                 "name": "replica-d",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -967,7 +967,7 @@
             "containers": [
               {
                 "name": "flash-sale-manager",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "flash-sale-manager"
@@ -1115,7 +1115,7 @@
             "containers": [
               {
                 "name": "inventory-reservation",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "inventory-reservation"
@@ -1279,7 +1279,7 @@
             "containers": [
               {
                 "name": "admission-controller",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "admission-controller"
@@ -1474,7 +1474,7 @@
             "containers": [
               {
                 "name": "order-service",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "order-service"
@@ -1639,7 +1639,7 @@
             "containers": [
               {
                 "name": "payment-service",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "payment-service"
@@ -1795,7 +1795,7 @@
             "containers": [
               {
                 "name": "product-catalog",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "product-catalog"
@@ -1957,7 +1957,7 @@
             "containers": [
               {
                 "name": "notification",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "notification"
@@ -2089,7 +2089,7 @@
             "containers": [
               {
                 "name": "analytics-api",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "analytics-api"
@@ -2221,7 +2221,7 @@
             "containers": [
               {
                 "name": "identity-api",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-observability-20261127t020712z",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "identity-api"
@@ -2491,11 +2491,11 @@
         "name": "telemetry"
       },
       "data": {
-        "prometheus.yml": "global:\n  scrape_interval: 10s\nscrape_configs:\n- job_name: flashkart\n  kubernetes_sd_configs:\n  - role: pod\n    namespaces:\n      names: [flashkart]\n  relabel_configs:\n  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]\n    regex: \"true\"\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);(\\d+)'\n    replacement: '$1:$2'\n    target_label: __address__\n  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);'\n    replacement: '$1'\n    target_label: __address__\n  - source_labels: [__meta_kubernetes_pod_container_port_name, __meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_container_name]\n    regex: 'http;;.*|.*;9249;flink-main-container'\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_label_app]\n    target_label: app\n",
+        "prometheus.yml": "global:\n  scrape_interval: 10s\nscrape_configs:\n- job_name: flashkart\n  kubernetes_sd_configs:\n  - role: pod\n    namespaces:\n      names: [flashkart]\n  relabel_configs:\n  - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]\n    regex: \"true\"\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);(\\d+)'\n    replacement: '$1:$2'\n    target_label: __address__\n  - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]\n    regex: '(.+);'\n    replacement: '$1'\n    target_label: __address__\n  - source_labels: [__meta_kubernetes_pod_container_port_name, __meta_kubernetes_pod_annotation_prometheus_io_port, __meta_kubernetes_pod_container_name]\n    regex: 'http;;.*|.*;9249;flink-main-container'\n    action: keep\n  - source_labels: [__meta_kubernetes_pod_label_app]\n    target_label: app\n- job_name: kube-state-metrics\n  static_configs:\n  - targets: ['kube-state-metrics:8080']\n",
         "fluent-bit.conf": "[SERVICE]\n    Flush 1\n    Parsers_File /fluent-bit/etc/parsers.conf\n[INPUT]\n    Name tail\n    Path /var/log/containers/*_flashkart_*.log\n    Tag kube.*\n    multiline.parser docker, cri\n    DB /positions/tail.db\n    Skip_Long_Lines On\n    Inotify_Watcher Off\n[OUTPUT]\n    Name cloudwatch_logs\n    Match kube.*\n    region ap-southeast-2\n    log_group_name /flashkart/flashkart-demo/application\n    log_stream_prefix pod-\n    auto_create_group false\n",
         "datasources.yaml": "apiVersion: 1\ndatasources:\n- name: Prometheus\n  uid: prometheus\n  type: prometheus\n  url: http://prometheus:9090\n  isDefault: true\n",
         "provider.yaml": "apiVersion: 1\nproviders:\n- name: Flashkart\n  options:\n    path: /dashboards\n",
-        "flashkart.json": "{\"uid\": \"flashkart\", \"title\": \"Flashkart\", \"schemaVersion\": 39, \"refresh\": \"10s\", \"panels\": [{\"id\": 1, \"type\": \"timeseries\", \"title\": \"Application health\", \"gridPos\": {\"x\": 0, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (up{job=\\\"flashkart\\\"})\"}]}, {\"id\": 2, \"type\": \"timeseries\", \"title\": \"HTTP requests per second\", \"gridPos\": {\"x\": 12, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_http_requests_total[1m]))\"}]}, {\"id\": 3, \"type\": \"timeseries\", \"title\": \"Available stock by sale\", \"gridPos\": {\"x\": 0, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"flashkart_inventory_available_stock\"}]}, {\"id\": 4, \"type\": \"timeseries\", \"title\": \"Work waiting for delivery\", \"gridPos\": {\"x\": 12, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (source) (flashkart_outbox_pending) or max by (service) (flashkart_workflow_pending)\"}]}, {\"id\": 5, \"type\": \"timeseries\", \"title\": \"Replica backend failures\", \"gridPos\": {\"x\": 0, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_sql_failures_total[1m]))\"}]}, {\"id\": 6, \"type\": \"timeseries\", \"title\": \"Replica peer failures\", \"gridPos\": {\"x\": 12, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_peer_requests_total{result=\\\"error\\\"}[1m]))\"}]}, {\"id\": 7, \"type\": \"timeseries\", \"title\": \"Analytics event-time progress\", \"gridPos\": {\"x\": 0, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*currentOutputWatermark\\\"}\"}]}, {\"id\": 8, \"type\": \"timeseries\", \"title\": \"Analytics late events\", \"gridPos\": {\"x\": 12, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*lateEventsDropped\\\"}\"}]}]}"
+        "flashkart.json": "{\"uid\": \"flashkart\", \"title\": \"Flashkart\", \"schemaVersion\": 39, \"refresh\": \"10s\", \"panels\": [{\"id\": 1, \"type\": \"timeseries\", \"title\": \"Application health\", \"gridPos\": {\"x\": 0, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (up{job=\\\"flashkart\\\"})\"}]}, {\"id\": 2, \"type\": \"timeseries\", \"title\": \"HTTP requests per second\", \"gridPos\": {\"x\": 12, \"y\": 0, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_http_api_responses_total[1m]))\"}]}, {\"id\": 3, \"type\": \"timeseries\", \"title\": \"Available stock by sale\", \"gridPos\": {\"x\": 0, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"flashkart_inventory_available_stock\"}]}, {\"id\": 4, \"type\": \"timeseries\", \"title\": \"Work waiting for delivery\", \"gridPos\": {\"x\": 12, \"y\": 8, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (source) (flashkart_outbox_pending) or max by (service) (flashkart_workflow_pending)\"}]}, {\"id\": 5, \"type\": \"timeseries\", \"title\": \"Replica backend failures\", \"gridPos\": {\"x\": 0, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_sql_failures_total[1m]))\"}]}, {\"id\": 6, \"type\": \"timeseries\", \"title\": \"Replica peer failures\", \"gridPos\": {\"x\": 12, \"y\": 16, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum by (app) (rate(flashkart_replica_peer_requests_total{result=\\\"error\\\"}[1m]))\"}]}, {\"id\": 7, \"type\": \"timeseries\", \"title\": \"Analytics event-time progress\", \"gridPos\": {\"x\": 0, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*currentOutputWatermark\\\"}\"}]}, {\"id\": 8, \"type\": \"timeseries\", \"title\": \"Analytics late events\", \"gridPos\": {\"x\": 12, \"y\": 24, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"{__name__=~\\\"flink_.*lateEventsDropped\\\"}\"}]}, {\"id\": 9, \"type\": \"timeseries\", \"title\": \"HTTP 5xx error rate (%)\", \"gridPos\": {\"x\": 0, \"y\": 32, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"100 * sum by (app) (rate(flashkart_http_api_responses_total{status_class=\\\"5xx\\\"}[5m])) / sum by (app) (rate(flashkart_http_api_responses_total[5m]))\"}]}, {\"id\": 10, \"type\": \"timeseries\", \"title\": \"HTTP p95 latency (ms)\", \"gridPos\": {\"x\": 12, \"y\": 32, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"1000 * histogram_quantile(0.95, sum by (app, le) (rate(flashkart_http_api_duration_seconds_bucket[5m])))\"}]}, {\"id\": 11, \"type\": \"timeseries\", \"title\": \"Kubernetes nodes ready\", \"gridPos\": {\"x\": 0, \"y\": 40, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"sum(kube_node_status_condition{condition=\\\"Ready\\\",status=\\\"true\\\"})\"}]}, {\"id\": 12, \"type\": \"timeseries\", \"title\": \"Kubernetes deployment unavailable replicas\", \"gridPos\": {\"x\": 12, \"y\": 40, \"w\": 12, \"h\": 8}, \"datasource\": {\"type\": \"prometheus\", \"uid\": \"prometheus\"}, \"targets\": [{\"refId\": \"A\", \"expr\": \"kube_deployment_status_replicas_unavailable{namespace=\\\"flashkart\\\"}\"}]}]}"
       }
     },
     {
@@ -2547,6 +2547,129 @@
     },
     {
       "apiVersion": "v1",
+      "kind": "ServiceAccount",
+      "metadata": {
+        "name": "kube-state-metrics"
+      }
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRole",
+      "metadata": {
+        "name": "flashkart-kube-state-metrics"
+      },
+      "rules": [
+        {
+          "apiGroups": [
+            ""
+          ],
+          "resources": [
+            "nodes"
+          ],
+          "verbs": [
+            "list",
+            "watch"
+          ]
+        },
+        {
+          "apiGroups": [
+            "apps"
+          ],
+          "resources": [
+            "deployments"
+          ],
+          "verbs": [
+            "list",
+            "watch"
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "rbac.authorization.k8s.io/v1",
+      "kind": "ClusterRoleBinding",
+      "metadata": {
+        "name": "flashkart-kube-state-metrics"
+      },
+      "roleRef": {
+        "apiGroup": "rbac.authorization.k8s.io",
+        "kind": "ClusterRole",
+        "name": "flashkart-kube-state-metrics"
+      },
+      "subjects": [
+        {
+          "kind": "ServiceAccount",
+          "name": "kube-state-metrics",
+          "namespace": "flashkart"
+        }
+      ]
+    },
+    {
+      "apiVersion": "v1",
+      "kind": "Service",
+      "metadata": {
+        "name": "kube-state-metrics"
+      },
+      "spec": {
+        "selector": {
+          "app": "kube-state-metrics"
+        },
+        "ports": [
+          {
+            "name": "metrics",
+            "port": 8080
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "name": "kube-state-metrics"
+      },
+      "spec": {
+        "selector": {
+          "matchLabels": {
+            "app": "kube-state-metrics"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "kube-state-metrics"
+            }
+          },
+          "spec": {
+            "serviceAccountName": "kube-state-metrics",
+            "containers": [
+              {
+                "name": "kube-state-metrics",
+                "image": "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0",
+                "args": [
+                  "--resources=nodes,deployments",
+                  "--metric-allowlist=kube_node_status_condition,kube_deployment_status_replicas_unavailable"
+                ],
+                "ports": [
+                  {
+                    "name": "metrics",
+                    "containerPort": 8080
+                  }
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": "25m",
+                    "memory": "32Mi"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "v1",
       "kind": "Service",
       "metadata": {
         "name": "prometheus"
@@ -2580,7 +2703,7 @@
               "app": "prometheus"
             },
             "annotations": {
-              "flashkart.io/telemetry-config": "a533a2a8ec23c5f110d0cdb122ac082fa1b5e653f36c24c52f181c6cc447cf68"
+              "flashkart.io/telemetry-config": "d3de33a04710979e3aef259dd76098ce1238dafd7cd8a620271f3eee0793b2fd"
             }
           },
           "spec": {
@@ -2654,7 +2777,7 @@
               "app": "grafana"
             },
             "annotations": {
-              "flashkart.io/telemetry-config": "a533a2a8ec23c5f110d0cdb122ac082fa1b5e653f36c24c52f181c6cc447cf68"
+              "flashkart.io/telemetry-config": "d3de33a04710979e3aef259dd76098ce1238dafd7cd8a620271f3eee0793b2fd"
             }
           },
           "spec": {
@@ -2717,7 +2840,7 @@
               "app": "fluent-bit"
             },
             "annotations": {
-              "flashkart.io/telemetry-config": "a533a2a8ec23c5f110d0cdb122ac082fa1b5e653f36c24c52f181c6cc447cf68"
+              "flashkart.io/telemetry-config": "d3de33a04710979e3aef259dd76098ce1238dafd7cd8a620271f3eee0793b2fd"
             }
           },
           "spec": {
