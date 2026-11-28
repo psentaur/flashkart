@@ -1773,6 +1773,7 @@
       "metadata": {
         "name": "product-catalog",
         "annotations": {
+          "flashkart.io/demo": "argocd-sync",
           "argocd.argoproj.io/sync-wave": "2"
         }
       },
