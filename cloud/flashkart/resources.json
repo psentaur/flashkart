@@ -2404,7 +2404,7 @@
         }
       },
       "spec": {
-        "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:flink-obs-c9858f6-20261128011337",
+        "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:flink-05d7ba051a8635d868ad88d913ba910c11b3cffe",
         "flinkVersion": "v1_20",
         "serviceAccount": "flink",
         "emrReleaseLabel": "emr-7.13.0-flink-latest",
