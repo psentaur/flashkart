@@ -178,7 +178,7 @@
             "containers": [
               {
                 "name": "migrate",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:migrations-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:migrations-obs-c9858f6-20261128011337",
                 "command": [
                   "sh",
                   "/sql/migrate.sh"
@@ -262,7 +262,7 @@
             "containers": [
               {
                 "name": "topics",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "command": [
                   "kafka-topics"
                 ],
@@ -341,7 +341,7 @@
             "containers": [
               {
                 "name": "replica-a",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -499,7 +499,7 @@
             "containers": [
               {
                 "name": "replica-b",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -657,7 +657,7 @@
             "containers": [
               {
                 "name": "replica-c",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -815,7 +815,7 @@
             "containers": [
               {
                 "name": "replica-d",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "catalog-replica"
@@ -967,7 +967,7 @@
             "containers": [
               {
                 "name": "flash-sale-manager",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "flash-sale-manager"
@@ -1115,7 +1115,7 @@
             "containers": [
               {
                 "name": "inventory-reservation",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "inventory-reservation"
@@ -1279,7 +1279,7 @@
             "containers": [
               {
                 "name": "admission-controller",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "admission-controller"
@@ -1474,7 +1474,7 @@
             "containers": [
               {
                 "name": "order-service",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "order-service"
@@ -1639,7 +1639,7 @@
             "containers": [
               {
                 "name": "payment-service",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "payment-service"
@@ -1795,7 +1795,7 @@
             "containers": [
               {
                 "name": "product-catalog",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "product-catalog"
@@ -1957,7 +1957,7 @@
             "containers": [
               {
                 "name": "notification",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "notification"
@@ -2089,7 +2089,7 @@
             "containers": [
               {
                 "name": "analytics-api",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "analytics-api"
@@ -2221,7 +2221,7 @@
             "containers": [
               {
                 "name": "identity-api",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:app-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "command": [
                   "identity-api"
@@ -2342,7 +2342,7 @@
             "containers": [
               {
                 "name": "nginx",
-                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:web-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+                "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:web-obs-c9858f6-20261128011337",
                 "imagePullPolicy": "IfNotPresent",
                 "readinessProbe": {
                   "httpGet": {
@@ -2404,7 +2404,7 @@
         }
       },
       "spec": {
-        "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:flink-05d7ba051a8635d868ad88d913ba910c11b3cffe",
+        "image": "526387674995.dkr.ecr.ap-southeast-2.amazonaws.com/flashkart-demo:flink-obs-c9858f6-20261128011337",
         "flinkVersion": "v1_20",
         "serviceAccount": "flink",
         "emrReleaseLabel": "emr-7.13.0-flink-latest",
