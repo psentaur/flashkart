@@ -1904,7 +1904,7 @@
               "name": "cpu",
               "target": {
                 "type": "Utilization",
-                "averageUtilization": 65
+                "averageUtilization": 70
               }
             }
           }
